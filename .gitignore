@@ -1,0 +1,44 @@
+# ===== 大型产物：绝不入库 =====
+output/                 # HPT 训练输出、日志、wandb
+data/                   # 数据集、离线示范
+*.ckpt
+*.pt
+*.pth
+*.bin
+wandb/
+
+# ===== Python 通用 =====
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.ipynb_checkpoints/
+
+# ===== 环境 =====
+.venv/
+venv/
+envs/
+conda_envs/
+*.egg
+
+# ===== 编辑器 / 系统 =====
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# ===== 临时 / 日志 =====
+tmp/
+_tmp*/
+*.log
+runs/
+lightning_logs/
+
+# ===== 密钥（红线：绝不可提交）=====
+*.token
+*.secret
+.env
+.env.*
