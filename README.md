@@ -27,8 +27,8 @@ fedvla-repo/
 
 ```bash
 # 1. 克隆
-git clone https://github.com/<你的用户名>/fedvla-repo.git
-cd fedvla-repo
+git clone https://github.com/hp/FedVLA.git
+cd FedVLA
 
 # 2. 一键装环境（建议在「无卡模式」下跑，约 30–40 分钟）
 bash setup_cloud.sh
