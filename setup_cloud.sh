@@ -7,10 +7,17 @@
 # ============================================================
 set -e
 
+# ---- GitHub 镜像代理（国内云实例直连 github.com 常超时）----
+# 用 gitclone.com 做代理；先清掉可能残留的失效代理（ghproxy.com 等），避免多条 insteadOf 冲突
+git config --global --unset-all url."https://ghproxy.com/https://github.com/".insteadOf 2>/dev/null || true
+git config --global --unset-all url."https://ghproxy.net/https://github.com/".insteadOf 2>/dev/null || true
+git config --global --unset-all url."https://github.com.cnpmjs.org/".insteadOf 2>/dev/null || true
+git config --global url."https://gitclone.com/github.com/".insteadOf "https://github.com/"
+
 echo "==> [1/7] 系统依赖"
 if ! command -v patchelf >/dev/null 2>&1; then
-  sudo apt-get update
-  sudo apt-get install -y \
+  apt-get update
+  apt-get install -y \
     build-essential \
     libgl1-mesa-dev libgl1-mesa-glx libglew-dev \
     libegl1-mesa libegl1-mesa-dev libosmesa6-dev \
@@ -24,7 +31,7 @@ echo "==> [2/7] MuJoCo 2.1.0"
 if [ ! -d "$HOME/.mujoco/mujoco210" ]; then
   mkdir -p "$HOME/.mujoco"
   cd "$HOME/.mujoco"
-  wget https://mujoco.org/download/mujoco210-linux-x86_64.tar.gz -O mujoco210.tar.gz --no-check-certificate
+  wget "https://ghproxy.net/https://github.com/google-deepmind/mujoco/releases/download/2.1.0/mujoco210-linux-x86_64.tar.gz" -O mujoco210.tar.gz --no-check-certificate
   tar -xvzf mujoco210.tar.gz
   cd - >/dev/null
 else
@@ -47,6 +54,11 @@ else
   echo "    已写入，跳过"
 fi
 source "$HOME/.bashrc" 2>/dev/null || true
+# 显式导出（bashrc 在非交互 shell 下会因开头的 return 而未生效）
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/.mujoco/mujoco210/bin
+export MUJOCO_GL=egl
+export WANDB_MODE=offline
+export HF_ENDPOINT=https://hf-mirror.com
 
 echo "==> [4/7] conda 环境（Python 3.10）"
 if ! command -v conda >/dev/null 2>&1; then
@@ -63,13 +75,13 @@ else
 fi
 conda activate hpt
 
-echo "==> [5/7] PyTorch（cu118，自带 CUDA 运行时）"
-# 若云镜像已装 torch 2.1.1 且能 import，则跳过，避免覆盖镜像自带版本
+echo "==> [5/7] PyTorch（2.1.1，从 PyPI 装，自带 CUDA 12.1 运行时）"
+# download.pytorch.org 在国内云实例常被 403，改用 PyPI 默认源（pypi.org 已验证可达）。
+# PyPI 上的 torch 2.1.1 Linux wheel 即为 CUDA 构建；装完自检会确认 cuda.is_available()。
 if python -c "import torch; assert torch.__version__.startswith('2.1.1')" 2>/dev/null; then
   echo "    已存在 torch 2.1.1，跳过"
 else
-  pip install torch==2.1.1 torchvision==0.16.1 \
-    --index-url https://download.pytorch.org/whl/cu118
+  pip install torch==2.1.1 torchvision==0.16.1
 fi
 
 echo "==> [6/7] HPT 与其依赖子集（跳过 tensorflow/rlds/dm-reverb/zarr/ray）"
