@@ -13,7 +13,7 @@ fedvla-repo/
 ├── fedvla_scaffold/      # numpy 版 FedVLA 核心算法（已跑通，验证数学用）
 │   ├── fl_core.py        # DGMoE / EDA / FedAvg 核心
 │   └── smoke_test.py     # 三组冒烟测试
-├── federated/            # 【待建】联邦训练主循环、聚合策略、客户端
+├── federated/            # 联邦训练主循环（FedAvg 基线 + 后续 EDA/按簇扩展）：partition/aggregate/run_fedavg
 ├── comms/                # 【待建】通信损伤：丢包注入、量化压缩、流量预算
 ├── privacy/              # 【待建】差分隐私（DP-SGD）、特征反演评估
 ├── experiments/          # 【待建】实验矩阵配置、评测脚本、结果汇总
