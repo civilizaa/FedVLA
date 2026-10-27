@@ -14,7 +14,7 @@ set -u
 HPT_PY=/root/miniconda3/envs/hpt/bin/python
 HPT_DIR=/root/HPT
 FEDVLA_DIR=/root/FedVLA
-RAW_BASE="https://raw.githubusercontent.com/civilizaa/FedVLA/master"
+RAW_BASE="https://raw.githubusercontent.com/civilizaa/FedVLA/main"
 # 私有仓库：raw 链接对匿名请求一律 404。
 # 若设置了 GITHUB_PAT，则用带 token 的 API 下载（更可靠）。
 GITHUB_PAT="${GITHUB_PAT:-}"
@@ -77,6 +77,15 @@ else
     echo "     方案B: 本机 Windows 打包 federated.tar.gz，用 JupyterLab 上传后解压（见 README）"
     echo "     方案C: 本机 scp -r federated root@<host>:/root/HPT/"
   fi
+  # 自动探测远端默认分支（避免分支名不一致导致 404）
+  for br in main master; do
+    if curl -sSL --max-time 25 -o /dev/null -w "%{http_code}" \
+        "https://raw.githubusercontent.com/civilizaa/FedVLA/$br/federated/aggregate.py" 2>/dev/null | grep -q "^200$"; then
+      RAW_BASE="https://raw.githubusercontent.com/civilizaa/FedVLA/$br"
+      echo "[..] 探测到远端分支: $br"
+      break
+    fi
+  done
   for f in aggregate.py partition.py verify_continuation.py fedavg_config.sh run_fedavg.sh run_eval_fedavg.sh README.md cloud_gates.sh; do
     fetch_one "$f" || echo "  [跳过] $f 下载失败"
   done
