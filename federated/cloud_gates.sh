@@ -15,6 +15,10 @@ HPT_PY=/root/miniconda3/envs/hpt/bin/python
 HPT_DIR=/root/HPT
 FEDVLA_DIR=/root/FedVLA
 RAW_BASE="https://raw.githubusercontent.com/hp/FedVLA/master"
+# 私有仓库：raw 链接对匿名请求一律 404。
+# 若设置了 GITHUB_PAT，则用带 token 的 API 下载（更可靠）。
+GITHUB_PAT="${GITHUB_PAT:-}"
+API_BASE="https://api.github.com/repos/hp/FedVLA/contents/federated"
 
 export MUJOCO_GL=egl
 export WANDB_MODE=offline
@@ -24,31 +28,72 @@ export PYTHONPATH="$HPT_DIR:${PYTHONPATH:-}"
 
 cd "$HPT_DIR" || { echo "找不到 $HPT_DIR"; exit 1; }
 
+# 判断文件是否有效（404 页面只有 14 字节，内容为 "404: Not Found"）
+is_valid() {
+  local f="$1"
+  [ -f "$f" ] || return 1
+  local sz
+  sz=$(stat -c%s "$f" 2>/dev/null || echo 0)
+  [ "$sz" -gt 100 ] || return 1
+  head -c 20 "$f" | grep -q "404: Not Found" && return 1
+  return 0
+}
+
+fetch_one() {
+  local fname="$1"
+  local out="$FEDVLA_DIR/federated/$fname"
+  if [ -n "$GITHUB_PAT" ]; then
+    # 私有仓库：走 GitHub API，用 token 鉴权
+    curl -sSL --max-time 90 -H "Authorization: token $GITHUB_PAT" \
+      -H "Accept: application/vnd.github.raw" \
+      -o "$out" "$API_BASE/$fname" 2>/dev/null
+  else
+    curl -sSL --max-time 90 -o "$out" "$RAW_BASE/$fname" 2>/dev/null
+  fi
+  if is_valid "$out"; then
+    echo "  ok: $fname ($(stat -c%s "$out") bytes)"
+    return 0
+  fi
+  rm -f "$out"
+  return 1
+}
+
 echo "################################################"
 echo "# 步骤 1/3：确保 federated/ 代码到位"
 echo "################################################"
-if [ -f "$FEDVLA_DIR/federated/aggregate.py" ]; then
-  echo "[OK] federated/ 已存在，跳过下载"
+mkdir -p "$FEDVLA_DIR/federated"
+NEED=0
+for f in aggregate.py partition.py verify_continuation.py fedavg_config.sh run_fedavg.sh run_eval_fedavg.sh README.md cloud_gates.sh; do
+  is_valid "$FEDVLA_DIR/federated/$f" || NEED=1
+done
+
+if [ "$NEED" -eq 0 ]; then
+  echo "[OK] federated/ 8 个文件均已就位且有效，跳过下载"
 else
-  echo "[..] federated/ 缺失，尝试补齐"
-  if [ ! -d "$FEDVLA_DIR" ]; then
-    echo "[..] $FEDVLA_DIR 不存在，先 git clone（国内可能很慢）"
-    git clone --depth 1 https://github.com/hp/FedVLA.git "$FEDVLA_DIR" 2>&1 | tail -5
+  echo "[..] 部分文件缺失或无效（404 页面），尝试下载"
+  if [ -z "$GITHUB_PAT" ]; then
+    echo "[..] 未设置 GITHUB_PAT：私有仓库匿名下载会返回 404（14 字节假文件）"
+    echo "     方案A: export GITHUB_PAT=<你的PAT> 后重跑本脚本"
+    echo "     方案B: 本机 Windows 打包 federated.tar.gz，用 JupyterLab 上传后解压（见 README）"
+    echo "     方案C: 本机 scp -r federated root@<host>:/root/HPT/"
   fi
-  mkdir -p "$FEDVLA_DIR/federated"
-  for f in aggregate.py partition.py verify_continuation.py fedavg_config.sh run_fedavg.sh run_eval_fedavg.sh README.md; do
-    echo "  -> $f"
-    curl -sSL --max-time 60 -o "$FEDVLA_DIR/federated/$f" "$RAW_BASE/federated/$f" \
-      || echo "     下载失败：$f"
+  for f in aggregate.py partition.py verify_continuation.py fedavg_config.sh run_fedavg.sh run_eval_fedavg.sh README.md cloud_gates.sh; do
+    fetch_one "$f" || echo "  [跳过] $f 下载失败"
   done
-  # 校验：aggregate.py 至少要拿到
-  if [ -f "$FEDVLA_DIR/federated/aggregate.py" ]; then
-    echo "[OK] federated/ 补齐完成"
-  else
-    echo "[!!] 自动补齐失败。请手动用 scp 传 federated/ 目录，或用国内镜像重试 git clone"
-    exit 1
-  fi
 fi
+
+# 校验
+MISSING=0
+for f in aggregate.py partition.py verify_continuation.py fedavg_config.sh run_fedavg.sh run_eval_fedavg.sh cloud_gates.sh; do
+  is_valid "$FEDVLA_DIR/federated/$f" || { echo "  [缺] $f"; MISSING=1; }
+done
+if [ "$MISSING" -eq 1 ]; then
+  echo
+  echo "[!!] 关键文件仍不可用。请用上面【方案B】(JupyterLab 上传 tar.gz) 或【方案C】(scp)。"
+  echo "     注意：若之前下载出 14 字节的假文件，请先 rm -rf $FEDVLA_DIR/federated 再操作。"
+  exit 1
+fi
+echo "[OK] federated/ 全部就位"
 ls -la "$FEDVLA_DIR/federated/"
 
 echo
