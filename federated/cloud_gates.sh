@@ -1,24 +1,37 @@
 #!/usr/bin/env bash
-# FedVLA 云端前置检查：一键拉代码 + 门0 + 门1
+# FedVLA 云端前置检查：一键确保代码到位 + 门0 + 门1
 #
-# 用法（在 AutoDL 的 ~/HPT 下执行）：
-#     bash /root/HPT/federated/cloud_gates.sh
-# 或者从本机 scp 上来后执行。
+# 用法（AutoDL，任意目录）：
+#     bash cloud_gates.sh
+# 脚本会自动把 federated/ 放到 /root/HPT/federated/（run_fedavg.sh 期望的路径）。
 #
 # 门0 / 门1 都是纯 CPU 操作，**可以在无卡模式跑**（省 ¥0.9/小时）。
 # 门2（异构续训烟雾）必须开卡，见 run_fedavg.sh。
 #
-# 设计：脚本不依赖 git 能用——代码到位检测失败时会自动尝试从 raw.githubusercontent 补齐。
+# 设计要点：
+#   - 不依赖 git（国内 git 镜像经常 504），raw 直取 + 多镜像降级
+#   - 每次下载都校验文件大小与内容，杜绝 404 假文件（curl 对 404 返回 0）
 set -u
 
 HPT_PY=/root/miniconda3/envs/hpt/bin/python
 HPT_DIR=/root/HPT
 FEDVLA_DIR=/root/FedVLA
-RAW_BASE="https://raw.githubusercontent.com/civilizaa/FedVLA/main"
-# 私有仓库：raw 链接对匿名请求一律 404。
-# 若设置了 GITHUB_PAT，则用带 token 的 API 下载（更可靠）。
+DEST="$HPT_DIR/federated"
+REPO="civilizaa/FedVLA"
+BRANCH="main"
+
+# 镜像列表：按顺序尝试，某个成功就固定用它
+MIRRORS=(
+  "https://raw.githubusercontent.com/$REPO/$BRANCH"
+  "https://raw.gitmirror.com/$REPO/$BRANCH"
+  "https://ghproxy.net/https://raw.githubusercontent.com/$REPO/$BRANCH"
+  "https://gh-proxy.com/https://raw.githubusercontent.com/$REPO/$BRANCH"
+)
+ACTIVE_MIRROR=""
+
+# 若设置了 GITHUB_PAT，则优先走 API（私有仓库/限流时更可靠）
 GITHUB_PAT="${GITHUB_PAT:-}"
-API_BASE="https://api.github.com/repos/civilizaa/FedVLA/contents/federated"
+API_BASE="https://api.github.com/repos/$REPO/contents/federated"
 
 export MUJOCO_GL=egl
 export WANDB_MODE=offline
@@ -28,7 +41,9 @@ export PYTHONPATH="$HPT_DIR:${PYTHONPATH:-}"
 
 cd "$HPT_DIR" || { echo "找不到 $HPT_DIR"; exit 1; }
 
-# 判断文件是否有效（404 页面只有 14 字节，内容为 "404: Not Found"）
+FILES=(aggregate.py partition.py verify_continuation.py fedavg_config.sh run_fedavg.sh run_eval_fedavg.sh README.md cloud_gates.sh)
+
+# 判断文件是否有效：404 页面只有 14 字节，内容为 "404: Not Found"
 is_valid() {
   local f="$1"
   [ -f "$f" ] || return 1
@@ -41,69 +56,80 @@ is_valid() {
 
 fetch_one() {
   local fname="$1"
-  local out="$FEDVLA_DIR/federated/$fname"
+  local out="$DEST/$fname"
+  # 1) 有 PAT -> 走 API
   if [ -n "$GITHUB_PAT" ]; then
-    # 私有仓库：走 GitHub API，用 token 鉴权
-    curl -sSL --max-time 90 -H "Authorization: token $GITHUB_PAT" \
+    curl -sSL --max-time 60 -H "Authorization: token $GITHUB_PAT" \
       -H "Accept: application/vnd.github.raw" \
       -o "$out" "$API_BASE/$fname" 2>/dev/null
-  else
-    curl -sSL --max-time 90 -o "$out" "$RAW_BASE/$fname" 2>/dev/null
+    if is_valid "$out"; then
+      echo "  ok: $fname ($(stat -c%s "$out") bytes, API)"
+      return 0
+    fi
+    rm -f "$out"
   fi
-  if is_valid "$out"; then
-    echo "  ok: $fname ($(stat -c%s "$out") bytes)"
-    return 0
+  # 2) 走当前活跃镜像
+  if [ -n "$ACTIVE_MIRROR" ]; then
+    curl -sSL --max-time 60 -o "$out" "$ACTIVE_MIRROR/$fname" 2>/dev/null
+    if is_valid "$out"; then
+      echo "  ok: $fname ($(stat -c%s "$out") bytes)"
+      return 0
+    fi
+    rm -f "$out"
   fi
-  rm -f "$out"
   return 1
 }
 
 echo "################################################"
-echo "# 步骤 1/3：确保 federated/ 代码到位"
+echo "# 步骤 1/3：确保 federated/ 代码到位 -> $DEST"
 echo "################################################"
-mkdir -p "$FEDVLA_DIR/federated"
+mkdir -p "$DEST"
+
 NEED=0
-for f in aggregate.py partition.py verify_continuation.py fedavg_config.sh run_fedavg.sh run_eval_fedavg.sh README.md cloud_gates.sh; do
-  is_valid "$FEDVLA_DIR/federated/$f" || NEED=1
+for f in "${FILES[@]}"; do
+  is_valid "$DEST/$f" || NEED=1
 done
 
 if [ "$NEED" -eq 0 ]; then
-  echo "[OK] federated/ 8 个文件均已就位且有效，跳过下载"
+  echo "[OK] 8 个文件均已就位且有效，跳过下载"
 else
-  echo "[..] 部分文件缺失或无效（404 页面），尝试下载"
-  if [ -z "$GITHUB_PAT" ]; then
-    echo "[..] 未设置 GITHUB_PAT：私有仓库匿名下载会返回 404（14 字节假文件）"
-    echo "     方案A: export GITHUB_PAT=<你的PAT> 后重跑本脚本"
-    echo "     方案B: 本机 Windows 打包 federated.tar.gz，用 JupyterLab 上传后解压（见 README）"
-    echo "     方案C: 本机 scp -r federated root@<host>:/root/HPT/"
-  fi
-  # 自动探测远端默认分支（避免分支名不一致导致 404）
+  echo "[..] 缺失或无效，开始下载"
+  # 探测可用镜像 + 分支
   for br in main master; do
-    if curl -sSL --max-time 25 -o /dev/null -w "%{http_code}" \
-        "https://raw.githubusercontent.com/civilizaa/FedVLA/$br/federated/aggregate.py" 2>/dev/null | grep -q "^200$"; then
-      RAW_BASE="https://raw.githubusercontent.com/civilizaa/FedVLA/$br"
-      echo "[..] 探测到远端分支: $br"
-      break
-    fi
+    for m in "https://raw.githubusercontent.com/$REPO/$br" \
+             "https://raw.gitmirror.com/$REPO/$br" \
+             "https://ghproxy.net/https://raw.githubusercontent.com/$REPO/$br"; do
+      code=$(curl -sSL --max-time 20 -o /dev/null -w "%{http_code}" "$m/aggregate.py" 2>/dev/null)
+      if [ "$code" = "200" ]; then
+        ACTIVE_MIRROR="$m"
+        echo "[..] 可用镜像: $m  (分支 $br)"
+        break 2
+      fi
+    done
   done
-  for f in aggregate.py partition.py verify_continuation.py fedavg_config.sh run_fedavg.sh run_eval_fedavg.sh README.md cloud_gates.sh; do
-    fetch_one "$f" || echo "  [跳过] $f 下载失败"
+  if [ -z "$ACTIVE_MIRROR" ] && [ -z "$GITHUB_PAT" ]; then
+    echo "[!!] 所有镜像均不可用。可选："
+    echo "     a) export GITHUB_PAT=<你的PAT> 后重跑"
+    echo "     b) 本机 scp -r federated root@<host>:/root/HPT/"
+    echo "     c) 本机打包 federated.tar.gz，用 JupyterLab 上传后解压到 $DEST"
+    exit 1
+  fi
+  for f in "${FILES[@]}"; do
+    fetch_one "$f" || echo "  [失败] $f"
   done
 fi
 
-# 校验
 MISSING=0
-for f in aggregate.py partition.py verify_continuation.py fedavg_config.sh run_fedavg.sh run_eval_fedavg.sh cloud_gates.sh; do
-  is_valid "$FEDVLA_DIR/federated/$f" || { echo "  [缺] $f"; MISSING=1; }
+for f in "${FILES[@]}"; do
+  is_valid "$DEST/$f" || { echo "  [缺] $f"; MISSING=1; }
 done
 if [ "$MISSING" -eq 1 ]; then
   echo
-  echo "[!!] 关键文件仍不可用。请用上面【方案B】(JupyterLab 上传 tar.gz) 或【方案C】(scp)。"
-  echo "     注意：若之前下载出 14 字节的假文件，请先 rm -rf $FEDVLA_DIR/federated 再操作。"
+  echo "[!!] 关键文件仍不可用，请用上面提示的备用方式传输。"
   exit 1
 fi
 echo "[OK] federated/ 全部就位"
-ls -la "$FEDVLA_DIR/federated/"
+ls -la "$DEST/"
 
 echo
 echo "################################################"
@@ -115,7 +141,7 @@ from collections import Counter
 
 p = "output/reach_baseline/model.pth"
 if not os.path.exists(p):
-    print(f"[!!] 找不到 {p}（需先完成门1的集中式训练）")
+    print(f"[!!] 找不到 {p}（需先完成集中式训练）")
     raise SystemExit(0)
 
 sd = torch.load(p, map_location="cpu", weights_only=False)
@@ -127,7 +153,6 @@ print()
 print("trunk 键数量:", len(tk))
 print("trunk 键示例:", tk[:6])
 
-# 判定 aggregate.py 的假设是否成立
 if not tk:
     print()
     print("[!!] 没有任何以 'trunk.' 开头的键！")
@@ -145,7 +170,7 @@ echo
 echo "################################################"
 echo "# 步骤 3/3：门1 —— 验证本地 trunk.pth 续训"
 echo "################################################"
-"$HPT_PY" "$FEDVLA_DIR/federated/verify_continuation.py"
+"$HPT_PY" "$DEST/verify_continuation.py"
 echo
 echo "门1 脚本退出码: $?"
 echo
