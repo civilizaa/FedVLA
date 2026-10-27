@@ -14,11 +14,11 @@ set -u
 HPT_PY=/root/miniconda3/envs/hpt/bin/python
 HPT_DIR=/root/HPT
 FEDVLA_DIR=/root/FedVLA
-RAW_BASE="https://raw.githubusercontent.com/hp/FedVLA/master"
+RAW_BASE="https://raw.githubusercontent.com/civilizaa/FedVLA/master"
 # 私有仓库：raw 链接对匿名请求一律 404。
 # 若设置了 GITHUB_PAT，则用带 token 的 API 下载（更可靠）。
 GITHUB_PAT="${GITHUB_PAT:-}"
-API_BASE="https://api.github.com/repos/hp/FedVLA/contents/federated"
+API_BASE="https://api.github.com/repos/civilizaa/FedVLA/contents/federated"
 
 export MUJOCO_GL=egl
 export WANDB_MODE=offline

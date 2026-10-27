@@ -1,6 +1,6 @@
 # 推送到 GitHub
 
-> ✅ 远端仓库已建好：**`https://github.com/hp/FedVLA.git`**（你已用方式二推送成功）。
+> ✅ 远端仓库已建好：**`https://github.com/civilizaa/FedVLA.git`**（你已用方式二推送成功）。
 > 本文件保留作为「身份设置 + 日常收工前 push」的参考。
 
 ---

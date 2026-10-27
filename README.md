@@ -27,7 +27,7 @@ fedvla-repo/
 
 ```bash
 # 1. 克隆
-git clone https://github.com/hp/FedVLA.git
+git clone https://github.com/civilizaa/FedVLA.git
 cd FedVLA
 
 # 2. 一键装环境（建议在「无卡模式」下跑，约 30–40 分钟）
