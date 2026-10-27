@@ -42,3 +42,9 @@ lightning_logs/
 *.secret
 .env
 .env.*
+
+# 构建产物
+federated.tar.gz
+federated.tar.gz.b64
+__pycache__/
+*.pyc
