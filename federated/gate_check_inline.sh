@@ -35,6 +35,14 @@ PY
 
 echo
 echo "########## 门1：本地 trunk.pth 续训 ##########"
+echo "--- 门1a：补丁存在性 ---"
+if grep -q "FedVLA patch" "$HPT_DIR/hpt/models/policy.py" 2>/dev/null; then
+  echo "[OK] policy.py 已含 FedVLA 补丁"
+else
+  echo "[!!] policy.py 未打补丁 —— load_trunk 对本地路径是空操作，联邦会静默退化为每轮独立训练"
+  echo "     请先执行：bash federated/patch_inline.sh"
+fi
+echo "--- 门1b：续训等价性 ---"
 "$HPT_PY" - <<'PY'
 import os, tempfile, torch
 from hpt.models.policy import Policy
@@ -60,7 +68,7 @@ print(f"LOADED_TRUNK_MATCHES_SOURCE = {ok}")
 if ok:
     print("[OK] 本地续训可用 -> 联邦管线(run_fedavg.sh)成立")
 else:
-    print("[!!] load_trunk 本地是空操作 -> 需改用 README 第8节兜底(自定义循环 load_state_dict)")
+    print("[!!] load_trunk 本地仍是空操作 -> 先执行 bash federated/patch_inline.sh 再重跑门1")
 PY
 echo
 echo "门1 退出码: $?"

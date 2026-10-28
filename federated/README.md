@@ -11,12 +11,14 @@
 
 - 每轮：4 个客户端**串行**在 GPU 上本地训 3 epoch（冻结逻辑由 HPT 控制，trunk 必须可训）。
 - 聚合：把各客户端 `model.pth` 读出，**只平均 trunk 参数**（键前缀 `trunk.`），写回全局目录
-  的 `trunk.pth` + `model.pth` + 复制 `config.yaml`/`config.json`。
-- 下一轮：客户端从全局目录**续训**（HPT `init_policy` 靠 `trunk.pth` 走本地续训分支）。
+  的 `trunk.pth` + `model.pth` + `extras.pth` + 复制 `config.yaml`/`config.json`。
+- 下一轮：客户端从全局目录**续训**（HPT `init_policy` 靠 `trunk.pth` 走本地续训分支，
+  **前提是 `load_trunk` 已打本地路径补丁**，见第 4 节第 1 步）。
 
 为什么只聚合 trunk：HPT 的 stem/head 是**按域的 ModuleDict**（`stems.<domain>_*`、`heads.<domain>`），
 不同客户端的域不同，无法跨客户端平均，且 FedVLA 本就是"trunk 共享聚合、stem/head 个性化"。
-所以全局模型 = 平均 trunk + 各客户端 stem/head 并集。
+所以全局模型 = 平均 trunk + 各客户端 stem/head/normalizer 并集。
+`modalities_tokens` 是跨域同形参数 → 取平均（见 `aggregate.py` 的 `extract_extras`）。
 
 ---
 
@@ -26,21 +28,30 @@
 |---|---|
 | `partition.py` | 任务级非 iid 划分（纯逻辑，可本地自测）。产出 `CLIENT_DOMAINS` 数组。 |
 | `fedavg_config.sh` | **所有旋钮集中地**：轮数、本地步数、任务分配、路径。 |
-| `run_fedavg.sh` | 编排：轮×客户端的训练 + 每轮聚合；支持 `START_ROUND` 断点续训。 |
-| `aggregate.py` | 服务器端 FedAvg：平均 trunk，写全局 `trunk.pth`/`model.pth`/`config*`。 |
+| `run_fedavg.sh` | 编排：轮×客户端的训练 + 每轮聚合；支持 `START_ROUND` 断点续训。内置三重保险。 |
+| `aggregate.py` | 服务器端 FedAvg：平均 trunk，写全局 `trunk.pth`/`model.pth`/`extras.pth`/`config*`。 |
 | `run_eval_fedavg.sh` | 评估全局模型（与集中式基线同一口径：3 seeds × 20 rollouts）。 |
-| `verify_continuation.py` | **运行前必做**：验证 HPT 能从本地 `trunk.pth` 续训。 |
+| `patch_inline.sh` | **零传输内联版**：给 HPT 的 `load_trunk` 打本地路径补丁（幂等、可回滚）。AutoDL 拉不到 GitHub 时直接粘贴全文执行。 |
+| `patch_hpt_load_trunk.py` | 同上补丁的文件版（可用 `--verify` / `--revert`）。 |
+| `gate_check_inline.sh` | **零传输版门0+门1**：门0 打 trunk 键名、门1 验证本地续训。粘贴即跑。 |
+| `verify_continuation.py` | 门1 的独立脚本版（功能已被 `gate_check_inline.sh` 覆盖，保留备查）。 |
 
 ---
 
 ## 3. 从 HPT 源码核实的关键事实（写代码时锁死）
 
 1. **续训靠 `trunk.pth`**：`init_policy` 判断 `os.path.exists(pretrained_dir/trunk.pth)`，有则走本地续训，并 `load_trunk(trunk.pth)` + 读 `config.yaml` 实例化同架构。
-2. **`domains` 是逗号分隔字符串**（`cfg.domains.split(",")`）；但**单次训练只用列表第一个域**构建数据集与 stem/head。→ 每个客户端挂**一个**任务，异构靠"不同客户端挂不同任务"。
-3. **数据是离线 Zarr 缓存**（`data/zarr_<name>`），首次落地后**复用，不每轮重采** → 50 轮×4 客户端时长可控。
-4. **`train.freeze_trunk`**：默认冻结 trunk（20 任务脚本显式设 `False` 解冻）。联邦必须训 trunk → 配置里设 `train.freeze_trunk=False`。
-5. **没有 `freeze_stem` 方法**；stem 是否可训取决于 `cfg.stem`。stem/head 不跨客户端聚合，对 FedAvg 数学无影响（只做个性化），故不强求冻结 stem。
-6. **`model.pth` = 完整 state_dict**（eval 用它）；`trunk.pth` = trunk-only（续训用它）。聚合脚本两者都写。
+2. **`load_trunk` 只有 `hf://` 分支**（源码逐字确认，无 else）→ **本地路径是空操作，必须打补丁**。见第 4 节第 1 步。
+3. **`domains` 是逗号分隔字符串**（`cfg.domains.split(",")`）；但**单次训练只用列表第一个域**构建数据集与 stem/head。→ 每个客户端挂**一个**任务，异构靠"不同客户端挂不同任务"。
+4. **数据是离线 Zarr 缓存**（`data/zarr_<name>`），首次落地后**复用，不每轮重采** → 50 轮×4 客户端时长可控。
+5. **`train.freeze_trunk`**：默认冻结 trunk（20 任务脚本显式设 `False` 解冻）。联邦必须训 trunk → 配置里设 `train.freeze_trunk=False`。
+6. **没有 `freeze_stem` 方法**；stem 是否可训取决于 `cfg.stem`。stem/head 不跨客户端聚合，对 FedAvg 数学无影响（只做个性化），故不强求冻结 stem。
+7. **`model.pth` = 完整 state_dict**（eval 用它）；`trunk.pth` = trunk-only（续训用它）。聚合脚本两者都写。
+8. **`self.trunk` 是 `nn.ModuleDict`**（内含键 `"trunk"`，可能还有 modality 子模块）→ 其 `state_dict` 键为 `trunk.xxx`；
+   而完整 policy 的键为 `trunk.trunk.xxx`。`extract_trunk_only` 去掉**一层** `trunk.` 前缀 → 恰好匹配 ModuleDict。**门0 已实证（264 键，trunk 224 / stems 18 / normalizer 12 / heads 8 / modalities_tokens 2）**。
+9. **`self.modalities_tokens` 是 policy 顶层的 `nn.ParameterDict`**（按 modality 命名），**不在 trunk 内** → `trunk.pth` 不含它 → 需单独走 `extras.pth`。
+10. **完整 state_dict 的顶层前缀分布**（门0 实测）：`trunk(224) / stems(18) / normalizer(12) / heads(8) / modalities_tokens(2)`。
+    → 异构客户端的并集必须覆盖 `normalizer.<domain>` 等，**不能只并 `stems.`/`heads.`**（`aggregate.py` 已修正）。
 
 ---
 
@@ -68,18 +79,54 @@ PY
 - 如果 trunk 键不以 `trunk.` 开头（比如直接 `xxx`），则 `aggregate.py` 的 `_is_trunk_key` 会漏选，
   需改 `average_trunk` 的判定（届时按打印结果调整）。
 
-### 1. 验证 load_trunk 本地加载（verify_continuation.py）
+### 1. 验证 load_trunk 本地加载 + 打补丁（**必做，已定位为真实缺陷**）
 
-`load_trunk` 我扒到的源码只显示了 `hf://` 分支，本地路径是否真能加载未 100% 确定。
-**先在远程 hpt 环境跑一次**：
+**实测结论（2026-10-27，云端门1 实证）**：`LOADED_TRUNK_MATCHES_SOURCE = False`，
+源码逐字确认 `Policy.load_trunk` **只有 `hf://` 分支，没有 else**：
 
-```bash
-cd ~/HPT
-/root/miniconda3/envs/hpt/bin/python federated/verify_continuation.py
+```python
+def load_trunk(self, path: str):
+    """load the trunk part of the model"""
+    if "hf://" in path:
+        if "output" in path:
+            path = path.replace("output/", "")
+        path = download_from_huggingface(path[len("hf://"):])
+        self.trunk.load_state_dict(torch.load(path), strict=True)
+    # ← 没有 else：本地路径 = 静默空操作
 ```
 
-- 输出 `LOADED_TRUNK_MATCHES_SOURCE = True` → 联邦管线可直接用。
-- 输出 `False` → `load_trunk` 本地是空操作。兜底方案见第 8 节（自定义循环直接 `load_state_dict` 全局 `model.pth`）。
+**为什么这是致命缺陷**：`run_fedavg.sh` 靠 `train.pretrained_dir=<全局目录>` 续训，
+而全局目录的 `trunk.pth` 是本地路径 → `load_trunk` 什么都不做 →
+每轮客户端都从 hf 原始权重重新开始 → **联邦静默退化成"每轮独立训练"，
+聚合的权重根本没被用上**。这种错不报错，但 50 轮算力全部白烧。
+
+**修复**：用补丁给 `load_trunk` 补一个本地分支（与已有的 T5 tokenizer 补丁同类）。
+补丁是幂等的，会自动备份原文件到 `policy.py.fedvla.bak`，可用 `--revert` 回滚。
+
+```bash
+cd /root/HPT
+# 方式 A（零传输，推荐 AutoDL 用）：直接粘贴 federated/patch_inline.sh 全文到终端
+# 方式 B：python federated/patch_hpt_load_trunk.py
+# 检查：python federated/patch_hpt_load_trunk.py --verify
+```
+
+打完补丁后重跑门检：
+
+```bash
+bash federated/gate_check_inline.sh
+```
+
+期望：`LOADED_TRUNK_MATCHES_SOURCE = True`。
+
+> 顺带修的第二个隐患：`self.modalities_tokens` 是 policy 顶层的 `nn.ParameterDict`
+> （按 modality 命名），**不在 `self.trunk` 内部** → `trunk.pth` 里没有它 →
+> 续训时模态 token 保持随机初始化，共享 trunk 会收到不一致输入。
+> 补丁会在同目录存在 `extras.pth` 时顺带载入（`aggregate.py` 已负责导出）。
+
+> **不需要走第 8 节的自定义训练循环兜底**。源码核实 `init_policy` 的本地续训分支
+> 其余环节（`config.yaml` 实例化同架构 → `init_domain_stem/head` 用**当前** `cfg.domains`
+> 建当前域的 stem/head → `finalize_modules()`）全部正常，
+> 唯一的断点就是 `load_trunk` 这一处。
 
 ### 2. 异构续训烟雾测试（1 轮，10 分钟级）
 
@@ -95,7 +142,23 @@ cd ~/HPT
 cd ~/HPT
 # 编辑 fedavg_config.sh：NUM_ROUNDS=1，CLIENT_DOMAINS=( task1 task2 task3 task1 )
 bash federated/run_fedavg.sh
-ls output/fedavg_reach/global_r0/   # 应有 trunk.pth / model.pth / config.yaml
+ls output/fedavg_reach/global_r0/   # 应有 trunk.pth / model.pth / extras.pth / config.yaml
+```
+
+### 3. 三重保险（已内置在 run_fedavg.sh，无需手动检查）
+
+因为「续训静默失效」是本项目最容易踩且最难发现的坑，`run_fedavg.sh` 里内置了三道拦截：
+
+| # | 位置 | 行为 | 防的是什么 |
+|---|---|---|---|
+| 1 | 开训前 | `policy.py` 里 grep 不到 `FedVLA patch` → **直接退出**，不烧算力 | 补丁没打就开跑 50 轮 |
+| 2 | 每轮聚合后 | 比对客户端 trunk 与上一轮全局 trunk 的最大差异；**差异 = 0 就退出** | 聚合权重没被载入（联邦空转） |
+| 3 | 每轮开始 | 上一轮全局目录有 `trunk.pth` 但缺 `extras.pth` → 打印 WARN | 模态 token 随机初始化 |
+
+第 2 条的输出长这样：
+```
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = 1.234e-05 @ trunk.blocks.12.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
 ```
 
 ---
@@ -155,9 +218,14 @@ grep -iE "success|rate|seed|mean|avg" /root/HPT/output/fedavg_reach/global_r49_e
 
 ---
 
-## 8. 兜底方案（仅当 verify_continuation.py 返回 False）
+## 8. 兜底方案（**当前不需要**，仅存档）
 
-`load_trunk` 本地若不可用，则**不依赖 HPT 的 `train.pretrained_dir` 续训**，改为自定义训练循环：
+> **状态更新（2026-10-27）**：第 4 节门1 已定位 `load_trunk` 本地为空操作，
+> 但**打补丁即可修复**（`patch_inline.sh`），源码核实 `init_policy` 其余环节全部正常，
+> 因此**不需要**走本节的自定义训练循环。
+> 本节保留作为"补丁万一失效"的最后备选。
+
+若补丁后门1 仍返回 `False`，则**不依赖 HPT 的 `train.pretrained_dir` 续训**，改为自定义训练循环：
 直接用 `Policy.from_pretrained(hf)` 初始化，每轮把全局 `model.pth` 用 `policy.load_state_dict(...)`
 载入（覆盖 trunk），本地训 trunk 若干步，再 `policy.save(全局model.pth)`。聚合仍用 `aggregate.py`
 （它读 `model.pth` 平均 trunk 即可）。自定义循环需要 `train_test.train` 的 forward/loss 接口，
