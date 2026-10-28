@@ -1,0 +1,8 @@
+# 强制 shell 脚本用 LF 行尾 —— CRLF 会让 Linux 上的 bash 报 "\r: command not found"
+*.sh text eol=lf
+# Python 源码同样统一 LF
+*.py text eol=lf
+# 二进制文件不做行尾转换
+*.pth binary
+*.pkl binary
+*.zarr binary
