@@ -11,6 +11,13 @@
 凭据（任一）：
     环境变量 AUTODL_TOKEN  —— 控制台 → 设置 → 开发者 Token
     环境变量 AUTODL_SSH_HOST / AUTODL_SSH_PORT / AUTODL_SSH_PASSWORD —— 手填 SSH 信息
+    文件     ~/.autodl_creds.json 或 AUTODL_CREDS_FILE 指向的文件：
+              {"host": "...", "port": 12345, "password": "..."}
+              {"token": "..."}
+
+⚠️ 坑（2026-10-31 实测）：**不要把 token 写在命令行里**（如 `export AUTODL_TOKEN=...`）——
+   某些执行环境会对命令行里的凭据做保护性替换，导致实际发出的 token 与你写的不是同一个，
+   进而误判成"token 无效"。改用文件传递最稳。
 
 Token 获取：https://www.autodl.com/console/homepage/personal 设置 → 开发者 Token
 """
@@ -148,38 +155,73 @@ def ssh_info(inst: dict) -> tuple[str, int, str]:
     return host, port, pwd
 
 
+def load_creds_file() -> dict:
+    """从凭据文件读 SSH 信息或 token（优先于环境变量，避免命令行凭据被替换）。"""
+    path = os.environ.get("AUTODL_CREDS_FILE", "")
+    if not path:
+        for cand in (
+            os.path.join(os.path.expanduser("~"), ".autodl_creds.json"),
+            os.path.join(os.getcwd(), ".autodl_creds.json"),
+        ):
+            if os.path.exists(cand):
+                path = cand
+                break
+    if not path or not os.path.exists(path):
+        return {}
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:  # noqa: BLE001
+        print(f"[auto][WARN] 凭据文件读取失败 {path}: {e}", file=sys.stderr)
+        return {}
+
+
 def connect(host: str, port: int, password: str, timeout: int = 30):
     import paramiko
 
     c = paramiko.SSHClient()
     c.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    c.connect(
-        host,
-        port=port,
-        username="root",
-        password=password or None,
-        timeout=timeout,
-        banner_timeout=timeout,
-        auth_timeout=timeout,
-        allow_agent=False,
-        look_for_keys=False,
-    )
+    try:
+        c.connect(
+            host,
+            port=port,
+            username="root",
+            password=password or None,
+            timeout=timeout,
+            banner_timeout=timeout,
+            auth_timeout=timeout,
+            allow_agent=False,
+            look_for_keys=False,
+        )
+    except paramiko.ssh_exception.AuthenticationException as e:
+        raise RuntimeError(
+            f"SSH 认证失败（{host}:{port}）：{e}\n"
+            "  → 密码可能不完整/被网页截断，或实例已关机（端口会变）。"
+        ) from e
+    except Exception as e:
+        raise RuntimeError(
+            f"SSH 连接失败（{host}:{port}）：{type(e).__name__}: {e}\n"
+            "  → 检查实例是否运行中、host/port 是否抄错。"
+        ) from e
     return c
 
 
 def _client(args):
-    """建立连接：优先环境变量手填，其次用 token 查 API。"""
-    host = os.environ.get("AUTODL_SSH_HOST")
-    port = os.environ.get("AUTODL_SSH_PORT")
-    pwd = os.environ.get("AUTODL_SSH_PASSWORD")
+    """建立连接。优先级：凭据文件 → 环境变量 → API 查询。"""
+    creds = load_creds_file()
+    host = creds.get("host") or os.environ.get("AUTODL_SSH_HOST")
+    port = creds.get("port") or os.environ.get("AUTODL_SSH_PORT")
+    pwd = creds.get("password") or os.environ.get("AUTODL_SSH_PASSWORD")
     if host:
+        print(f"[auto] 使用手填 SSH 凭据 -> {host}:{port or 22}", file=sys.stderr)
         return connect(host, int(port or 22), pwd or "")
 
-    token = os.environ.get("AUTODL_TOKEN", "")
+    token = creds.get("token") or os.environ.get("AUTODL_TOKEN", "")
     if not token:
         raise RuntimeError(
-            "缺少凭据：请设环境变量 AUTODL_TOKEN（控制台→设置→开发者Token），"
-            "或设 AUTODL_SSH_HOST/AUTODL_SSH_PORT/AUTODL_SSH_PASSWORD"
+            "缺少凭据：请提供 ~/.autodl_creds.json（含 host/port/password），"
+            "或设环境变量 AUTODL_SSH_HOST/AUTODL_SSH_PORT/AUTODL_SSH_PASSWORD，"
+            "或设 AUTODL_TOKEN（开发者Token）"
         )
     insts = parse_instances(api_list_instances(token))
     inst = pick_instance(insts, args.instance)
@@ -315,12 +357,94 @@ def cmd_script(args):
         c.close()
 
 
+def cmd_doctor(args):
+    """一键体检：凭据 → TCP → SSH → 远端环境 → HPT 状态。"""
+    creds = load_creds_file()
+    host = creds.get("host") or os.environ.get("AUTODL_SSH_HOST")
+    port = creds.get("port") or os.environ.get("AUTODL_SSH_PORT")
+    pwd = creds.get("password") or os.environ.get("AUTODL_SSH_PASSWORD")
+    token = creds.get("token") or os.environ.get("AUTODL_TOKEN", "")
+
+    print("=" * 62)
+    print("AutoDL 通道体检")
+    print("=" * 62)
+    print(f"[1] 凭据文件 : {'已找到' if creds else '未找到（将用环境变量）'}")
+    print(f"    SSH 手填 : host={host or '-'} port={port or '-'} password={'有' if pwd else '无'}")
+    print(f"    Token    : {'有' if token else '无'}")
+
+    if host:
+        import socket
+        print(f"\n[2] TCP 连通 {host}:{port or 22} ...", end=" ", flush=True)
+        try:
+            with socket.create_connection((host, int(port or 22)), timeout=15):
+                print("OK")
+        except Exception as e:
+            print(f"失败 {type(e).__name__}: {e}")
+            print("    → 实例可能已关机（端口会变），或 host 抄错")
+            return 1
+
+        print("\n[3] SSH 认证 ...", end=" ", flush=True)
+        try:
+            c = connect(host, int(port or 22), pwd or "")
+            print("OK")
+        except Exception as e:
+            print(f"失败\n    {e}")
+            return 1
+
+        try:
+            checks = [
+                ("系统信息", "hostname; uptime | tail -1"),
+                ("GPU", "nvidia-smi --query-gpu=name,memory.total,memory.used --format=csv,noheader 2>/dev/null || echo '无 GPU / 未装驱动'"),
+                ("HPT 目录", "ls -d /root/HPT 2>/dev/null && ls /root/HPT | head -5 || echo '缺 /root/HPT'"),
+                ("hpt 环境", "ls /root/miniconda3/envs/hpt/bin/python 2>/dev/null && /root/miniconda3/envs/hpt/bin/python -V || echo '缺 hpt 环境'"),
+                ("集中式模型", "ls -la /root/HPT/output/reach_baseline/ 2>/dev/null | head -8 || echo '缺 reach_baseline'"),
+                ("联邦目录", "ls /root/HPT/federated/ 2>/dev/null | head -20 || echo '缺 /root/HPT/federated'"),
+                ("磁盘", "df -h /root /root/autodl-tmp 2>/dev/null | head -5"),
+            ]
+            for name, cmd in checks:
+                print(f"\n--- {name} ---")
+                _run(c, cmd)
+        finally:
+            c.close()
+        print("\n" + "=" * 62)
+        print("体检完成")
+        return 0
+
+    if token:
+        print("\n[2] API 通道 ...", end=" ", flush=True)
+        try:
+            insts = parse_instances(api_list_instances(token))
+            print(f"OK，{len(insts)} 个实例")
+            for it in insts:
+                print(f"    {it.get('name', '?')}  status={it.get('status')}")
+        except Exception as e:
+            print(f"失败 {e}")
+        return 0
+
+    print("\n没有可用凭据。请提供 ~/.autodl_creds.json 或环境变量。")
+    return 1
+
+
+def _run(c, cmd: str, timeout: int = 120):
+    """在已连接的 SSH 上跑一条命令并打印输出（不流式）。"""
+    import io
+
+    _in, stdout, stderr = c.exec_command(cmd, timeout=timeout)
+    out = stdout.read().decode("utf-8", "replace")
+    err = stderr.read().decode("utf-8", "replace")
+    if out:
+        print(out.rstrip())
+    if err.strip():
+        print(f"[stderr] {err.strip()[:400]}")
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description="AutoDL 自动化通道")
     ap.add_argument("--instance", default=None, help="实例名/uuid 关键字，默认取第一个 running")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     sub.add_parser("list", help="列出实例")
+    sub.add_parser("doctor", help="一键体检（凭据/TCP/SSH/远端环境）")
 
     p = sub.add_parser("exec", help="执行远程命令")
     p.add_argument("command")
@@ -341,7 +465,7 @@ def main(argv=None):
     args = ap.parse_args(argv)
     fn = {
         "list": cmd_list, "exec": cmd_exec, "put": cmd_put,
-        "get": cmd_get, "script": cmd_script,
+        "get": cmd_get, "script": cmd_script, "doctor": cmd_doctor,
     }[args.cmd]
     try:
         return fn(args)

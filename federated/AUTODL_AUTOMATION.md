@@ -2,52 +2,64 @@
 
 ## 你只需要做一件事：给我凭据
 
-二选一：
+### 方式 A（推荐）：写一个凭据文件
 
-### 方式 A（推荐，一次配好长期有效）：开发者 Token
+在 `C:\Users\hp\.workbuddy\2026-10-08-14-27-08\` 下新建文件 **`.autodl_creds.json`**，内容：
 
-1. 打开 https://www.autodl.com/console/homepage/personal
-2. 找到「开发者 Token」→ 新建 → 复制
-3. 在本机 PowerShell 里设环境变量（**只对当前窗口有效**，够用了）：
+```json
+{
+  "host": "connect.westb.seetacloud.com",
+  "port": 45678,
+  "password": "你的实例密码"
+}
+```
+
+（`host`/`port` 就是控制台实例详情页那行 `ssh -p 45678 root@connect.westb.seetacloud.com` 里的部分。）
+
+### 方式 B：环境变量
+
+```powershell
+$env:AUTODL_SSH_HOST = "connect.westb.seetacloud.com"
+$env:AUTODL_SSH_PORT = "45678"
+$env:AUTODL_SSH_PASSWORD = "密码"
+```
+
+### 方式 C：开发者 Token（走 API）
 
 ```powershell
 $env:AUTODL_TOKEN = "你的token"
 ```
 
-Token 权限 = 能读实例列表即可（读 SSH 信息需要实例管理权限）。
-
-### 方式 B（不用 Token，从控制台抄 SSH 信息）
-
-打开 AutoDL 控制台 → 你的实例详情页，会看到：
-
-```
-SSH 命令：ssh -p 45678 root@connect.abc123.seetacloud.com
-密码：xxxxxxxx
-```
-
-在 PowerShell 里设：
-
-```powershell
-$env:AUTODL_SSH_HOST = "connect.abc123.seetacloud.com"
-$env:AUTODL_SSH_PORT = "45678"
-$env:AUTODL_SSH_PASSWORD = "xxxxxxxx"
-```
-
-> ⚠️ **网页上的密码可能被截断**（AutoDL 的已知问题）。如果方式 B 连不上，
-> 改用方式 A —— API 返回的是完整密码。
+> ⚠️ **实测（2026-10-31）**：开发者 Token 被 API 拒绝，所有端点/所有鉴权头组合都返回
+> 同一个 `AuthorizeFailed: 登录超时`。最可能是**账号未实名认证**导致 API 未激活。
+> 所以**优先用方式 A**。
+>
+> ⚠️ **另一个坑**：不要把 token 写在命令行里（`export AUTODL_TOKEN=...`）——
+> 某些执行环境会对命令行凭据做保护性替换，实际发出的与你写的不是同一个，
+> 会误判成"token 无效"。**写文件最稳。**
 
 ---
 
-## 凭据到位后我能干什么
+## 凭据到位后先体检
 
 ```powershell
 cd C:/Users/hp/WorkBuddy/2026-10-08-14-27-08/fedvla-repo/federated
+python autodl_auto.py doctor
+```
 
-# 列出实例，看状态（有卡/无卡/关机）和 SSH 信息
+会依次检查：凭据 → TCP 连通 → SSH 认证 → 远端环境（GPU / HPT 目录 / hpt 环境 /
+集中式模型 / 联邦目录 / 磁盘）。**任何一环有问题会立刻指出**，不用等跑实验才发现。
+
+---
+
+## 常用操作
+
+```powershell
+# 列出实例（需 token）
 python autodl_auto.py list
 
-# 在实例上执行任意命令（流式输出）
-python autodl_auto.py exec "nvidia-smi; ls /root/HPT"
+# 执行任意命令（流式输出）
+python autodl_auto.py exec "nvidia-smi"
 
 # 上传文件
 python autodl_auto.py put patch_and_verify_inline.sh /root/HPT/patch_and_verify_inline.sh --chmod
@@ -59,11 +71,7 @@ python autodl_auto.py script patch_and_verify_inline.sh /root/HPT/patch_and_veri
 python autodl_auto.py get /root/HPT/gate1.log ./gate1.log
 ```
 
-多实例时用 `--instance <名字>` 指定：
-
-```powershell
-python autodl_auto.py --instance fedvla exec "nvidia-smi"
-```
+> `python` 指 `C:\Users\hp\.workbuddy\binaries\python\versions\3.13.12\python.exe`（已装 paramiko）。
 
 ---
 
