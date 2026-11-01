@@ -1,0 +1,262 @@
+#!/usr/bin/env python3
+"""FedVLA 远程指挥通道 —— 服务端。
+
+设计目标：让 AutoDL 实例（只能出网、连不上本机）把"我这边要执行什么"取走，
+执行完再把结果回传，从而实现"本机 Agent ↔ 云端实例"的自动化闭环。
+
+协议（全部需要 header: X-Relay-Token: <SECRET>）
+  GET  /health                      -> {"ok": true}
+  POST /enqueue                     body {"cmd","cwd","timeout","bg"} -> {"id": N}
+  GET  /poll?since=<last_id>        -> {"cmds":[{id,cmd,cwd,timeout,bg}, ...]}
+  POST /result                      body {"id","rc","out","err"} -> {"ok":true}
+  GET  /results?since=<last_id>     -> {"results":[{id,rc,out,err,ts}, ...]}
+  POST /run                         body 同 enqueue，同步等待结果并返回（带 timeout）
+
+状态持久化到 relay_state.json（服务重启不丢队列与结果）。
+"""
+import json
+import os
+import threading
+import time
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+SECRET = os.environ.get("RELAY_SECRET", "")
+# 平台网关要求 sharecode，代理层会自动补上；agent 侧仍需自己带
+SHARECODE = os.environ.get("RELAY_SHARECODE", "")
+# 下发给 agent 的公网地址。不能用 Host 头——反向代理传入的是沙箱内网域名，
+# AutoDL 那边解析不了。
+PUBLIC_URL = os.environ.get("RELAY_PUBLIC_URL", "").rstrip("/")
+HERE = os.path.dirname(os.path.abspath(__file__))
+STATE_PATH = os.path.join(HERE, "relay_state.json")
+MAX_OUT = 200_000  # 单条输出最大保留字符
+
+# 密钥与 sharecode 一律从本地文件读（该文件被 .gitignore 排除；仓库是 public，
+# 硬编码等于把云端实例的控制权公开）。部署时随目录一起上传。
+if not SECRET or not SHARECODE:
+    _sf = os.path.join(HERE, "relay_secret.txt")
+    if os.path.exists(_sf):
+        with open(_sf, encoding="utf-8") as f:
+            _lines = [ln.strip() for ln in f
+                      if ln.strip() and not ln.strip().startswith("#")]
+        if not SECRET and len(_lines) >= 1:
+            SECRET = _lines[0]
+        if not SHARECODE and len(_lines) >= 2:
+            SHARECODE = _lines[1]
+if not SECRET:
+    raise SystemExit("缺少密钥：设 RELAY_SECRET 环境变量 或 提供 relay_secret.txt")
+if not SHARECODE:
+    raise SystemExit("缺少 sharecode：设 RELAY_SHARECODE 环境变量 或 提供 relay_secret.txt")
+
+
+_lock = threading.Lock()
+_state = {"next_id": 1, "queue": [], "results": {}}
+
+
+def _load():
+    global _state
+    if os.path.exists(STATE_PATH):
+        try:
+            with open(STATE_PATH, "r", encoding="utf-8") as f:
+                _state = json.load(f)
+            _state.setdefault("next_id", 1)
+            _state.setdefault("queue", [])
+            _state.setdefault("results", {})
+        except Exception:
+            pass
+
+
+def _save():
+    try:
+        tmp = STATE_PATH + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(_state, f, ensure_ascii=False)
+        os.replace(tmp, STATE_PATH)
+    except Exception:
+        pass
+
+
+_load()
+
+
+class Handler(BaseHTTPRequestHandler):
+    protocol_version = "HTTP/1.1"
+
+    def log_message(self, *a):  # 静音默认日志
+        pass
+
+    # ---------- helpers ----------
+    def _auth_ok(self):
+        got = self.headers.get("X-Relay-Token", "")
+        if not got:
+            q = self.path.split("?", 1)[1] if "?" in self.path else ""
+            for kv in q.split("&"):
+                if kv.startswith("k="):
+                    got = kv[2:]
+        return got == SECRET
+
+    def _send(self, code, obj):
+        body = json.dumps(obj, ensure_ascii=False).encode("utf-8")
+        self.send_response(code)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _read_json(self):
+        n = int(self.headers.get("Content-Length") or 0)
+        if not n:
+            return {}
+        raw = self.rfile.read(n)
+        try:
+            return json.loads(raw.decode("utf-8"))
+        except Exception:
+            return {}
+
+    def _q(self, key, default=None):
+        if "?" not in self.path:
+            return default
+        for kv in self.path.split("?", 1)[1].split("&"):
+            if kv.startswith(key + "="):
+                return kv[len(key) + 1:]
+        return default
+
+    # ---------- routes ----------
+    def do_GET(self):
+        if not self._auth_ok():
+            return self._send(401, {"ok": False, "error": "bad token"})
+        path = self.path.split("?", 1)[0]
+        if path == "/health":
+            with _lock:
+                return self._send(200, {"ok": True, "queued": len(_state["queue"]),
+                                        "results": len(_state["results"]),
+                                        "next_id": _state["next_id"]})
+        if path == "/poll":
+            # 返回所有"尚未完成"的命令；不删除队列，靠 results 里的 id 判定完成，
+            # 避免因 agent 取走后崩溃导致命令丢失。超时未回传的会被重新派发。
+            now = int(time.time())
+            with _lock:
+                done = set(_state["results"].keys())
+                cmds, requeue = [], []
+                for c in _state["queue"]:
+                    if str(c["id"]) in done:
+                        continue
+                    claim = c.get("claimed_at", 0)
+                    if claim and now - claim < int(c.get("timeout", 600)) + 180:
+                        continue  # 正在执行中
+                    if claim:
+                        requeue.append(c["id"])
+                    c["claimed_at"] = now
+                    cmds.append({"id": c["id"], "cmd": c["cmd"], "cwd": c.get("cwd", ""),
+                                 "timeout": c.get("timeout", 600), "bg": c.get("bg", False)})
+                if cmds:
+                    _save()
+            if requeue:
+                print(f"[relay] re-dispatch timed-out cmds: {requeue}", flush=True)
+            return self._send(200, {"cmds": cmds})
+        if path == "/results":
+            since = int(self._q("since", "0") or 0)
+            with _lock:
+                res = [r for rid, r in sorted(_state["results"].items(), key=lambda kv: int(kv[0]))
+                       if int(rid) > since]
+            return self._send(200, {"results": res})
+        if path == "/agent.py":
+            # 下发 agent 脚本（自动填入本次部署的 URL 与密钥）
+            tpl_path = os.path.join(HERE, "agent_template.py")
+            if not os.path.exists(tpl_path):
+                return self._send(500, {"ok": False, "error": "agent_template.py missing"})
+            with open(tpl_path, "r", encoding="utf-8") as f:
+                src = f.read()
+            host = self.headers.get("Host", "")
+            # 协议推断：反代会带 X-Forwarded-Proto；本地回环用 http，其余用 https
+            proto = self.headers.get("X-Forwarded-Proto", "").strip()
+            if not proto:
+                hostonly = host.split(":")[0]
+                proto = "http" if hostonly in ("localhost", "127.0.0.1", "0.0.0.0") else "https"
+            base = f"{proto}://{host}" if host else ""
+            src = src.replace("__RELAY_URL__", base).replace("__RELAY_TOKEN__", SECRET)
+            src = src.replace("__RELAY_SHARECODE__", SHARECODE)
+            body = src.encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "text/x-python; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(body)
+            return
+        return self._send(404, {"ok": False, "error": "no route"})
+
+    def do_POST(self):
+        if not self._auth_ok():
+            return self._send(401, {"ok": False, "error": "bad token"})
+        path = self.path.split("?", 1)[0]
+        body = self._read_json()
+
+        if path == "/enqueue":
+            cmd = (body.get("cmd") or "").strip()
+            if not cmd:
+                return self._send(400, {"ok": False, "error": "empty cmd"})
+            with _lock:
+                cid = _state["next_id"]
+                _state["next_id"] = cid + 1
+                _state["queue"].append({
+                    "id": cid, "cmd": cmd, "cwd": body.get("cwd", ""),
+                    "timeout": int(body.get("timeout", 600)),
+                    "bg": bool(body.get("bg", False)),
+                })
+                _save()
+            return self._send(200, {"ok": True, "id": cid})
+
+        if path == "/result":
+            cid = body.get("id")
+            if cid is None:
+                return self._send(400, {"ok": False, "error": "no id"})
+            out = str(body.get("out", ""))[:MAX_OUT]
+            err = str(body.get("err", ""))[:MAX_OUT]
+            with _lock:
+                _state["results"][str(cid)] = {
+                    "id": cid, "rc": body.get("rc"), "out": out, "err": err,
+                    "ts": int(time.time()),
+                }
+                # 只保留最近 500 条
+                if len(_state["results"]) > 500:
+                    for k in sorted(_state["results"], key=lambda x: int(x))[:-500]:
+                        _state["results"].pop(k, None)
+                _save()
+            return self._send(200, {"ok": True})
+
+        if path == "/run":
+            cmd = (body.get("cmd") or "").strip()
+            if not cmd:
+                return self._send(400, {"ok": False, "error": "empty cmd"})
+            wait = int(body.get("wait", 900))
+            with _lock:
+                cid = _state["next_id"]
+                _state["next_id"] = cid + 1
+                _state["queue"].append({
+                    "id": cid, "cmd": cmd, "cwd": body.get("cwd", ""),
+                    "timeout": int(body.get("timeout", wait)), "bg": False,
+                })
+                _save()
+            deadline = time.time() + wait
+            while time.time() < deadline:
+                time.sleep(2)
+                with _lock:
+                    r = _state["results"].get(str(cid))
+                if r is not None:
+                    return self._send(200, {"ok": True, "result": r})
+            return self._send(504, {"ok": False, "error": "timeout waiting for agent",
+                                    "id": cid})
+
+        return self._send(404, {"ok": False, "error": "no route"})
+
+
+def main():
+    port = int(os.environ.get("PORT", "8000"))
+    srv = ThreadingHTTPServer(("0.0.0.0", port), Handler)
+    print(f"[relay] listening on 0.0.0.0:{port}", flush=True)
+    srv.serve_forever()
+
+
+if __name__ == "__main__":
+    main()

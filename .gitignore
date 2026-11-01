@@ -48,3 +48,13 @@ federated.tar.gz
 federated.tar.gz.b64
 __pycache__/
 *.pyc
+
+# ===== relay 凭据与状态（红线）=====
+.autodl_creds.json
+relay_secret.txt
+**/relay_secret.txt
+relay/agent_b64.txt
+relay/agent_final.py
+relay/relay_client.json
+relay/relay_state.json
+**/relay_state.json
