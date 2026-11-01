@@ -24,10 +24,31 @@ import urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CFG_PATH = os.path.join(HERE, "relay_client.json")
+SECRET_PATH = os.path.join(HERE, "relay_secret.txt")
+
+
+def _from_secret_file():
+    """读 relay_secret.txt（已 gitignore）：第1行 token，第2行 sharecode，第3行 url。"""
+    if not os.path.exists(SECRET_PATH):
+        return {}
+    try:
+        with open(SECRET_PATH, "r", encoding="utf-8") as f:
+            lines = [l.strip() for l in f
+                     if l.strip() and not l.strip().startswith("#")]
+    except Exception:  # noqa: BLE001
+        return {}
+    out = {}
+    if len(lines) > 0:
+        out["token"] = lines[0]
+    if len(lines) > 1:
+        out["sharecode"] = lines[1]
+    if len(lines) > 2:
+        out["url"] = lines[2]
+    return out
 
 
 def _cfg():
-    """凭据来源：环境变量 > relay_client.json > relay_secret.txt。
+    """凭据来源优先级：环境变量 > relay_client.json > relay_secret.txt。
 
     注意：仓库是 public，密钥绝不能硬编码在代码里。
     """
@@ -36,31 +57,18 @@ def _cfg():
         "token": os.environ.get("RELAY_TOKEN", ""),
         "sharecode": os.environ.get("RELAY_SHARECODE", ""),
     }
-    for path in (CFG_PATH, os.path.join(HERE, "relay_secret.txt")):
-        if os.path.exists(path):
-            try:
-                with open(path, encoding="utf-8") as f:
-                    lines = [ln.strip() for ln in f
-                             if ln.strip() and not ln.strip().startswith("#")]
-                if path.endswith(".json"):
-                    c.update(json.loads("".join(lines)))
-                else:
-                    # relay_secret.txt: [0]=token [1]=sharecode [2]=public_url
-                    if not c["token"] and len(lines) >= 1:
-                        c["token"] = lines[0]
-                    if not c["sharecode"] and len(lines) >= 2:
-                        c["sharecode"] = lines[1]
-                    if not c["url"] and len(lines) >= 3:
-                        c["url"] = lines[2]
-            except Exception:
-                pass
-    if not c["url"]:
-        c["url"] = "https://fedvla-relay.app.workbuddy.host"
-    missing = [k for k in ("token", "sharecode") if not c[k]]
+    c.update(_from_secret_file())
+    if os.path.exists(CFG_PATH):
+        try:
+            with open(CFG_PATH, encoding="utf-8") as f:
+                c.update(json.load(f))
+        except Exception:  # noqa: BLE001
+            pass
+    missing = [k for k, v in c.items() if not v]
     if missing:
         raise SystemExit(
-            "缺少凭据: " + ", ".join(missing) + "\n"
-            f"请写 {CFG_PATH}（形如 {{\"url\":..., \"token\":..., \"sharecode\":...}}）"
+            "缺少凭据: " + ", ".join(missing) +
+            f"\n请写 {SECRET_PATH}（第1行 token / 第2行 sharecode / 第3行 url）"
             " 或设同名环境变量。"
         )
     return c

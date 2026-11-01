@@ -4,10 +4,22 @@
 只依赖标准库（urllib / subprocess），不需要 pip 装任何东西。
 通过轮询从 relay 服务端领取命令，执行后回传结果。
 
-由服务端 /agent.py 下发，__RELAY_URL__ / __RELAY_TOKEN__ 会被自动替换。
+由服务端 /agent.py 下发，__RELAY_URL__ / __RELAY_TOKEN__ / __RELAY_SHARECODE__ 会被自动替换。
+
+【健壮性要点 —— 2026-11-01 事故修复】
+  事故：agent 执行一条含 '&' 的命令时被 SIGTERM 杀死，整条通道中断，
+        队列积压 67 条命令无人领取。
+  根因：subprocess 派生的子进程与 agent 同处一个进程组/会话，
+        任何发给进程组的信号会同时打到 agent 和子进程。
+  修复：
+    1) 所有子进程用 start_new_session=True -> 独立会话，不受 agent 信号影响
+       （长训练即使 agent 挂了也会继续跑完）
+    2) agent 自身忽略 SIGTERM/SIGHUP/SIGINT -> 平台或父进程的信号打不死它
+    3) 每轮循环上报心跳 -> 客户端能区分"agent 死了"和"agent 在忙"
 """
 import json
 import os
+import signal
 import subprocess
 import sys
 import tempfile
@@ -20,10 +32,22 @@ RELAY_TOKEN = "__RELAY_TOKEN__"
 RELAY_SHARECODE = "__RELAY_SHARECODE__"
 POLL_INTERVAL = 3
 MAX_OUTPUT = 200_000
+BG_LOG = "/root/relay_bg.log"
 
 # 已执行但结果尚未成功回传的命令：{id: result}
 # 放在队列里重试上报，避免"服务端重派 -> agent 重复执行长训练命令"
 _pending_report = {}
+
+# 忽略终止信号：宁可 agent 变僵尸，也不让通道断掉
+# 用 getattr 保护 —— Windows 上没有 SIGHUP
+for _name in ("SIGTERM", "SIGHUP", "SIGINT"):
+    _sig = getattr(signal, _name, None)
+    if _sig is None:
+        continue
+    try:
+        signal.signal(_sig, signal.SIG_IGN)
+    except Exception:  # noqa: BLE001
+        pass
 
 
 def _req(path, payload=None, method=None, timeout=60):
@@ -50,26 +74,46 @@ def _dec(b):
     return b or ""
 
 
+def _spawn(cmd, cwd, **kw):
+    """所有子进程统一走这里：独立会话 + 独立进程组。
+
+    start_new_session=True 之后，子进程成为新 session 的首进程，
+    不会被发给 agent 进程组的信号（SIGTERM 等）波及。
+    """
+    return subprocess.Popen(
+        cmd, shell=True, cwd=cwd or None,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        start_new_session=True, **kw)
+
+
 def _run_bg(cmd, cwd):
     """后台执行：把命令写进临时脚本再 nohup 起来，避免多层引号被吃掉。"""
-    log = "/root/relay_bg.log"
     fd, path = tempfile.mkstemp(suffix=".sh", prefix="relay_")
     with os.fdopen(fd, "w", encoding="utf-8") as f:
         f.write("#!/usr/bin/env bash\n" + cmd + "\n")
     os.chmod(path, 0o755)
-    shell_cmd = f"nohup bash {path} >> {log} 2>&1 & echo STARTED_PID=$!"
-    p = subprocess.run(shell_cmd, shell=True, cwd=cwd or None,
-                       capture_output=True, timeout=60)
-    return {"rc": 0, "out": _dec(p.stdout), "err": f"(后台执行，日志: {log})"}
+    shell_cmd = f"nohup setsid bash {path} >> {BG_LOG} 2>&1 < /dev/null & echo STARTED_PID=$!"
+    try:
+        p = _spawn(shell_cmd, cwd)
+        out, _ = p.communicate(timeout=60)
+        return {"rc": 0, "out": _dec(out), "err": f"(后台执行，日志: {BG_LOG})"}
+    except Exception as e:  # noqa: BLE001
+        return {"rc": -1, "out": "", "err": f"{type(e).__name__}: {e}"}
 
 
 def _run_fg(cmd, cwd, timeout):
+    """前台执行：同样用独立会话，避免长训练被外部信号打断。"""
     try:
-        p = subprocess.run(["bash", "-lc", cmd], cwd=cwd or None,
-                           capture_output=True, timeout=timeout)
-        return {"rc": p.returncode, "out": _dec(p.stdout), "err": _dec(p.stderr)}
-    except subprocess.TimeoutExpired as e:
-        return {"rc": -9, "out": _dec(e.stdout), "err": f"TIMEOUT after {timeout}s"}
+        p = _spawn(cmd, cwd)
+        try:
+            out, err = p.communicate(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            p.kill()
+            out, err = p.communicate()
+            return {"rc": -9, "out": _dec(out), "err": f"TIMEOUT after {timeout}s"}
+        return {"rc": p.returncode, "out": _dec(out), "err": _dec(err)}
+    except Exception as e:  # noqa: BLE001
+        return {"rc": -1, "out": "", "err": f"{type(e).__name__}: {e}"}
 
 
 def _flush_pending():
@@ -84,12 +128,20 @@ def _flush_pending():
 
 
 def main():
-    _log(f"agent start -> {RELAY_URL}")
+    _log(f"agent start -> {RELAY_URL}  pid={os.getpid()}")
     # 服务端会重派"超时未回传"的命令；agent 侧靠 _pending_report 去重，
     # 避免同一条命令被执行两次（例如长训练被重复启动）。
+    last_beat = 0.0
     while True:
         try:
             _flush_pending()
+            # 心跳：让客户端能区分"agent 死了"和"agent 正在跑长命令"
+            if time.time() - last_beat > 10:
+                last_beat = time.time()
+                try:
+                    _req("/heartbeat", {"pid": os.getpid(), "ts": int(time.time())})
+                except Exception:  # noqa: BLE001
+                    pass
             data = _req("/poll", timeout=30)
             cmds = data.get("cmds") or []
             for c in cmds:

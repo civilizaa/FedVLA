@@ -20,36 +20,46 @@ import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-SECRET = os.environ.get("RELAY_SECRET", "")
-# 平台网关要求 sharecode，代理层会自动补上；agent 侧仍需自己带
-SHARECODE = os.environ.get("RELAY_SHARECODE", "")
-# 下发给 agent 的公网地址。不能用 Host 头——反向代理传入的是沙箱内网域名，
-# AutoDL 那边解析不了。
-PUBLIC_URL = os.environ.get("RELAY_PUBLIC_URL", "").rstrip("/")
 HERE = os.path.dirname(os.path.abspath(__file__))
 STATE_PATH = os.path.join(HERE, "relay_state.json")
 MAX_OUT = 200_000  # 单条输出最大保留字符
 
-# 密钥与 sharecode 一律从本地文件读（该文件被 .gitignore 排除；仓库是 public，
-# 硬编码等于把云端实例的控制权公开）。部署时随目录一起上传。
-if not SECRET or not SHARECODE:
-    _sf = os.path.join(HERE, "relay_secret.txt")
-    if os.path.exists(_sf):
-        with open(_sf, encoding="utf-8") as f:
-            _lines = [ln.strip() for ln in f
-                      if ln.strip() and not ln.strip().startswith("#")]
-        if not SECRET and len(_lines) >= 1:
-            SECRET = _lines[0]
-        if not SHARECODE and len(_lines) >= 2:
-            SHARECODE = _lines[1]
-if not SECRET:
-    raise SystemExit("缺少密钥：设 RELAY_SECRET 环境变量 或 提供 relay_secret.txt")
-if not SHARECODE:
-    raise SystemExit("缺少 sharecode：设 RELAY_SHARECODE 环境变量 或 提供 relay_secret.txt")
 
+def _read_secret_file():
+    """从 relay_secret.txt 读凭据（该文件已 gitignore，不入库）。
+
+    仓库是 public，密钥绝不能硬编码在代码里。
+    文件格式（每行一条，'#' 开头为注释）：
+        第1行 = RELAY_TOKEN
+        第2行 = RELAY_SHARECODE
+        第3行 = RELAY_PUBLIC_URL
+    """
+    path = os.path.join(HERE, "relay_secret.txt")
+    if not os.path.exists(path):
+        return "", "", ""
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            lines = [l.strip() for l in f
+                     if l.strip() and not l.strip().startswith("#")]
+    except Exception:  # noqa: BLE001
+        return "", "", ""
+    tok = lines[0] if len(lines) > 0 else ""
+    sc = lines[1] if len(lines) > 1 else ""
+    url = lines[2] if len(lines) > 2 else ""
+    return tok, sc, url
+
+
+_f_tok, _f_sc, _f_url = _read_secret_file()
+SECRET = os.environ.get("RELAY_SECRET", "") or _f_tok
+# 平台网关要求 sharecode，代理层会自动补上；agent 侧仍需自己带
+SHARECODE = os.environ.get("RELAY_SHARECODE", "") or _f_sc
+# 下发给 agent 的公网地址。不能用 Host 头 —— 反向代理传进来的是沙箱内网域名，
+# AutoDL 那边解析不了（2026-11-01 实测踩过）。
+PUBLIC_URL = (os.environ.get("RELAY_PUBLIC_URL", "") or _f_url
+               or "https://fedvla-relay.app.workbuddy.host").rstrip("/")
 
 _lock = threading.Lock()
-_state = {"next_id": 1, "queue": [], "results": {}}
+_state = {"next_id": 1, "queue": [], "results": {}, "heartbeat": {}}
 
 
 def _load():
@@ -128,9 +138,13 @@ class Handler(BaseHTTPRequestHandler):
         path = self.path.split("?", 1)[0]
         if path == "/health":
             with _lock:
+                hb = _state.get("heartbeat", {}) or {}
                 return self._send(200, {"ok": True, "queued": len(_state["queue"]),
                                         "results": len(_state["results"]),
-                                        "next_id": _state["next_id"]})
+                                        "next_id": _state["next_id"],
+                                        "agent_alive": bool(hb),
+                                        "agent_pid": hb.get("pid"),
+                                        "agent_seen": hb.get("ts")})
         if path == "/poll":
             # 返回所有"尚未完成"的命令；不删除队列，靠 results 里的 id 判定完成，
             # 避免因 agent 取走后崩溃导致命令丢失。超时未回传的会被重新派发。
@@ -167,13 +181,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(500, {"ok": False, "error": "agent_template.py missing"})
             with open(tpl_path, "r", encoding="utf-8") as f:
                 src = f.read()
-            host = self.headers.get("Host", "")
-            # 协议推断：反代会带 X-Forwarded-Proto；本地回环用 http，其余用 https
-            proto = self.headers.get("X-Forwarded-Proto", "").strip()
-            if not proto:
-                hostonly = host.split(":")[0]
-                proto = "http" if hostonly in ("localhost", "127.0.0.1", "0.0.0.0") else "https"
-            base = f"{proto}://{host}" if host else ""
+            base = PUBLIC_URL
             src = src.replace("__RELAY_URL__", base).replace("__RELAY_TOKEN__", SECRET)
             src = src.replace("__RELAY_SHARECODE__", SHARECODE)
             body = src.encode("utf-8")
@@ -191,6 +199,23 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(401, {"ok": False, "error": "bad token"})
         path = self.path.split("?", 1)[0]
         body = self._read_json()
+
+        if path == "/heartbeat":
+            # agent 存活心跳：客户端据此区分"agent 死了"和"agent 在跑长命令"
+            with _lock:
+                _state.setdefault("heartbeat", {})["pid"] = body.get("pid")
+                _state.setdefault("heartbeat", {})["ts"] = int(time.time())
+            return self._send(200, {"ok": True})
+
+        if path == "/clear":
+            # 清空未完成的队列（agent 挂掉后积压的命令会被重派，先清掉）
+            with _lock:
+                done = set(_state["results"].keys())
+                n = len(_state["queue"])
+                _state["queue"] = [c for c in _state["queue"] if str(c["id"]) in done]
+                _save()
+            return self._send(200, {"ok": True, "cleared": n - len(_state["queue"]),
+                                    "queue": len(_state["queue"])})
 
         if path == "/enqueue":
             cmd = (body.get("cmd") or "").strip()
