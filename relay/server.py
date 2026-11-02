@@ -16,6 +16,7 @@
 """
 import json
 import os
+import secrets
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -131,11 +132,51 @@ class Handler(BaseHTTPRequestHandler):
                 return kv[len(key) + 1:]
         return default
 
+    def _agent_source(self):
+        """读 agent 模板并注入本次部署的 URL / token / sharecode。"""
+        tpl_path = os.path.join(HERE, "agent_template.py")
+        if not os.path.exists(tpl_path):
+            return None
+        with open(tpl_path, "r", encoding="utf-8") as f:
+            src = f.read()
+        src = src.replace("__RELAY_URL__", PUBLIC_URL)
+        src = src.replace("__RELAY_TOKEN__", SECRET)
+        src = src.replace("__RELAY_SHARECODE__", SHARECODE)
+        return src
+
     # ---------- routes ----------
     def do_GET(self):
+        path = self.path.split("?", 1)[0]
+        # /bootstrap 用一次性码鉴权（不用长期 token）——
+        # 这样"在 AutoDL 终端粘贴启动 agent"这件事永远不需要暴露长期凭据。
+        if path == "/bootstrap":
+            code = self._q("code", "") or ""
+            with _lock:
+                otc = _state.setdefault("otc", {})
+                rec = otc.get(code)
+                if not rec:
+                    return self._send(401, {"ok": False, "error": "bad or used code"})
+                if rec.get("used"):
+                    return self._send(401, {"ok": False, "error": "code already used"})
+                if int(time.time()) > int(rec.get("expires", 0)):
+                    otc.pop(code, None)
+                    _save()
+                    return self._send(401, {"ok": False, "error": "code expired"})
+                rec["used"] = True
+                _save()
+            src = self._agent_source()
+            if src is None:
+                return self._send(500, {"ok": False, "error": "agent_template.py missing"})
+            body = src.encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "text/x-python; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(body)
+            return
         if not self._auth_ok():
             return self._send(401, {"ok": False, "error": "bad token"})
-        path = self.path.split("?", 1)[0]
         if path == "/health":
             with _lock:
                 hb = _state.get("heartbeat", {}) or {}
@@ -176,14 +217,9 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(200, {"results": res})
         if path == "/agent.py":
             # 下发 agent 脚本（自动填入本次部署的 URL 与密钥）
-            tpl_path = os.path.join(HERE, "agent_template.py")
-            if not os.path.exists(tpl_path):
+            src = self._agent_source()
+            if src is None:
                 return self._send(500, {"ok": False, "error": "agent_template.py missing"})
-            with open(tpl_path, "r", encoding="utf-8") as f:
-                src = f.read()
-            base = PUBLIC_URL
-            src = src.replace("__RELAY_URL__", base).replace("__RELAY_TOKEN__", SECRET)
-            src = src.replace("__RELAY_SHARECODE__", SHARECODE)
             body = src.encode("utf-8")
             self.send_response(200)
             self.send_header("Content-Type", "text/x-python; charset=utf-8")
@@ -216,6 +252,23 @@ class Handler(BaseHTTPRequestHandler):
                 _save()
             return self._send(200, {"ok": True, "cleared": n - len(_state["queue"]),
                                     "queue": len(_state["queue"])})
+
+        if path == "/newcode":
+            # 签发一次性 bootstrap 码：单次使用、默认 15 分钟失效。
+            # 用途：让"在 AutoDL 终端粘贴命令启动 agent"这件事
+            #      不需要把长期 token 写进任何脚本/历史/剪贴板。
+            ttl = int(body.get("ttl", 900))
+            code = secrets.token_urlsafe(18)
+            with _lock:
+                otc = _state.setdefault("otc", {})
+                now = int(time.time())
+                for k in [k for k, v in otc.items()
+                          if int(v.get("expires", 0)) < now or v.get("used")]:
+                    otc.pop(k, None)
+                otc[code] = {"expires": now + ttl, "used": False}
+                _save()
+            return self._send(200, {"ok": True, "code": code, "ttl": ttl,
+                                    "url": f"{PUBLIC_URL}/bootstrap?code={code}"})
 
         if path == "/enqueue":
             cmd = (body.get("cmd") or "").strip()

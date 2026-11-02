@@ -11,10 +11,20 @@ FED_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"   # 本脚本所在目�
 NUM_ROUNDS=50
 LOCAL_EPOCHS=3                                 # 每客户端本地 epoch 数（目标）
 
-# 本地步数 = LOCAL_EPOCHS × 单 epoch 步数。
-# 先用【一个】客户端跑一次（见 README 校准步骤），看日志里 "Epoch size: X"，
-# 把下面 LOCAL_TOTAL_ITERS 改成 3*X。若不想分步校准，可直接给一个经验值。
-LOCAL_TOTAL_ITERS=3000                          # TODO: 校准后替换
+# ⚠️ total_iters 的单位是【总 batch step 数】，不是 epoch 数！
+# 源码依据 hpt/run.py：
+#     train_steps = (epoch + 1) * len(train_loader)      # 每个 epoch 走 len(train_loader) 步
+#     if train_steps > cfg.train.total_iters: break       # 超过才停
+# 所以"跑满 LOCAL_EPOCHS 个 epoch"需要：
+#     total_iters = LOCAL_EPOCHS × epoch_size - 1
+# （减 1 是因为判断是严格大于；写成 LOCAL_EPOCHS×epoch_size 会多跑一个 epoch）
+#
+# epoch_size = len(train_loader) = ceil(训练集样本数 / batch_size)，随任务/数据量变化。
+# 集中式门1 实测：epoch_size=15（batch 256、100 episode、task1）。
+# 三个任务数据量相近，异构基线统一按 15 起步，**跑第一轮后必须核对日志里的
+# "Epoch size:" 行**，若不同任务的 epoch_size 不一致要按任务分别设置。
+LOCAL_EPOCH_SIZE=15                            # TODO: 用第一轮日志的 "Epoch size:" 核对
+LOCAL_TOTAL_ITERS=$((LOCAL_EPOCHS * LOCAL_EPOCH_SIZE - 1))   # = 44
 
 EPISODE_CNT=100                                 # 每任务示范数（与集中式基线一致）
 DATASETSIZE=metaworld_1                         # 单任务数据集；多任务客户端见 README
@@ -24,7 +34,15 @@ INIT_PRETRAINED=hf://liruiw/hpt-base
 
 # HPT 训练额外参数。若远程确认有冻结 stem 的 flag（如 train.freeze_stem=True），可加在这里；
 # 注意：HPT 没有 freeze_stem 方法，stem 是否可训取决于 cfg.stem；trunk 必须可训（freeze_trunk=False）。
-EXTRA_HPT_ARGS="train.freeze_trunk=False"
+#
+# ⚠️ warmup_lr.step 必须下调！
+# 源码 hpt/utils/warmup_lr_wrapper.py：WarmupLR 是从 init_lr=0 【线性升到目标 lr】，
+# 升满需要 warmup_lr.step 步。默认值 1000 是为集中式 6000 步设计的；
+# 联邦本地只有 ~44 步，若还用 1000，则整个本地训练期间 lr 都近似 0
+# → 本地模型几乎不变 → 联邦"看起来没效果"，但其实是配置错误，不是方法失效。
+# 这里取本地总步数的 1/4（向上取整），保证有足够步数在有效学习率区间。
+LOCAL_WARMUP=$(( (LOCAL_TOTAL_ITERS + 3) / 4 ))
+EXTRA_HPT_ARGS="train.freeze_trunk=False warmup_lr.step=${LOCAL_WARMUP}"
 
 # ===== 客户端任务分配（异构核心）=====
 # 每个字符串是一个客户端的 HPT `domains`（HPT 只用列表里第一个域训练）。
