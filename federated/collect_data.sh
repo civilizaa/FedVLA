@@ -2,12 +2,18 @@
 # FedVLA：采集异构客户端所需的 Meta-World 任务数据（现场渲染 + resnet 特征预计算）
 # 用法：bash collect_data.sh
 #
-# 关键事实（已核实 HPT 源码）：
-#   - LocalTrajDataset 数据来源 = 本地缓存 data/zarr_<domain>_<encoder>_traj<cnt>
-#     不存在则调用 cfg.dataset_generator_func 现场渲染；不从 HF 下载。
-#   - generate_dataset_rollouts 只认 env_names，不认 domains。
+# 关键事实（已逐字核实 HPT 源码 hpt/dataset/local_traj_dataset.py，2026-11-01）：
+#   - 缓存路径 = "data/zarr_" + dataset_name + dataset_encoder_postfix + dataset_postfix
+#     = data/zarr_{domain}_resnet_traj100
+#   - 判据（源码 L197）：load_from_cache = os.path.exists(dataset_path + "/data/action")
+#     ⚠️ data/action 是【目录】（zarr 的 chunk 目录），不是文件！
+#        用 `[ -f .../data/action ]` 判定会永远为假 —— 之前误报"采集失败"就是栽在这。
+#   - ⚠️ 目录存在但缺 data/action 时（use_disk=False）：
+#       走 ReplayBuffer.create_empty_numpy() → 数据只在内存，【不落盘】！
+#       下次训练还要重新渲染 16 分钟。
+#       所以必须先把这种空壳目录移走，让 HPT 走 create_empty_zarr 分支落盘。
+#   - generate_dataset_rollouts 只认 env_names，不认 domains；
 #     domains 只是缓存目录标签，env_names 决定真实任务。
-#   - 所以：domains=mujoco_metaworld_taskN + env_names=[<真实env>] 即可任意配对。
 set -u
 cd /root/HPT || exit 1
 export MUJOCO_GL=egl WANDB_MODE=offline HF_ENDPOINT=https://hf-mirror.com OMP_NUM_THREADS=8
@@ -22,13 +28,41 @@ if ! flock -n 9; then
   exit 0
 fi
 
+# 缓存是否真的可用：zarr 数组 data/action 第一维 > 0 且 episode_ends 非空。
+# 只看文件/目录存在是不够的 —— 空壳目录会让 HPT 走内存分支，数据不落盘。
+cache_ok () {
+  local cache="$1"
+  [ -d "$cache/data/action" ] || return 1
+  "$PY" - "$cache" <<'PY' 2>/dev/null
+import sys, zarr
+try:
+    g = zarr.open(sys.argv[1], mode="r")
+    n = int(g["data/action"].shape[0])
+    e = int(g["meta/episode_ends"].shape[0]) if "meta/episode_ends" in g else 0
+except Exception:
+    sys.exit(1)
+sys.exit(0 if (n > 0 and e > 0) else 1)
+PY
+}
+
 collect () {
   local domain="$1" env="$2"
   local cache="/root/HPT/data/zarr_${domain}_resnet_traj100"
-  if [ -f "$cache/data/action" ]; then
-    echo "[SKIP] $domain 缓存已存在：$cache"
+  local log="/root/HPT/log_collect_${domain}.txt"
+
+  if cache_ok "$cache"; then
+    echo "[SKIP] $domain 缓存已就绪：$cache ($(du -sh "$cache" | cut -f1))"
     return 0
   fi
+
+  # 空壳/残缺缓存：移走而不是删（HPT 自己在落盘分支也会 rm -rf），
+  # 移走的好处是失败后还能回滚，不丢任何东西。
+  if [ -e "$cache" ]; then
+    local stale="${cache}.stale_$(date +%s)"
+    echo "[FIX] $cache 存在但不完整，移到 $stale（让 HPT 重新生成并落盘）"
+    mv "$cache" "$stale"
+  fi
+
   echo "=========== 采集 $domain <- $env ==========="
   local t0=$(date +%s)
   "$PY" -m hpt.run \
@@ -41,16 +75,26 @@ collect () {
     train.epoch_iters=1 train.validation_iters=1 \
     train.pretrained_dir=hf://liruiw/hpt-base \
     output_dir="/root/HPT/output/_collect_${domain}" \
-    2>&1 | grep -vE "^(wandb:| *$)" | tail -25
-  echo "[---] 用时 $(( $(date +%s) - t0 )) 秒"
-  if [ -f "$cache/data/action" ]; then
-    echo "[OK] $domain 数据就绪"
-    du -sh "$cache"
+    > "$log" 2>&1
+  local rc=$?
+  echo "[---] 用时 $(( $(date +%s) - t0 )) 秒  rc=$rc"
+
+  if cache_ok "$cache"; then
+    echo "[OK] $domain 数据就绪  $(du -sh "$cache" | cut -f1)"
+    echo "     episode 数：$("$PY" - "$cache" <<'PY2' 2>/dev/null
+import sys, zarr
+g = zarr.open(sys.argv[1], mode="r")
+print(int(g["meta/episode_ends"].shape[0]))
+PY2
+)"
   else
-    echo "[!!] $domain 采集失败"
+    echo "[!!] $domain 采集失败（缓存仍不可用），日志尾部："
+    tail -n 30 "$log"
+    return 1
   fi
 }
 
+collect mujoco_metaworld_task1 reach-v2
 collect mujoco_metaworld_task2 push-v2
 collect mujoco_metaworld_task3 button-press-topdown-v2
 echo "ALL_COLLECT_DONE"
