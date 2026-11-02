@@ -135,6 +135,8 @@ def main():
     p = sub.add_parser("results")
     p.add_argument("since", nargs="?", default="0")
     sub.add_parser("watch")
+    p = sub.add_parser("bootstrap")
+    p.add_argument("--ttl", type=int, default=900)
 
     a = ap.parse_args()
 
@@ -180,6 +182,22 @@ def main():
 
         if a.cmd == "status":
             print(json.dumps(call("/health"), ensure_ascii=False))
+            return 0
+
+        if a.cmd == "bootstrap":
+            # 签发一次性码并打印可直接粘贴到 AutoDL 终端的启动命令。
+            # 命令里不含长期凭据 —— 码单次使用且会过期。
+            r = call("/newcode", {"ttl": a.ttl})
+            url = r["url"]
+            print("=" * 64)
+            print("把下面这一行粘贴到 AutoDL 终端执行（码单次使用，%d 秒后失效）：" % r["ttl"])
+            print("=" * 64)
+            print(f"mkdir -p /root/fedvla_relay && cd /root/fedvla_relay && "
+                  f"curl -sSL '{url}&sharecode={C['sharecode']}' -o agent.py && "
+                  f"python3 -c \"import ast;ast.parse(open('agent.py').read());print('agent.py 语法 OK')\" && "
+                  f"nohup python3 agent.py > agent.log 2>&1 < /dev/null & "
+                  f"sleep 6; tail -n 5 /root/fedvla_relay/agent.log")
+            print("=" * 64)
             return 0
 
         if a.cmd == "results":
