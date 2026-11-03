@@ -128,10 +128,27 @@ def _flush_pending():
 
 
 def main():
+    started_at = int(time.time())
     _log(f"agent start -> {RELAY_URL}  pid={os.getpid()}")
     # 服务端会重派"超时未回传"的命令；agent 侧靠 _pending_report 去重，
     # 避免同一条命令被执行两次（例如长训练被重复启动）。
+    #
+    # 首次轮询带 fresh_after=启动时间戳：丢弃云端实例重启前遗留的陈旧命令。
+    # 场景：AutoDL 实例关机 -> agent 进程死亡 -> 队列里堆着几十条历史命令
+    #       （其中可能包含训练任务）。若不丢弃，agent 复活后会逐条重跑，
+    #       既烧 GPU 又堵死串行通道。
+    first_poll = True
     last_beat = 0.0
+    # 启动即清空服务端队列里"启动前"的陈旧命令。
+    # 传 before=started_at -> 只清更早的，不会误删"启动后刚入队"的新命令。
+    # 老版本服务端不支持 before 参数，会全清；此时 fresh_after 仍然兜底。
+    try:
+        _req("/clearall", {"before": started_at}, timeout=20)
+        _log("startup: cleared stale queue")
+    except urllib.error.HTTPError:
+        pass
+    except Exception as e:  # noqa: BLE001
+        _log(f"startup clearall skipped: {e}")
     while True:
         try:
             _flush_pending()
@@ -142,7 +159,11 @@ def main():
                     _req("/heartbeat", {"pid": os.getpid(), "ts": int(time.time())})
                 except Exception:  # noqa: BLE001
                     pass
-            data = _req("/poll", timeout=30)
+            if first_poll:
+                data = _req(f"/poll?fresh_after={started_at}", timeout=30)
+                first_poll = False
+            else:
+                data = _req("/poll", timeout=30)
             cmds = data.get("cmds") or []
             for c in cmds:
                 cid = c["id"]

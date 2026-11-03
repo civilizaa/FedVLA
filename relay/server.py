@@ -189,13 +189,18 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/poll":
             # 返回所有"尚未完成"的命令；不删除队列，靠 results 里的 id 判定完成，
             # 避免因 agent 取走后崩溃导致命令丢失。超时未回传的会被重新派发。
+            # fresh_after: agent 首次轮询时传入自身启动时间戳，
+            #   用于丢弃"实例重启前遗留的陈旧命令"（否则会逐条重跑，含训练任务）。
             now = int(time.time())
+            fresh_after = int(self._q("fresh_after", "0") or 0)
             with _lock:
                 done = set(_state["results"].keys())
                 cmds, requeue = [], []
                 for c in _state["queue"]:
                     if str(c["id"]) in done:
                         continue
+                    if fresh_after and int(c.get("ts") or 0) < fresh_after:
+                        continue  # 陈旧命令，直接跳过不派发
                     claim = c.get("claimed_at", 0)
                     if claim and now - claim < int(c.get("timeout", 600)) + 180:
                         continue  # 正在执行中
@@ -253,6 +258,28 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(200, {"ok": True, "cleared": n - len(_state["queue"]),
                                     "queue": len(_state["queue"])})
 
+        if path == "/clearall":
+            # 硬清：丢弃队列中的陈旧命令。
+            # 场景：云端实例重启导致 agent 进程死亡，历史命令会在 agent 复活后
+            #       被逐条重跑（可能含训练任务，既烧 GPU 又堵死串行通道）。
+            # before: 可选时间戳，只清除 ts < before 的命令。
+            #   agent 启动时传自己的 started_at -> 只清"启动前"的陈旧命令，
+            #   不会误删"启动后刚入队"的新命令（避免竞态）。
+            # 不传 before -> 全清（手动运维用）。
+            before = int(body.get("before", 0) or 0)
+            with _lock:
+                keep, drop = [], []
+                for c in _state["queue"]:
+                    if before and int(c.get("ts") or 0) >= before:
+                        keep.append(c)
+                    else:
+                        drop.append({"id": c["id"], "cmd": (c.get("cmd") or "")[:120]})
+                _state["queue"] = keep
+                _save()
+            print(f"[relay] clearall: dropped {len(drop)} (before={before}), kept {len(keep)}", flush=True)
+            return self._send(200, {"ok": True, "cleared": len(drop), "queue": len(keep),
+                                    "dropped": drop[:200]})
+
         if path == "/newcode":
             # 签发一次性 bootstrap 码：单次使用、默认 15 分钟失效。
             # 用途：让"在 AutoDL 终端粘贴命令启动 agent"这件事
@@ -281,6 +308,7 @@ class Handler(BaseHTTPRequestHandler):
                     "id": cid, "cmd": cmd, "cwd": body.get("cwd", ""),
                     "timeout": int(body.get("timeout", 600)),
                     "bg": bool(body.get("bg", False)),
+                    "ts": int(time.time()),
                 })
                 _save()
             return self._send(200, {"ok": True, "id": cid})
@@ -314,6 +342,7 @@ class Handler(BaseHTTPRequestHandler):
                 _state["queue"].append({
                     "id": cid, "cmd": cmd, "cwd": body.get("cwd", ""),
                     "timeout": int(body.get("timeout", wait)), "bg": False,
+                    "ts": int(time.time()),
                 })
                 _save()
             deadline = time.time() + wait
