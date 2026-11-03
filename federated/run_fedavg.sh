@@ -27,8 +27,10 @@ START_ROUND=${START_ROUND:-0}
 
 echo "===== FedVLA FedAvg ====="
 echo "OUTPUT_ROOT=$OUTPUT_ROOT"
-echo "NUM_ROUNDS=$NUM_ROUNDS  NUM_CLIENTS=$NUM_CLIENTS  LOCAL_TOTAL_ITERS=$LOCAL_TOTAL_ITERS"
+echo "NUM_ROUNDS=$NUM_ROUNDS  NUM_CLIENTS=$NUM_CLIENTS  LOCAL_EPOCHS=$LOCAL_EPOCHS"
 echo "CLIENT_DOMAINS: ${CLIENT_DOMAINS[*]}"
+echo "CLIENT_ENVS: ${CLIENT_ENVS[*]}"
+echo "CLIENT_EPOCH_SIZE: ${CLIENT_EPOCH_SIZE[*]}"
 echo "从轮 $START_ROUND 开始"
 echo "========================="
 
@@ -78,9 +80,16 @@ for ((r=START_ROUND; r<NUM_ROUNDS; r++)); do
   # ---- 客户端串行本地训练 ----
   for ((c=0; c<NUM_CLIENTS; c++)); do
     DOMAINS="${CLIENT_DOMAINS[$c]}"
+    CLIENT_ENV="${CLIENT_ENVS[$c]}"
+    # 逐客户端的步数：epoch_size 随任务 episode 长度不同而不同，
+    # 必须按任务分别算 total_iters（单位是 batch step，不是 epoch）。
+    C_EPOCH_SIZE="${CLIENT_EPOCH_SIZE[$c]}"
+    C_TOTAL_ITERS=$((LOCAL_EPOCHS * C_EPOCH_SIZE - 1))
+    C_WARMUP=$(( (C_TOTAL_ITERS + WARMUP_RATIO_NUM - 1) / WARMUP_RATIO_NUM ))
     CLIENT_OUT="$OUTPUT_ROOT/client_${c}_r${r}"
     LOG="$OUTPUT_ROOT/log_client_${c}_r${r}.txt"
-    echo "[round $r] client $c  domains=$DOMAINS  -> $CLIENT_OUT"
+    echo "[round $r] client $c  domains=$DOMAINS env=$CLIENT_ENV  epoch_size=$C_EPOCH_SIZE" \
+         "total_iters=$C_TOTAL_ITERS warmup=$C_WARMUP -> $CLIENT_OUT"
 
     "$HPT_PY" -m hpt.run \
       env=mujoco_metaworld \
@@ -88,14 +97,20 @@ for ((r=START_ROUND; r<NUM_ROUNDS; r++)); do
       dataset.episode_cnt="$EPISODE_CNT" \
       domains="$DOMAINS" \
       +datasetsize="$DATASETSIZE" \
-      train.total_iters="$LOCAL_TOTAL_ITERS" \
+      "dataset_generator_func.env_names=[\"$CLIENT_ENV\"]" \
+      "rollout_runner.env_names=[\"$CLIENT_ENV\"]" \
+      "rollout_runner.episode_num=$TRAIN_EVAL_ROLLOUTS" \
+      train.total_iters="$C_TOTAL_ITERS" \
       output_dir="$CLIENT_OUT" \
-      $EXTRA_HPT_ARGS \
+      train.freeze_trunk=False \
+      warmup_lr.step="$C_WARMUP" \
       > "$LOG" 2>&1
 
     if [ ! -f "$CLIENT_OUT/model.pth" ]; then
       echo "[round $r] client $c 训练失败，查看 $LOG"; tail -n 30 "$LOG"; exit 1
     fi
+    # 记录本客户端实际的 epoch_size 与步数（首轮实测优先于配置值）
+    grep -m1 "Epoch size:" "$LOG" | sed "s/^/[round $r] client $c /" || true
   done
 
   # ---- 续训正确性自检（只对第 1 轮及以后做）----
@@ -132,9 +147,17 @@ PY
   # ---- 服务器端聚合 ----
   CLIENT_DIRS=()
   for ((c=0; c<NUM_CLIENTS; c++)); do CLIENT_DIRS+=("$OUTPUT_ROOT/client_${c}_r${r}"); done
-  "$HPT_PY" "$SCRIPT_DIR/aggregate.py" \
-    --clients "${CLIENT_DIRS[@]}" \
-    --out "$GLOBAL_DIR" \
+  AGG_ARGS=( --clients "${CLIENT_DIRS[@]}" --out "$GLOBAL_DIR" )
+  if [ "$FEDAVG_WEIGHTS" = "data" ]; then
+    # 教科书 FedAvg：按各客户端本地样本数(=epoch_size)加权
+    W=()
+    for ((c=0; c<NUM_CLIENTS; c++)); do W+=("${CLIENT_EPOCH_SIZE[$c]}"); done
+    AGG_ARGS+=( --weights "${W[@]}" )
+    echo "[round $r] 聚合权重(按样本数): ${W[*]}"
+  else
+    echo "[round $r] 聚合权重: 等权"
+  fi
+  "$HPT_PY" "$SCRIPT_DIR/aggregate.py" "${AGG_ARGS[@]}" \
     >> "$OUTPUT_ROOT/log_aggregate_r${r}.txt" 2>&1
 
   if [ ! -f "$GLOBAL_DIR/trunk.pth" ]; then

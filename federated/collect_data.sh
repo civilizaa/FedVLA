@@ -18,6 +18,7 @@ set -u
 cd /root/HPT || exit 1
 export MUJOCO_GL=egl WANDB_MODE=offline HF_ENDPOINT=https://hf-mirror.com OMP_NUM_THREADS=8
 PY=/root/miniconda3/envs/hpt/bin/python
+EPISODE_CNT=100                                    # 每任务示范条数（论文协议：100）
 
 # ---- 防重入锁 ----
 # relay 队列重派 / 手动重复执行时，若已有采集进程在跑，直接退出，
@@ -50,7 +51,13 @@ collect () {
   local cache="/root/HPT/data/zarr_${domain}_resnet_traj100"
   local log="/root/HPT/log_collect_${domain}.txt"
 
-  if cache_ok "$cache"; then
+  if [ "${FORCE:-0}" = "1" ]; then
+    if [ -e "$cache" ]; then
+      local stale="${cache}.stale_$(date +%s)"
+      echo "[FORCE] $cache 已存在，移到 $stale 后重新采集"
+      mv "$cache" "$stale"
+    fi
+  elif cache_ok "$cache"; then
     echo "[SKIP] $domain 缓存已就绪：$cache ($(du -sh "$cache" | cut -f1))"
     return 0
   fi
@@ -70,7 +77,7 @@ collect () {
     domains="$domain" \
     +datasetsize=metaworld_1 \
     "dataset_generator_func.env_names=[\"$env\"]" \
-    dataset.episode_cnt=100 \
+    dataset.episode_cnt=$EPISODE_CNT \
     train.total_iters=1 train.total_epochs=1 \
     train.epoch_iters=1 train.validation_iters=1 \
     train.pretrained_dir=hf://liruiw/hpt-base \
@@ -80,13 +87,18 @@ collect () {
   echo "[---] 用时 $(( $(date +%s) - t0 )) 秒  rc=$rc"
 
   if cache_ok "$cache"; then
-    echo "[OK] $domain 数据就绪  $(du -sh "$cache" | cut -f1)"
-    echo "     episode 数：$("$PY" - "$cache" <<'PY2' 2>/dev/null
+    local n_eps
+    n_eps=$("$PY" - "$cache" <<'PY2' 2>/dev/null
 import sys, zarr
 g = zarr.open(sys.argv[1], mode="r")
 print(int(g["meta/episode_ends"].shape[0]))
 PY2
-)"
+)
+    echo "[OK] $domain 数据就绪  $(du -sh "$cache" | cut -f1)  episode 数=$n_eps"
+    if [ "$n_eps" -lt "$EPISODE_CNT" ]; then
+      echo "[!!] $domain episode 数不足：$n_eps < $EPISODE_CNT（采集被中断？用 FORCE=1 重采）"
+      return 1
+    fi
   else
     echo "[!!] $domain 采集失败（缓存仍不可用），日志尾部："
     tail -n 30 "$log"
@@ -94,7 +106,15 @@ PY2
   fi
 }
 
-collect mujoco_metaworld_task1 reach-v2
-collect mujoco_metaworld_task2 push-v2
-collect mujoco_metaworld_task3 button-press-topdown-v2
+# 只采集指定任务（逗号分隔，如 ONLY_TASKS=task1,task2）；默认全采。
+# FORCE=1 时即使缓存已就绪也重新采集（用于修复"上次采集被中断、episode 数不足"的情况）。
+ONLY_TASKS=${ONLY_TASKS:-"task1,task2,task3"}
+ONLY_TASKS=${ONLY_TASKS// /,}
+want () {
+  case ",$ONLY_TASKS," in *",$1,"*) return 0 ;; *) return 1 ;; esac
+}
+
+want task1 && collect mujoco_metaworld_task1 reach-v2
+want task2 && collect mujoco_metaworld_task2 push-v2
+want task3 && collect mujoco_metaworld_task3 button-press-topdown-v2
 echo "ALL_COLLECT_DONE"

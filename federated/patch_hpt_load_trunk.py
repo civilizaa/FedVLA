@@ -53,15 +53,41 @@ PATCHED_BLOCK = '''            self.trunk.load_state_dict(torch.load(path), stri
                 sd = torch.load(path, map_location="cpu")
             self.trunk.load_state_dict(sd, strict=True)
             # [FedVLA patch] 顺带载入顶层共享参数（modalities_tokens / action_tokens）
+            #
+            # ⚠️ 这里【绝对不能】用 self.load_state_dict(extras, strict=False)：
+            #    normalizer 用的 LinearNormalizer 继承 DictOfTensorMixin，
+            #    其 _load_from_state_dict 会【无条件重建】 self.params_dict：
+            #        self.params_dict = load_dict(state_dict, prefix + "params_dict")
+            #    extras 里没有 normalizer 的键 -> normalizer.params_dict 被清空
+            #    -> 训练第一步就崩：
+            #        AttributeError: 'ParameterDict' object has no attribute 'state'
+            #    （发生在 policy.preprocess_states -> self.normalizer[domain]["state"]）
+            #
+            # 正确做法：只对顶层 ParameterDict 逐键赋值，不触发任何子模块的
+            #           _load_from_state_dict。modalities_tokens / action_tokens
+            #           的键都是一级的（image / state / <domain>）。
             extras_path = os.path.join(os.path.dirname(os.path.abspath(path)), "extras.pth")
             if os.path.exists(extras_path):
                 try:
                     extras = torch.load(extras_path, map_location="cpu", weights_only=False)
                 except TypeError:
                     extras = torch.load(extras_path, map_location="cpu")
-                self.load_state_dict(extras, strict=False)
+                loaded = 0
+                for _k, _v in extras.items():
+                    if not (_k.startswith("modalities_tokens.") or _k.startswith("action_tokens.")):
+                        continue
+                    _container_name, _key = _k.split(".", 1)
+                    _container = getattr(self, _container_name, None)
+                    if _container is None:
+                        continue
+                    if hasattr(_container, "keys") and _key in _container:
+                        with torch.no_grad():
+                            _container[_key] = torch.nn.Parameter(
+                                _v.detach().clone(), requires_grad=False
+                            )
+                        loaded += 1
                 logging.info(f"[FedVLA patch] loaded extras from {extras_path} "
-                             f"({len(extras)} tensors)")
+                             f"({loaded}/{len(extras)} tensors)")
 '''
 
 MARK = "[FedVLA patch]"
