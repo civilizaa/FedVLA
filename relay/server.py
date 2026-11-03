@@ -284,7 +284,23 @@ class Handler(BaseHTTPRequestHandler):
             # 签发一次性 bootstrap 码：单次使用、默认 15 分钟失效。
             # 用途：让"在 AutoDL 终端粘贴命令启动 agent"这件事
             #      不需要把长期 token 写进任何脚本/历史/剪贴板。
+            #
+            # peek=True：只返回"码是否可用"而不消费它。
+            #   用于签发后先自检、确认无误再交给用户粘贴 —— 避免
+            #   "本地自测时把码用掉，导致用户粘贴时下载到 401 错误页"。
             ttl = int(body.get("ttl", 900))
+            peek = bool(body.get("peek", False))
+            if peek:
+                code = (body.get("code") or "").strip()
+                with _lock:
+                    v = _state.get("otc", {}).get(code)
+                    if not v:
+                        return self._send(404, {"ok": False, "error": "no such code"})
+                    expired = int(v.get("expires", 0)) < int(time.time())
+                    return self._send(200, {"ok": True, "code": code,
+                                            "used": bool(v.get("used")),
+                                            "expired": expired,
+                                            "valid": (not v.get("used")) and not expired})
             code = secrets.token_urlsafe(18)
             with _lock:
                 otc = _state.setdefault("otc", {})

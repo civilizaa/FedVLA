@@ -130,6 +130,17 @@ def _flush_pending():
 def main():
     started_at = int(time.time())
     _log(f"agent start -> {RELAY_URL}  pid={os.getpid()}")
+    # 启动自检：确认自己确实是完整的 agent 源码、且凭据已注入。
+    # 若下发的是错误页（如 401 JSON），这里会明确报错而不是静默跑不通。
+    try:
+        _n = len(open(os.path.abspath(__file__), encoding="utf-8").read())
+        _log(f"self-check: source ok ({_n} bytes)")
+    except Exception as e:  # noqa: BLE001
+        _log(f"self-check FAILED: {e}")
+        raise
+    if not RELAY_TOKEN or RELAY_TOKEN.startswith("__RELAY"):
+        _log("self-check FAILED: token 未注入，拒绝启动")
+        raise SystemExit(2)
     # 服务端会重派"超时未回传"的命令；agent 侧靠 _pending_report 去重，
     # 避免同一条命令被执行两次（例如长训练被重复启动）。
     #

@@ -187,17 +187,34 @@ def main():
         if a.cmd == "bootstrap":
             # 签发一次性码并打印可直接粘贴到 AutoDL 终端的启动命令。
             # 命令里不含长期凭据 —— 码单次使用且会过期。
+            #
+            # 【重要】签发后绝不在本地拉取 agent 自测 —— 那会消费掉这个码，
+            #   导致用户粘贴时下载到 401 错误页、agent 静默启动失败。
+            #   如需自检请用 peek 模式（服务端只查状态不消费）。
             r = call("/newcode", {"ttl": a.ttl})
+            code = r["code"]
             url = r["url"]
+            # peek 自检：确认码确实签发成功且未过期（不消费）
+            try:
+                st = call("/newcode", {"code": code, "peek": True})
+                if not st.get("valid"):
+                    print(f"[!] 码状态异常: {st}")
+                    return 1
+                print(f"[ok] 一次性码已签发并校验通过（有效期 {r['ttl']}s）")
+            except Exception as e:  # noqa: BLE001
+                print(f"[!] peek 自检失败（不影响签发）: {e}")
             print("=" * 64)
             print("把下面这一行粘贴到 AutoDL 终端执行（码单次使用，%d 秒后失效）：" % r["ttl"])
             print("=" * 64)
             print(f"mkdir -p /root/fedvla_relay && cd /root/fedvla_relay && "
                   f"curl -sSL '{url}&sharecode={C['sharecode']}' -o agent.py && "
+                  f"head -c 60 agent.py && echo && "
                   f"python3 -c \"import ast;ast.parse(open('agent.py').read());print('agent.py 语法 OK')\" && "
                   f"nohup python3 agent.py > agent.log 2>&1 < /dev/null & "
-                  f"sleep 6; tail -n 5 /root/fedvla_relay/agent.log")
+                  f"sleep 8; tail -n 8 /root/fedvla_relay/agent.log")
             print("=" * 64)
+            print("提示：若输出是 JSON 错误页而非 Python 源码，说明码已被消费，"
+                  "重新执行本命令换一个新码。")
             return 0
 
         if a.cmd == "results":
