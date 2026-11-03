@@ -197,9 +197,66 @@ def fig_trunk_share(out_path, trunk=12_644_352, personal=3_892_838):
     return True
 
 
+def fig_convergence(json_path, out_path):
+    """联邦收敛曲线：各客户端 + 联邦平均"""
+    if not os.path.exists(json_path):
+        print(f"[skip] 找不到 {json_path}")
+        return False
+    import json
+    with open(json_path, encoding="utf-8") as f:
+        data = json.load(f)
+    curve = data.get("curve") or []
+    if not curve:
+        print("[skip] 曲线为空")
+        return False
+
+    rounds = [c["round"] for c in curve]
+    mean = [c["mean_train_loss"] for c in curve]
+
+    fig, ax = plt.subplots(figsize=(7.4, 4.4))
+    # 联邦平均（粗线）
+    ax.plot(rounds, mean, color="#111827", linewidth=2.2, marker="o", markersize=3.5,
+            label=L("联邦平均", "Federated average"), zorder=5)
+
+    # 各客户端（细线）
+    colors = ["#2563eb", "#dc2626", "#16a34a", "#a855f7"]
+    labels = {
+        0: L("c0: reach-v2", "c0: reach-v2"),
+        1: L("c1: push-v2", "c1: push-v2"),
+        2: L("c2: button-press", "c2: button-press"),
+        3: L("c3: reach-v2", "c3: reach-v2"),
+    }
+    all_keys = sorted({k for c in curve for k in c.get("per_client_train_loss", {})})
+    for i, k in enumerate(all_keys):
+        xs, ys = [], []
+        for c in curve:
+            v = c.get("per_client_train_loss", {}).get(k)
+            if v is not None:
+                xs.append(c["round"]); ys.append(v)
+        if xs:
+            ax.plot(xs, ys, color=colors[i % len(colors)], linewidth=1.3, alpha=0.75,
+                    marker="s", markersize=2.5, label=labels.get(int(k), f"c{k}"))
+
+    ax.set_xlabel(L("联邦通信轮数", "Federated round"))
+    ax.set_ylabel(L("训练损失", "Training loss"))
+    ax.set_title(L("联邦训练收敛曲线（异构 4 客户端）",
+                   "Federated convergence (4 heterogeneous clients)"))
+    ax.legend(frameon=False, fontsize=8.5, ncol=2)
+    ax.grid(color=C_GRID, linewidth=0.7, alpha=0.7)
+    ax.set_axisbelow(True)
+    for s in ("top", "right"):
+        ax.spines[s].set_visible(False)
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=200, bbox_inches="tight")
+    plt.close(fig)
+    print(f"[OK] {out_path}")
+    return True
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--compare", default="/root/HPT/output/compare_results.txt")
+    ap.add_argument("--convergence", default="/root/HPT/output/convergence_hetero.json")
     ap.add_argument("--outdir", default=FIG_DIR)
     ap.add_argument("--all", action="store_true")
     args = ap.parse_args()
@@ -212,6 +269,7 @@ def main():
         made.append(fig_comparison(compare, os.path.join(args.outdir, "fig6_comparison.png")))
         made.append(fig_comm_cost(os.path.join(args.outdir, "fig7_comm_cost.png")))
         made.append(fig_trunk_share(os.path.join(args.outdir, "fig5_param_share.png")))
+        made.append(fig_convergence(args.convergence, os.path.join(args.outdir, "fig4_convergence.png")))
     else:
         compare = parse_compare(args.compare)
         made.append(fig_comparison(compare, os.path.join(args.outdir, "fig6_comparison.png")))
