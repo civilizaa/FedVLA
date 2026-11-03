@@ -1,32 +1,33 @@
 #!/usr/bin/env bash
-# FedVLA：等待当前 GPU 任务空闲后，串行跑完剩余实验队列。
+# FedVLA：剩余实验队列（幂等版）。
 #
-# 队列（按优先级）：
-#   1. 等预算集中式基线（3 任务）      —— 论文对比表第二列
-#   2. 集中式基线评估（3 任务 × 3 seeds × 20 rollouts）
-#   3. IID 健全性检查（4 客户端全 task1，50 轮）—— 验证管线正确性
-#   4. IID 评估
+# 幂等保证：每一步都先检查产物是否已存在，存在就跳过。
+#   - 训练：model.pth 存在 -> SKIP
+#   - 评估：eval_centralized_<task>.log 里有 3 张结果表 -> SKIP
+#   - IID：global_r49 存在 -> SKIP
 #
-# 用法：
-#   nohup bash run_queue.sh > /root/HPT/output/queue.log 2>&1 &
+# 同时检测 hpt.run 和 hpt.run_eval 两种进程，避免与正在跑的评估争 GPU。
 set -u
 SCRIPT_DIR=/root/HPT/federated
+HPT_PY=/root/miniconda3/envs/hpt/bin/python
 
 export WANDB_MODE=offline MUJOCO_GL=egl HF_ENDPOINT=https://hf-mirror.com
 export OMP_NUM_THREADS=8
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/.mujoco/mujoco210/bin
 
-# 等 GPU 上没有 hpt.run 训练进程（最多等 3 小时）
+# 等 GPU 空闲（训练和评估都不算占用）
 wait_gpu () {
-  local max_wait=${1:-10800}
+  local max_wait=${1:-36000}
   local waited=0
   while [ "$waited" -lt "$max_wait" ]; do
-    n=$(ps -eo cmd | grep -E 'hpt\.run ' | grep -v grep | wc -l)
+    n=$(ps -eo cmd | grep -E 'hpt\.run |hpt\.run_eval' | grep -v grep | wc -l)
     if [ "$n" -eq 0 ]; then
       echo "[queue] GPU 空闲（第 ${waited}s）"
       return 0
     fi
-    echo "[queue] 等待 GPU 空闲，还有 $n 个训练进程（已等 ${waited}s）"
+    if [ $((waited % 300)) -eq 0 ]; then
+      echo "[queue] 等待 GPU 空闲，还有 $n 个进程（已等 ${waited}s）"
+    fi
     sleep 60
     waited=$((waited + 60))
   done
@@ -34,24 +35,57 @@ wait_gpu () {
   return 0
 }
 
+# 评估是否已完成（3 张结果表 = 3 seeds）
+eval_done () {
+  local log="$1"
+  [ -f "$log" ] || return 1
+  local n
+  n=$(grep -c '| avg' "$log" 2>/dev/null || echo 0)
+  [ "$n" -ge 3 ]
+}
+
 echo "==================== 队列开始 $(date '+%H:%M:%S') ===================="
 
-echo ">>> [1/4] 等预算集中式基线"
+echo ">>> [1/5] 等预算集中式基线"
 wait_gpu
-# 已有产物会自动 SKIP（run_centralized_equal_budget.sh 内有 model.pth 存在检查）
 bash "$SCRIPT_DIR/run_centralized_equal_budget.sh"
 
-echo ">>> [2/4] 集中式基线评估"
-CENTRAL_ROOT=/root/HPT/output/centralized bash "$SCRIPT_DIR/eval_centralized.sh"
+echo ">>> [2/5] 集中式基线评估（6000 步）"
+for t in task1 task2 task3; do
+  log="/root/HPT/output/eval_centralized_${t}.log"
+  if eval_done "$log"; then
+    echo "[SKIP] $t 评估已完成：$log"
+  else
+    wait_gpu
+    CENTRAL_ROOT=/root/HPT/output/centralized bash "$SCRIPT_DIR/eval_centralized.sh"
+    break   # eval_centralized.sh 一次跑完三个任务
+  fi
+done
 
-echo ">>> [2b/4] 等预算集中式评估"
-CENTRAL_ROOT=/root/HPT/output/centralized_equal_budget bash "$SCRIPT_DIR/eval_centralized.sh"
+echo ">>> [3/5] 等预算集中式评估"
+for t in task1 task2 task3; do
+  log="/root/HPT/output/eval_equalbudget_${t}.log"
+  if eval_done "$log"; then
+    echo "[SKIP] $t 等预算评估已完成"
+  else
+    wait_gpu
+    CENTRAL_ROOT=/root/HPT/output/centralized_equal_budget \
+      ROOT_TAG=centralized_equal_budget \
+      ARCHIVE_PREFIX=equalbudget \
+      bash "$SCRIPT_DIR/eval_centralized.sh"
+    break
+  fi
+done
 
-echo ">>> [3/4] IID 健全性检查（4 客户端全 task1）"
-wait_gpu
-bash "$SCRIPT_DIR/run_all_experiments.sh" iid
+echo ">>> [4/5] IID 健全性检查（4 客户端全 task1）"
+if [ -f /root/HPT/output/fedavg_iid/global_r49/model.pth ]; then
+  echo "[SKIP] IID 已训完"
+else
+  wait_gpu
+  bash "$SCRIPT_DIR/run_all_experiments.sh" iid
+fi
 
-echo ">>> [4/4] 生成对比表"
+echo ">>> [5/5] 生成对比表"
 bash "$SCRIPT_DIR/compare_results.sh"
 
 echo "==================== 队列完成 $(date '+%H:%M:%S') ===================="

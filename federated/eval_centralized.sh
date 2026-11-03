@@ -1,15 +1,26 @@
 #!/usr/bin/env bash
 # FedVLA：集中式基线的统一评估（与联邦评估同一口径）
 #
-# 输出约定（compare_results.sh 依赖）：
-#   模型目录: /root/HPT/output/centralized/<task>/
-#   日志:     /root/HPT/output/eval_centralized_<task>.log
+# ⚠️ 日志命名必须区分不同基线，否则会互相覆盖：
+#    两种基线的模型目录 basename 都是 task1/task2/task3
+#    （output/centralized/task1 vs output/centralized_equal_budget/task1），
+#    若都用 eval_task1_<domain>.log / eval_centralized_task1.log，
+#    第二种基线会把第一种的结果覆盖掉。
+#
+# 命名规则：
+#   原始日志: eval_<ROOT_TAG>_<task>_<domain>.log
+#   归档:     eval_<ARCHIVE_PREFIX>_<task>.log
+#   ROOT_TAG 默认取 CENTRAL_ROOT 的 basename（如 centralized / centralized_equal_budget）
+#   ARCHIVE_PREFIX 默认同 ROOT_TAG
 set -u
 SCRIPT_DIR=/root/HPT/federated
 CENTRAL_ROOT=${CENTRAL_ROOT:-/root/HPT/output/centralized}
 N_SEEDS=${N_SEEDS:-3}
 EPISODE_NUM=${EPISODE_NUM:-20}
 N_JOBS=${N_JOBS:-1}
+
+ROOT_TAG=${ROOT_TAG:-$(basename "$CENTRAL_ROOT")}
+ARCHIVE_PREFIX=${ARCHIVE_PREFIX:-$ROOT_TAG}
 
 export WANDB_MODE=offline MUJOCO_GL=egl HF_ENDPOINT=https://hf-mirror.com
 export OMP_NUM_THREADS=8
@@ -29,16 +40,24 @@ for t in "${TASKS[@]}"; do
     echo "[SKIP] $task 没有模型：$model/model.pth"
     continue
   fi
-  echo "########## 集中式评估 $task ($env) ##########"
-  # eval_model.sh 会写 output/eval_<TAG>_<DOMAIN>.log，这里再拷一份成
-  # eval_centralized_<task>.log 作为对比脚本的稳定入口
+  echo "########## 集中式评估 $task ($env)  root=$ROOT_TAG ##########"
+
+  # eval_model.sh 会写 output/eval_<MODEL_DIR basename>_<domain>.log，
+  # 两种基线的 basename 相同 -> 先把原始日志改名，再让 eval_model.sh 用独立目录。
+  RAW="/root/HPT/output/eval_${ROOT_TAG}_${task}_${dom}.log"
+
   MODEL_DIR="$model" DOMAIN="$dom" ENVNAME="$env" \
   N_SEEDS="$N_SEEDS" EPISODE_NUM="$EPISODE_NUM" N_JOBS="$N_JOBS" \
     bash "$SCRIPT_DIR/eval_model.sh"
-  src="/root/HPT/output/eval_$(basename "$model")_${dom}.log"
-  if [ -f "$src" ]; then
-    cp "$src" "/root/HPT/output/eval_centralized_${task}.log"
-    echo "[OK] 结果已归档 -> /root/HPT/output/eval_centralized_${task}.log"
+
+  # eval_model.sh 实际写的是 eval_$(basename $model)_<domain>.log
+  produced="/root/HPT/output/eval_$(basename "$model")_${dom}.log"
+  if [ -f "$produced" ]; then
+    mv -f "$produced" "$RAW"
+    cp "$RAW" "/root/HPT/output/eval_${ARCHIVE_PREFIX}_${task}.log"
+    echo "[OK] 结果已归档 -> /root/HPT/output/eval_${ARCHIVE_PREFIX}_${task}.log"
+  else
+    echo "[!!] 没找到评估输出：$produced"
   fi
 done
 echo "CENTRAL_EVAL_DONE"

@@ -33,7 +33,7 @@ echo "集中式根目录: $CENTRAL_ROOT"
 echo "联邦模型:     $FED_MODEL"
 echo
 
-printf "%-26s %-24s %-24s %s\n" "任务" "集中式 (mean±95%CI)" "联邦 (mean±95%CI)" "差值"
+printf "%-26s %-18s %-18s %-18s\n" "任务" "集中式(6000步)" "集中式(等预算)" "联邦(50轮)"
 printf "%s\n" "------------------------------------------------------------------------"
 
 for pair in "${TASKS[@]}"; do
@@ -41,8 +41,7 @@ for pair in "${TASKS[@]}"; do
   dom="$1"; env="$2"; task="${dom#mujoco_metaworld_}"
 
   # 集中式：约定输出目录 output/centralized/<task>/，评估日志写在
-  #   output/eval_centralized_<task>.log（由 run_centralized.sh + eval_model.sh 约定）
-  #   若不存在，则找 output/eval_centralized_<dom>.log
+  #   output/eval_centralized_<task>.log（由 eval_centralized.sh 生成）
   c_log=""
   for cand in \
       "/root/HPT/output/eval_centralized_${task}.log" \
@@ -51,9 +50,18 @@ for pair in "${TASKS[@]}"; do
     [ -f "$cand" ] && { c_log="$cand"; break; }
   done
 
+  # 等预算集中式：output/eval_equalbudget_<task>.log
+  eq_log=""
+  for cand in \
+      "/root/HPT/output/eval_equalbudget_${task}.log" \
+      "/root/HPT/output/eval_centralized_equal_budget_${task}.log"; do
+    [ -f "$cand" ] && { eq_log="$cand"; break; }
+  done
+
   f_log="/root/HPT/output/eval_$(basename "$FED_MODEL")_${dom}.log"
 
   c_val="—"
+  eq_val="—"
   f_val="—"
 
   # summarize_eval.py 的输出行形如： "  reach-v2    n=3  0.983 ± 0.053   [0.930, 1.036]"
@@ -66,11 +74,13 @@ for pair in "${TASKS[@]}"; do
   }
 
   [ -n "$c_log" ] && c_val=$(extract "$c_log" "$env")
+  [ -n "$eq_log" ] && eq_val=$(extract "$eq_log" "$env")
   [ -f "$f_log" ] && f_val=$(extract "$f_log" "$env")
 
-  printf "%-26s %-20s %-20s\n" "$env" "$c_val" "$f_val"
-  echo "    集中式日志: ${c_log:-未找到}"
-  echo "    联邦日志:   ${f_log:-未找到}"
+  printf "%-26s %-18s %-18s %-18s\n" "$env" "$c_val" "$eq_val" "$f_val"
+  echo "    集中式(6000步): ${c_log:-未找到}"
+  echo "    等预算:         ${eq_log:-未找到}"
+  echo "    联邦(50轮):     ${f_log:-未找到}"
 done
 
 echo
