@@ -67,11 +67,22 @@ if [ ! -f "$GLOBAL/model.pth" ]; then
 fi
 
 echo "===== 评估最终全局模型 $GLOBAL ====="
-for pair in "mujoco_metaworld_task1 reach-v2" \
-            "mujoco_metaworld_task2 push-v2" \
-            "mujoco_metaworld_task3 button-press-topdown-v2"; do
+# ⚠️ LOG_TAG 必须区分 hetero / iid —— 两者的 MODEL_DIR basename 都是 global_r49，
+#    日志同名会互相覆盖（踩过：IID 评估把异构评估结果冲掉）。
+if [ "$MODE" = "iid" ]; then
+  # IID 只训了 task1 —— 全局模型里没有 task2/task3 的 stem/head，
+  # 评估那两个任务没有意义（strict=False 会退化成随机 head）。
+  EVAL_PAIRS="mujoco_metaworld_task1 reach-v2"
+else
+  EVAL_PAIRS="mujoco_metaworld_task1 reach-v2
+              mujoco_metaworld_task2 push-v2
+              mujoco_metaworld_task3 button-press-topdown-v2"
+fi
+
+for pair in $EVAL_PAIRS; do
   set -- $pair
   MODEL_DIR="$GLOBAL" DOMAIN="$1" ENVNAME="$2" N_SEEDS=3 EPISODE_NUM=20 N_JOBS=1 \
+    LOG_TAG="${MODE}_r49" \
     bash "$SCRIPT_DIR/eval_model.sh"
 done
 

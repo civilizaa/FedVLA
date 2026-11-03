@@ -34,10 +34,13 @@ export OMP_NUM_THREADS=8
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/.mujoco/mujoco210/bin
 
 TAG=$(basename "$MODEL_DIR")
-# ⚠️ 日志名必须带上 domain —— 否则同一模型评估多个任务时，后者会覆盖前者，
+# ⚠️ 日志名必须带 domain —— 否则同一模型评估多个任务时，后者会覆盖前者，
 #    最后只剩最后一个任务的结果（踩过：三个任务评估完只剩 task3 的表格）。
-OUT_DIR="/root/HPT/output/eval_${TAG}_${DOMAIN}"
-LOG="/root/HPT/output/eval_${TAG}_${DOMAIN}.log"
+# ⚠️ TAG 相同但模型来源不同（集中式 / 等预算 / 联邦）也会互相覆盖，
+#    所以额外允许用 LOG_TAG 覆盖 TAG。
+LOG_TAG=${LOG_TAG:-$TAG}
+OUT_DIR="/root/HPT/output/eval_${LOG_TAG}_${DOMAIN}"
+LOG="/root/HPT/output/eval_${LOG_TAG}_${DOMAIN}.log"
 
 mkdir -p "$OUT_DIR"
 echo "===== 评估 $MODEL_DIR ====="

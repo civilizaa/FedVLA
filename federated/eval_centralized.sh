@@ -42,18 +42,19 @@ for t in "${TASKS[@]}"; do
   fi
   echo "########## 集中式评估 $task ($env)  root=$ROOT_TAG ##########"
 
-  # eval_model.sh 会写 output/eval_<MODEL_DIR basename>_<domain>.log，
-  # 两种基线的 basename 相同 -> 先把原始日志改名，再让 eval_model.sh 用独立目录。
+  # eval_model.sh 会写 output/eval_<LOG_TAG>_<domain>.log，
+  # 两种基线的模型目录 basename 相同 -> 用 LOG_TAG 区分开。
   RAW="/root/HPT/output/eval_${ROOT_TAG}_${task}_${dom}.log"
 
   MODEL_DIR="$model" DOMAIN="$dom" ENVNAME="$env" \
+  LOG_TAG="${ROOT_TAG}_${task}" \
   N_SEEDS="$N_SEEDS" EPISODE_NUM="$EPISODE_NUM" N_JOBS="$N_JOBS" \
     bash "$SCRIPT_DIR/eval_model.sh"
 
-  # eval_model.sh 实际写的是 eval_$(basename $model)_<domain>.log
-  produced="/root/HPT/output/eval_$(basename "$model")_${dom}.log"
+  # eval_model.sh 实际写的是 eval_<LOG_TAG>_<domain>.log
+  produced="/root/HPT/output/eval_${ROOT_TAG}_${task}_${dom}.log"
   if [ -f "$produced" ]; then
-    mv -f "$produced" "$RAW"
+    cp "$produced" "$RAW"
     cp "$RAW" "/root/HPT/output/eval_${ARCHIVE_PREFIX}_${task}.log"
     echo "[OK] 结果已归档 -> /root/HPT/output/eval_${ARCHIVE_PREFIX}_${task}.log"
   else

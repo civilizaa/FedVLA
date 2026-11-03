@@ -25,6 +25,47 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/.mujoco/mujoco210/bin
 
 START_ROUND=${START_ROUND:-0}
 
+# ===== 磁盘水位守卫 =====
+# 背景（2026-11-03 实测踩坑）：每轮每客户端都产出 model.pth(66MB) + trunk.pth(50MB)，
+# 50 轮 × 4 客户端 ≈ 250 个目录 ≈ 23GB —— 把 30GB 的系统盘直接吃满，
+# 结果是 agent 心跳停摆、正在跑的评估被写日志失败打断（已实测）。
+# 所以：默认只保留最近 KEEP_ROUNDS 轮的权重产物，日志一律保留
+#（收敛曲线 extract_convergence.py 靠 log_client_*.txt，不受影响）。
+KEEP_ROUNDS=${KEEP_ROUNDS:-2}      # 保留最近 N 轮的 client/global 权重
+MIN_FREE_GB=${MIN_FREE_GB:-6}       # 可用空间低于此值时强制只留最近 1 轮
+
+free_gb () {
+  local v
+  v=$(df -BG --output=avail "$OUTPUT_ROOT" 2>/dev/null | tail -1 | tr -dc '0-9')
+  echo "${v:-999}"   # df 不可用时返回 999，不触发强制清理
+}
+
+# 删除第 $1 轮之前（不含）的 client_*/global_* 权重目录；第 $2 个参数是保留轮数
+cleanup_old_rounds () {
+  local cur="$1" keep="$2"
+  local cutoff=$((cur - keep))
+  [ "$cutoff" -lt 1 ] && return 0
+  local targets=()
+  for ((d=0; d<cutoff; d++)); do
+    targets+=("$OUTPUT_ROOT/global_r$d")
+    for ((c=0; c<NUM_CLIENTS; c++)); do
+      targets+=("$OUTPUT_ROOT/client_${c}_r$d")
+    done
+  done
+  local existed=0 sz=0
+  for t in "${targets[@]}"; do
+    if [ -d "$t" ]; then
+      existed=$((existed+1))
+      sz=$((sz + $(du -sm "$t" 2>/dev/null | cut -f1)))
+    fi
+  done
+  if [ "$existed" -gt 0 ]; then
+    rm -rf "${targets[@]}"
+    echo "[清理] 删除 $existed 个历史轮次权重目录，释放约 ${sz} MB（保留最近 ${keep} 轮 + 全部日志）"
+  fi
+  df -h "$OUTPUT_ROOT" | tail -1 | sed 's/^/[清理后磁盘] /'
+}
+
 echo "===== FedVLA FedAvg ====="
 echo "OUTPUT_ROOT=$OUTPUT_ROOT"
 echo "NUM_ROUNDS=$NUM_ROUNDS  NUM_CLIENTS=$NUM_CLIENTS  LOCAL_EPOCHS=$LOCAL_EPOCHS"
@@ -164,6 +205,15 @@ PY
     echo "[round $r] 聚合失败，查看 $OUTPUT_ROOT/log_aggregate_r${r}.txt"; exit 1
   fi
   echo "[round $r] 完成，全局模型 -> $GLOBAL_DIR"
+
+  # ---- 磁盘水位守卫 + 清理历史轮次权重 ----
+  FG=$(free_gb)
+  KEEP=$KEEP_ROUNDS
+  if [ "$FG" -lt "$MIN_FREE_GB" ]; then
+    echo "[!!] 可用空间仅 ${FG}GB < ${MIN_FREE_GB}GB —— 强制只保留最近 1 轮"
+    KEEP=1
+  fi
+  cleanup_old_rounds "$r" "$KEEP"
 done
 
 echo "===== 全部 $NUM_ROUNDS 轮完成 ====="
