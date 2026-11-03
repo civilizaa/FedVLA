@@ -23,6 +23,7 @@ import signal
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -102,18 +103,72 @@ def _run_bg(cmd, cwd):
 
 
 def _run_fg(cmd, cwd, timeout):
-    """前台执行：同样用独立会话，避免长训练被外部信号打断。"""
+    """前台执行：独立会话 + 【临时文件收集输出】。
+
+    【2026-11-03 事故修复 —— 管道死锁导致 agent 永久卡死】
+      现象：一条命令打印了 200KB 字符后，agent 整个通道卡死，
+            心跳停了几十分钟，进程还在但什么都不做。
+      根因：用 stdout=PIPE + communicate() 收集输出。子进程写入超过
+            管道缓冲区（64KB）后阻塞在 write()，而 communicate() 在
+            超时后调 p.kill() 杀的是 shell 包装进程，真正的 python
+            子进程仍持有管道写端 -> communicate() 第二次调用永远等不到 EOF。
+      修复：stdout/stderr 重定向到临时文件，进程结束后读文件。
+            磁盘缓冲没有容量上限，不会死锁；且顺带支持"输出超大也不炸"。
+    """
+    out_fd, out_path = tempfile.mkstemp(suffix=".out", prefix="relay_out_")
+    err_fd, err_path = tempfile.mkstemp(suffix=".err", prefix="relay_err_")
+    os.close(out_fd)
+    os.close(err_fd)
     try:
-        p = _spawn(cmd, cwd)
-        try:
-            out, err = p.communicate(timeout=timeout)
-        except subprocess.TimeoutExpired:
-            p.kill()
-            out, err = p.communicate()
-            return {"rc": -9, "out": _dec(out), "err": f"TIMEOUT after {timeout}s"}
-        return {"rc": p.returncode, "out": _dec(out), "err": _dec(err)}
+        with open(out_path, "wb") as fo, open(err_path, "wb") as fe:
+            p = subprocess.Popen(
+                cmd, shell=True, cwd=cwd or None,
+                stdout=fo, stderr=fe,
+                start_new_session=True)
+            timed_out = False
+            try:
+                p.wait(timeout=timeout)
+            except subprocess.TimeoutExpired:
+                timed_out = True
+                # 杀整个进程组（start_new_session 后 pgid == pid）
+                try:
+                    os.killpg(p.pid, signal.SIGKILL)
+                except Exception:  # noqa: BLE001
+                    try:
+                        p.kill()
+                    except Exception:  # noqa: BLE001
+                        pass
+                try:
+                    p.wait(timeout=15)
+                except Exception:  # noqa: BLE001
+                    pass
+        out = _read_file(out_path)
+        err = _read_file(err_path)
+        if timed_out:
+            return {"rc": -9, "out": out, "err": (err + f"\n[TIMEOUT after {timeout}s]").strip()}
+        return {"rc": p.returncode, "out": out, "err": err}
     except Exception as e:  # noqa: BLE001
         return {"rc": -1, "out": "", "err": f"{type(e).__name__}: {e}"}
+    finally:
+        for path in (out_path, err_path):
+            try:
+                os.unlink(path)
+            except Exception:  # noqa: BLE001
+                pass
+
+
+def _read_file(path, limit=MAX_OUTPUT):
+    """读临时输出文件；只保留尾部 limit 字节（超长时保留最有信息量的部分）。"""
+    try:
+        size = os.path.getsize(path)
+        with open(path, "rb") as f:
+            if size > limit:
+                f.seek(size - limit)
+                data = f.read()
+                return "[...输出过长，仅保留尾部...]\n" + data.decode("utf-8", errors="replace")
+            return f.read().decode("utf-8", errors="replace")
+    except Exception as e:  # noqa: BLE001
+        return f"(读取输出失败: {e})"
 
 
 def _flush_pending():
@@ -149,7 +204,6 @@ def main():
     #       （其中可能包含训练任务）。若不丢弃，agent 复活后会逐条重跑，
     #       既烧 GPU 又堵死串行通道。
     first_poll = True
-    last_beat = 0.0
     # 启动即清空服务端队列里"启动前"的陈旧命令。
     # 传 before=started_at -> 只清更早的，不会误删"启动后刚入队"的新命令。
     # 老版本服务端不支持 before 参数，会全清；此时 fresh_after 仍然兜底。
@@ -160,16 +214,25 @@ def main():
         pass
     except Exception as e:  # noqa: BLE001
         _log(f"startup clearall skipped: {e}")
+
+    # 心跳放到独立线程：主线程在跑长命令（训练可达数十分钟）时，
+    # 心跳仍要持续上报，否则客户端会误判"agent 死了"并重启它。
+    _stop_beat = threading.Event()
+
+    def _beat_loop():
+        while not _stop_beat.is_set():
+            try:
+                _req("/heartbeat", {"pid": os.getpid(), "ts": int(time.time())}, timeout=15)
+            except Exception:  # noqa: BLE001
+                pass
+            _stop_beat.wait(10)
+
+    _beat_thread = threading.Thread(target=_beat_loop, daemon=True)
+    _beat_thread.start()
+
     while True:
         try:
             _flush_pending()
-            # 心跳：让客户端能区分"agent 死了"和"agent 正在跑长命令"
-            if time.time() - last_beat > 10:
-                last_beat = time.time()
-                try:
-                    _req("/heartbeat", {"pid": os.getpid(), "ts": int(time.time())})
-                except Exception:  # noqa: BLE001
-                    pass
             if first_poll:
                 data = _req(f"/poll?fresh_after={started_at}", timeout=30)
                 first_poll = False
