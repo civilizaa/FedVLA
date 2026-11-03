@@ -42,16 +42,28 @@ print("=== 全局是否覆盖所有客户端的域 ===")
 all_domains = set()
 for st in client_st:
     all_domains |= set(domains_of(st, "stems"))
+# heads / normalizer 的键是二级结构（heads.<domain>），
+# 而 stems 是三级（stems.<domain>_<modality>）—— 不能拿 stems 的域集合去比 heads/normalizer。
+base_domains = set()
+for st in client_st:
+    for pref in ("heads", "normalizer"):
+        base_domains |= set(domains_of(st, pref))
+
 g_stems = set(domains_of(g, "stems"))
 g_heads = set(domains_of(g, "heads"))
 g_norm = set(domains_of(g, "normalizer"))
+print("  客户端域并集 (stems 口径):", sorted(all_domains))
+print("  客户端域并集 (heads/normalizer 口径):", sorted(base_domains))
 missing = all_domains - g_stems
-print("  客户端域并集:", sorted(all_domains))
 print("  全局 stems 缺失:", sorted(missing) if missing else "无 ✓")
-if all_domains - g_heads:
-    print("  [!] 全局 heads 缺失:", sorted(all_domains - g_heads))
-if all_domains - g_norm:
-    print("  [!] 全局 normalizer 缺失:", sorted(all_domains - g_norm))
+if base_domains - g_heads:
+    print("  [!] 全局 heads 缺失:", sorted(base_domains - g_heads))
+else:
+    print("  全局 heads 缺失: 无 ✓")
+if base_domains - g_norm:
+    print("  [!] 全局 normalizer 缺失:", sorted(base_domains - g_norm))
+else:
+    print("  全局 normalizer 缺失: 无 ✓")
 
 print()
 print("=== trunk 是否为 4 客户端的平均（不是拷贝）===")
