@@ -94,6 +94,32 @@ if ! grep -q "FedVLA patch" "$POLICY_FILE"; then
 fi
 echo "[OK] load_trunk 补丁已就位"
 
+# ===== 全局步数感知调度（可选，默认开启）=====
+# 背景：HPT 原生把 cosine 的 T_max 硬编码为 train.total_iters，联邦下这是
+# 【单轮本地步数】；再加上每轮一个新进程（scheduler/optimizer 重建），
+# 于是 50 轮 = 50 次 "warmup -> cosine -> 0" 的 LR 重启，且 Adam 动量每轮清零。
+# 补丁让 lr 成为【全局进度 p】的函数，联邦 50 轮的 lr 轨迹与同预算集中式逐点相同。
+USE_GLOBAL_LR=${USE_GLOBAL_LR:-1}
+WARMUP_FRAC=${WARMUP_FRAC:-0.25}
+if [ "$USE_GLOBAL_LR" = "1" ]; then
+  SCHED_FILE="${HPT_DIR:-/root/HPT}/hpt/utils/fedvla_lr.py"
+  if [ ! -f "$SCHED_FILE" ]; then
+    echo "[!!] 找不到 $SCHED_FILE —— 全局调度补丁未打！"
+    echo "     请先执行：python $SCRIPT_DIR/patch_hpt_global_lr.py"
+    echo "     （或用 USE_GLOBAL_LR=0 退回原生调度，但会重现 50 次 LR 重启）"
+    exit 1
+  fi
+  if ! grep -q "GlobalStepLRScheduler" "${HPT_DIR:-/root/HPT}/hpt/run.py"; then
+    echo "[!!] hpt/run.py 里没有 GlobalStepLRScheduler —— 补丁未注入！"
+    exit 1
+  fi
+  echo "[OK] 全局步数感知调度补丁已就位（warmup_frac=$WARMUP_FRAC）"
+else
+  echo "[WARN] USE_GLOBAL_LR=0 —— 使用 HPT 原生调度（每轮重启 warmup+cosine）"
+  unset FEDVLA_GLOBAL_LR FEDVLA_P_START FEDVLA_P_END FEDVLA_NUM_STEPS \
+        FEDVLA_WARMUP_FRAC FEDVLA_OPT_STATE
+fi
+
 # ===== 开训前硬拦截：全局目录必须有 extras.pth =====
 # extras.pth 存 modalities_tokens（policy 顶层 ParameterDict，不在 trunk 内）。
 # 缺失时续训的模态 token 保持随机初始化，共享 trunk 会收到不一致输入。
@@ -127,10 +153,33 @@ for ((r=START_ROUND; r<NUM_ROUNDS; r++)); do
     C_EPOCH_SIZE="${CLIENT_EPOCH_SIZE[$c]}"
     C_TOTAL_ITERS=$((LOCAL_EPOCHS * C_EPOCH_SIZE - 1))
     C_WARMUP=$(( (C_TOTAL_ITERS + WARMUP_RATIO_NUM - 1) / WARMUP_RATIO_NUM ))
+    # 实际执行的优化步数 = LOCAL_EPOCHS × epoch_size
+    # （total_iters 是"停止阈值"，真实步数比它多 1，见 fedavg_config.sh 的说明）
+    C_LOCAL_STEPS=$((LOCAL_EPOCHS * C_EPOCH_SIZE))
     CLIENT_OUT="$OUTPUT_ROOT/client_${c}_r${r}"
     LOG="$OUTPUT_ROOT/log_client_${c}_r${r}.txt"
     echo "[round $r] client $c  domains=$DOMAINS env=$CLIENT_ENV  epoch_size=$C_EPOCH_SIZE" \
          "total_iters=$C_TOTAL_ITERS warmup=$C_WARMUP -> $CLIENT_OUT"
+
+    # ---- 全局调度的进度区间 ----
+    # 第 r 轮对应全局进度 [r/R, (r+1)/R]，轮内再按本地步数细分。
+    # 这样 50 轮的 lr 轨迹与同预算集中式逐点相同。
+    if [ "$USE_GLOBAL_LR" = "1" ]; then
+      P_START=$(awk "BEGIN{printf \"%.10f\", $r / $NUM_ROUNDS}")
+      P_END=$(awk "BEGIN{printf \"%.10f\", ($r + 1) / $NUM_ROUNDS}")
+      export FEDVLA_GLOBAL_LR=1
+      export FEDVLA_P_START="$P_START"
+      export FEDVLA_P_END="$P_END"
+      export FEDVLA_NUM_STEPS="$C_LOCAL_STEPS"
+      export FEDVLA_WARMUP_FRAC="$WARMUP_FRAC"
+      # Adam 状态跨轮持久化（每个客户端一份；同一客户端的域固定，参数量稳定）
+      # FEDVLA_PERSIST_OPT=0 可关掉（用于消融：只开全局 lr，不持久化 Adam）
+      if [ "${FEDVLA_PERSIST_OPT:-1}" = "1" ]; then
+        export FEDVLA_OPT_STATE="$OUTPUT_ROOT/opt_state_c${c}.pt"
+      else
+        unset FEDVLA_OPT_STATE
+      fi
+    fi
 
     "$HPT_PY" -m hpt.run \
       env=mujoco_metaworld \

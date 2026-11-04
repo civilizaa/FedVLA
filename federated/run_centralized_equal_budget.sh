@@ -18,6 +18,19 @@ FED_ROUNDS=${FED_ROUNDS:-50}
 LOCAL_EPOCHS=${LOCAL_EPOCHS:-3}
 HPT_PY=/root/miniconda3/envs/hpt/bin/python
 
+# 全局步数感知调度（与联邦同一套调度定义，保证 lr 轨迹逐点可比）
+USE_GLOBAL_LR=${USE_GLOBAL_LR:-1}
+WARMUP_FRAC=${WARMUP_FRAC:-0.25}
+if [ "$USE_GLOBAL_LR" = "1" ]; then
+  SCHED_FILE="${HPT_DIR:-/root/HPT}/hpt/utils/fedvla_lr.py"
+  if [ ! -f "$SCHED_FILE" ]; then
+    echo "[!!] 找不到 $SCHED_FILE —— 全局调度补丁未打！"
+    echo "     请先执行：python /root/HPT/federated/patch_hpt_global_lr.py"
+    exit 1
+  fi
+  echo "[OK] 全局步数感知调度（warmup_frac=$WARMUP_FRAC）"
+fi
+
 export WANDB_MODE=offline MUJOCO_GL=egl HF_ENDPOINT=https://hf-mirror.com
 export OMP_NUM_THREADS=8
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/.mujoco/mujoco210/bin
@@ -34,6 +47,11 @@ mkdir -p "$OUT_ROOT"
 for t in "${TASKS[@]}"; do
   set -- $t
   task="$1"; dom="$2"; env="$3"; esize="$4"
+  # ONLY_TASK=task1 可以只跑一个任务（消融实验用，省时间）
+  if [ -n "${ONLY_TASK:-}" ] && [ "$task" != "$ONLY_TASK" ]; then
+    echo "[SKIP] $task（ONLY_TASK=$ONLY_TASK）"
+    continue
+  fi
 
   # 每个客户端的等预算步数：轮数 × 本地 epoch × 该任务的 epoch_size
   if [ -n "${ITERS:-}" ]; then
@@ -53,6 +71,17 @@ for t in "${TASKS[@]}"; do
 
   echo "===== 等预算集中式 $task  domain=$dom env=$env  iters=$iters warmup=$warmup ====="
   t0=$(date +%s)
+  if [ "$USE_GLOBAL_LR" = "1" ]; then
+    export FEDVLA_GLOBAL_LR=1
+    export FEDVLA_P_START=0
+    export FEDVLA_P_END=1
+    export FEDVLA_NUM_STEPS="$iters"
+    export FEDVLA_WARMUP_FRAC="$WARMUP_FRAC"
+    unset FEDVLA_OPT_STATE
+  else
+    unset FEDVLA_GLOBAL_LR FEDVLA_P_START FEDVLA_P_END FEDVLA_NUM_STEPS \
+          FEDVLA_WARMUP_FRAC FEDVLA_OPT_STATE
+  fi
   (
     cd /root/HPT || exit 1
     "$HPT_PY" -m hpt.run \
