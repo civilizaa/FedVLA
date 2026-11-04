@@ -38,9 +38,12 @@ done
 
 # ---- 工具：数一个评估日志里已完成的 seed 数（每个 seed 一张 reward 表）----
 count_seeds() {
-  # $1 = log 路径；每个 seed 结束会打印 "| avg" 行
-  [ -f "$1" ] || { echo 0; return; }
-  grep -c '^| avg' "$1" 2>/dev/null || echo 0
+  # ⚠️ grep -c 在 0 匹配时退出码为 1，直接 `|| echo 0` 会得到 "0\n0"，
+  #    再拿去 `[ "$x" -lt 3 ]` 会报 "integer expression expected" 并走错分支。
+  local n
+  n=$(grep -c '^| avg' "$1" 2>/dev/null)
+  [ -n "$n" ] || n=0
+  echo "$n"
 }
 
 echo
