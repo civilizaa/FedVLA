@@ -1,4 +1,4 @@
-"""FedVLA 服务器端聚合（FedAvg）。
+"""FedVLA 服务器端聚合（FedAvg / EDA）。
 
 每个联邦轮结束后调用一次：把 4 个客户端的 `model.pth`（完整 state_dict）读出，
 只平均 **trunk** 参数（键前缀 `trunk.`），然后写回全局目录：
@@ -12,6 +12,13 @@
 heads.<domain>），不同客户端的域不同，无法跨客户端平均，且 FedVLA 本就是"trunk 共享聚合、
 stem/head 个性化"。所以全局模型 = 平均 trunk + 各客户端 stem/head 并集。
 
+两种聚合模式
+------------
+  * FedAvg（默认）：所有层、所有参数用同一组（可样本加权的）权重。
+  * EDA（`--eda`）：**逐层**加权 —— 每个 MoE 层用自己那一行 EDA 权重，
+    权重来自各客户端的专家选择计数（`expert_counts.pt`）。
+    这就是 H2「按簇/中心性聚合更优」的实验路径。
+
 依赖：torch（在 hpt 环境里跑）。用法见 federated/README.md。
 """
 from __future__ import annotations
@@ -22,6 +29,11 @@ import shutil
 import sys
 
 import torch
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from eda import (aggregate_state_dicts, block_indices_from_names,  # noqa: E402
+                 cluster_clients, cluster_report, eda_cluster_weights,
+                 eda_diagnostics, eda_weights, format_weight_report)
 
 
 def _load_state(path: str) -> dict:
@@ -62,6 +74,56 @@ def average_trunk(client_states: list[dict], weights: list[float] | None = None)
             raise RuntimeError(f"客户端 trunk 参数形状不一致，键={k}: {e}")
         avg[k] = sum(wnorm[i] * client_states[i][k] for i in range(len(client_states)))
     return avg
+
+
+def average_trunk_eda(client_states: list[dict], weights: torch.Tensor,
+                      block_map: list[int]) -> dict:
+    """EDA 逐层加权聚合 trunk。
+
+    weights  : (L, N)，第 r 行对应 block_map[r] 号 transformer block
+    block_map: 行号 -> transformer block 号
+
+    非 MoE block 的参数与共享参数用"沿层平均"的权重
+    （等价于整体中心性权重；见 eda.py 的说明）。
+    """
+    trunk_keys = [k for k in client_states[0] if _is_trunk_key(k)]
+    if not trunk_keys:
+        raise KeyError("未在客户端 state_dict 中找到任何 `trunk.` 前缀参数；请检查 HPT 版本。")
+
+    sub = [{k: v for k, v in sd.items() if _is_trunk_key(k)} for sd in client_states]
+    avg = aggregate_state_dicts(sub, weights=weights, num_layers=weights.shape[0],
+                                 block_map=block_map)
+    # 键前缀在 aggregate_state_dicts 里被保留（我们只截取了 trunk.* 的子集）
+    return avg
+
+
+def load_expert_counts(client_dirs: list[str]):
+    """读各客户端的 expert_counts.pt，返回 (V, names)。
+
+    V: (N, L, K) 的选择计数张量；names: 对应的模块路径列表。
+    """
+    mats, names = [], None
+    for d in client_dirs:
+        p = os.path.join(d, "expert_counts.pt")
+        if not os.path.exists(p):
+            raise FileNotFoundError(
+                f"找不到专家计数文件：{p}\n"
+                f"  EDA 模式需要客户端开启 FEDVLA_MOE=1 并导出 expert_counts.pt。")
+        blob = torch.load(p, map_location="cpu", weights_only=False)
+        M = blob["counts"] if isinstance(blob, dict) else blob
+        if M.dim() != 2:
+            raise ValueError(f"{p}: counts 应为 (L, K)，实际 {tuple(M.shape)}")
+        mats.append(M.double())
+        if names is None:
+            names = list(blob["names"]) if isinstance(blob, dict) else []
+    L = mats[0].shape[0]
+    for i, m in enumerate(mats):
+        if m.shape != mats[0].shape:
+            raise ValueError(f"客户端 {i} 的专家计数形状 {tuple(m.shape)} "
+                             f"与客户端 0 的 {tuple(mats[0].shape)} 不一致")
+    V = torch.stack(mats, dim=0)          # (N, L, K)
+    return V, (names or [])
+
 
 
 def _tensor_equal_shape(vals: list) -> bool:
@@ -172,13 +234,61 @@ def extract_extras(full: dict) -> dict:
 
 
 
-def aggregate(client_dirs: list[str], out_dir: str, weights: list[float] | None = None):
+def aggregate(client_dirs: list[str], out_dir: str, weights: list[float] | None = None,
+              eda_mode: bool = False, client_tasks: list[str] | None = None,
+              eda_cluster: bool = False, num_clusters: int | None = None):
     os.makedirs(out_dir, exist_ok=True)
     client_models = [os.path.join(d, "model.pth") for d in client_dirs]
     states = [_load_state(m) for m in client_models]
 
-    print(f"[aggregate] 客户端数={len(states)}  权重={weights}")
-    trunk_avg = average_trunk(states, weights)
+    if eda_mode:
+        print(f"[aggregate] EDA 模式：客户端数={len(states)}"
+              f"{'（簇感知：簇内加权 + 簇间等权）' if eda_cluster else '（中心性加权）'}")
+        V, names = load_expert_counts(client_dirs)
+        block_map = block_indices_from_names(names) if names else list(range(V.shape[1]))
+        clusters = None
+        if eda_cluster:
+            clusters = cluster_clients(V, num_clusters=num_clusters)
+            print(f"[aggregate] 客户端分簇结果: "
+                  f"{dict(zip([f'c{i}' for i in range(len(states))], clusters))}")
+            print(cluster_report(V, clusters, client_tasks))
+            w = eda_cluster_weights(V, clusters)
+        else:
+            w = eda_weights(V)                    # (L, N)
+        if len(block_map) != w.shape[0]:
+            raise ValueError(f"从专家计数名解析出 {len(block_map)} 个 block，"
+                             f"但权重的层数是 {w.shape[0]}；两者必须一致")
+        print(f"[aggregate] EDA 权重形状={tuple(w.shape)}  对应 block={block_map}")
+        print(format_weight_report(w, client_tasks or [f"c{i}" for i in range(len(states))],
+                                   layer_names=[f"block{b}" for b in block_map]))
+        diag = eda_diagnostics(V, client_tasks)
+        # 非 trunk 参数（normalizer 统计量 / modalities_tokens）也用 EDA 的平均权重，
+        # 保证"整份模型"用的是同一套客户端重要性判断。
+        weights = diag["mean_weights"].tolist()
+        trunk_avg = average_trunk_eda(states, w, block_map)
+        # 把权重与诊断落盘，论文表格/图直接引用
+        torch.save({"weights": w, "block_map": block_map,
+                    "counts": V, "names": names, "clusters": clusters},
+                   os.path.join(out_dir, "eda_weights.pt"))
+        with open(os.path.join(out_dir, "eda_report.txt"), "w", encoding="utf-8") as f:
+            f.write(format_weight_report(
+                w, client_tasks or [f"c{i}" for i in range(len(states))],
+                layer_names=[f"block{b}" for b in block_map]))
+            f.write("\n\n平均权重: ")
+            f.write(", ".join(f"c{i}={v:.4f}" for i, v in
+                              enumerate(diag["mean_weights"].tolist())))
+            f.write("\n")
+            if clusters is not None:
+                f.write("\n簇划分: " + str(clusters) + "\n")
+                f.write(cluster_report(V, clusters, client_tasks) + "\n")
+            if client_tasks:
+                f.write("同任务相似度: " + ", ".join(f"{v:.4f}" for v in diag["within_task_sim"]))
+                f.write("\n异任务相似度: " + ", ".join(f"{v:.4f}" for v in diag["across_task_sim"]))
+                f.write("\n")
+    else:
+        print(f"[aggregate] FedAvg 模式：客户端数={len(states)}  权重={weights}")
+        trunk_avg = average_trunk(states, weights)
+
     full = build_global_model(states, trunk_avg, weights)
     trunk_only = extract_trunk_only(trunk_avg)
 
@@ -199,18 +309,33 @@ def aggregate(client_dirs: list[str], out_dir: str, weights: list[float] | None 
 
 
 def main(argv=None):
-    p = argparse.ArgumentParser(description="FedVLA FedAvg 聚合")
+    p = argparse.ArgumentParser(description="FedVLA 聚合（FedAvg / EDA）")
     p.add_argument("--clients", nargs="+", required=True,
                    help="各客户端输出目录（含 model.pth），空格分隔")
     p.add_argument("--out", required=True, help="全局模型输出目录")
     p.add_argument("--weights", nargs="+", type=float, default=None,
                    help="可选：各客户端样本量权重（FedAvg 样本加权）；省略则等权")
+    p.add_argument("--eda", action="store_true",
+                   help="用 EDA（专家驱动聚合）替代等权 FedAvg：逐层按专家计数相似度加权")
+    p.add_argument("--eda-cluster", action="store_true",
+                   help="簇感知聚合：先分簇，簇内中心性加权 + 簇间等权（需配合 --eda）")
+    p.add_argument("--num-clusters", type=int, default=None,
+                   help="簇感知聚合的目标簇数；省略则自动")
+    p.add_argument("--tasks", nargs="+", default=None,
+                   help="可选：各客户端对应的任务名，用于 EDA 诊断报告")
     args = p.parse_args(argv)
 
     if args.weights is not None and len(args.weights) != len(args.clients):
         p.error("--weights 数量必须与 --clients 一致")
+    if args.tasks is not None and len(args.tasks) != len(args.clients):
+        p.error("--tasks 数量必须与 --clients 一致")
+    if args.eda_cluster and not args.eda:
+        p.error("--eda-cluster 需要配合 --eda 一起使用")
 
-    aggregate(args.clients, args.out, args.weights)
+    aggregate(args.clients, args.out, args.weights, eda_mode=args.eda,
+              client_tasks=args.tasks, eda_cluster=args.eda_cluster,
+              num_clusters=args.num_clusters)
+
 
 
 if __name__ == "__main__":

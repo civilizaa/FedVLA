@@ -120,6 +120,57 @@ else
         FEDVLA_WARMUP_FRAC FEDVLA_OPT_STATE
 fi
 
+# ===== MoE（top-k 专家混合）开关 =====
+# 第 3 阶段的实验开关。默认关闭（保持与门2 完全一致的基线行为）。
+# 开启后：
+#   - 客户端在 HPT trunk 的后半层 block 上挂「稠密 FFN + 并联零初始化 MoE 残差」
+#     （训练起点严格等于预训练模型，预训练权重原样载入）
+#   - 每轮本地训练结束导出 expert_counts.pt（专家选择计数）
+#   - 聚合可选 EDA（逐层按计数相似度加权）—— 见 AGG_MODE
+USE_MOE=${USE_MOE:-0}
+MOE_EXPERTS=${MOE_EXPERTS:-8}
+MOE_TOPK=${MOE_TOPK:-2}
+MOE_EXPERT_RATIO=${MOE_EXPERT_RATIO:-0.25}
+MOE_LAYERS=${MOE_LAYERS:-half}
+if [ "$USE_MOE" = "1" ]; then
+  HPT_ROOT="${HPT_DIR:-/root/HPT}"
+  if [ ! -f "$HPT_ROOT/hpt/utils/fedvla_moe.py" ]; then
+    echo "[!!] 找不到 $HPT_ROOT/hpt/utils/fedvla_moe.py —— MoE 补丁未打！"
+    echo "     请先执行：python $SCRIPT_DIR/patch_hpt_moe.py"
+    exit 1
+  fi
+  if ! grep -q "FedVLA-MOE" "$HPT_ROOT/hpt/models/transformer.py"; then
+    echo "[!!] transformer.py 里没有 FedVLA-MOE 标记 —— MoE 补丁未注入！"
+    exit 1
+  fi
+  if ! grep -q "FedVLA-MOE" "$HPT_ROOT/hpt/models/policy.py"; then
+    echo "[!!] policy.py 里没有 FedVLA-MOE 标记 —— load_trunk 的 MoE 适配未注入！"
+    echo "     注意：MoE 补丁必须打在 load_trunk 补丁之后"
+    echo "     请先执行：python $SCRIPT_DIR/patch_hpt_load_trunk.py"
+    echo "               python $SCRIPT_DIR/patch_hpt_moe.py"
+    exit 1
+  fi
+  export FEDVLA_MOE=1
+  export FEDVLA_MOE_EXPERTS="$MOE_EXPERTS"
+  export FEDVLA_MOE_TOPK="$MOE_TOPK"
+  export FEDVLA_MOE_EXPERT_RATIO="$MOE_EXPERT_RATIO"
+  export FEDVLA_MOE_LAYERS="$MOE_LAYERS"
+  echo "[OK] MoE 已开启（E=$MOE_EXPERTS k=$MOE_TOPK ratio=$MOE_EXPERT_RATIO layers=$MOE_LAYERS）"
+fi
+
+# ===== 聚合模式：fedavg | eda | eda_cluster =====
+# fedavg    ：所有层用同一组权重（等权或按样本数）
+# eda       ：逐层用 EDA 中心性权重（来自专家选择计数的余弦相似度）
+# eda_cluster：簇感知 —— 先分簇，簇内中心性加权 + 簇间等权（H2 的执行路径）
+AGG_MODE=${AGG_MODE:-fedavg}
+if [ "$AGG_MODE" != "fedavg" ]; then
+  if [ "$USE_MOE" != "1" ]; then
+    echo "[!!] AGG_MODE=$AGG_MODE 需要 USE_MOE=1（EDA 的信号来自专家计数）"
+    exit 1
+  fi
+  echo "[OK] 聚合模式 = $AGG_MODE"
+fi
+
 # ===== 开训前硬拦截：全局目录必须有 extras.pth =====
 # extras.pth 存 modalities_tokens（policy 顶层 ParameterDict，不在 trunk 内）。
 # 缺失时续训的模态 token 保持随机初始化，共享 trunk 会收到不一致输入。
@@ -181,6 +232,11 @@ for ((r=START_ROUND; r<NUM_ROUNDS; r++)); do
       fi
     fi
 
+    # ---- 专家计数导出路径（EDA 的输入信号）----
+    if [ "$USE_MOE" = "1" ]; then
+      export FEDVLA_MOE_COUNTS="$CLIENT_OUT/expert_counts.pt"
+    fi
+
     "$HPT_PY" -m hpt.run \
       env=mujoco_metaworld \
       train.pretrained_dir="$PRETRAINED" \
@@ -238,7 +294,19 @@ PY
   CLIENT_DIRS=()
   for ((c=0; c<NUM_CLIENTS; c++)); do CLIENT_DIRS+=("$OUTPUT_ROOT/client_${c}_r${r}"); done
   AGG_ARGS=( --clients "${CLIENT_DIRS[@]}" --out "$GLOBAL_DIR" )
-  if [ "$FEDAVG_WEIGHTS" = "data" ]; then
+  if [ "$AGG_MODE" = "eda" ] || [ "$AGG_MODE" = "eda_cluster" ]; then
+    # EDA：逐层权重由各客户端的专家计数算出（无需外部指定 --weights）
+    TASKS=()
+    for ((c=0; c<NUM_CLIENTS; c++)); do TASKS+=("${CLIENT_DOMAINS[$c]}"); done
+    AGG_ARGS+=( --eda --tasks "${TASKS[@]}" )
+    if [ "$AGG_MODE" = "eda_cluster" ]; then
+      AGG_ARGS+=( --eda-cluster )
+      if [ -n "${EDA_NUM_CLUSTERS:-}" ]; then
+        AGG_ARGS+=( --num-clusters "$EDA_NUM_CLUSTERS" )
+      fi
+    fi
+    echo "[round $r] 聚合模式: $AGG_MODE（tasks: ${TASKS[*]}）"
+  elif [ "$FEDAVG_WEIGHTS" = "data" ]; then
     # 教科书 FedAvg：按各客户端本地样本数(=epoch_size)加权
     W=()
     for ((c=0; c<NUM_CLIENTS; c++)); do W+=("${CLIENT_EPOCH_SIZE[$c]}"); done
