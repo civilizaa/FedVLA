@@ -54,10 +54,24 @@ def similarity_matrix(V: torch.Tensor) -> torch.Tensor:
     return sim
 
 
-def eda_weights(V: torch.Tensor, eps: float = 1e-12) -> torch.Tensor:
-    """EDA 权重。V: (N, L, K) → w: (L, N)，每行沿 N 维和为 1。"""
+def eda_weights(V: torch.Tensor, eps: float = 1e-12,
+                clamp_nonneg: bool = True) -> torch.Tensor:
+    """EDA 权重。V: (N, L, K) → w: (L, N)，每行沿 N 维和为 1。
+
+    ⚠️ **非负性不变量**（2026-11-05 逐字推导 + 实测）：
+    真实场景下 V 是**专家计数**，元素非负 → 任意两个客户端的余弦相似度
+    `⟨V_i, V_j⟩ / (|V_i||V_j|) ≥ 0`（非负向量内积非负）→ `totals ≥ 0`
+    → 权重必然非负。**因此负权重（权重外推）在本管线里不会出现。**
+
+    但 `clamp_nonneg=True` 保留为防御：万一将来 V 变成有符号
+    （如改成梯度表示），负权重会让 `aggregate_state_dicts` 做**权重外推**，
+    是"训练不收敛"的经典诱因。clamp 对合法的非负输入是无操作，
+    只在异常输入时才生效，并顺带重新归一化保证行和为 1。
+    """
     sim = similarity_matrix(V)                          # (L, N, N)
     totals = sim.sum(dim=2)                             # (L, N)
+    if clamp_nonneg:
+        totals = totals.clamp_min(0.0)
     denom = totals.sum(dim=1, keepdim=True).clamp_min(eps)
     return totals / denom
 
@@ -289,7 +303,7 @@ def eda_cluster_weights(V: torch.Tensor, clusters: Sequence[int],
             continue
         idx = torch.tensor(members, dtype=torch.long)
         sub = sim[:, idx][:, :, idx]                 # (L, m, m)
-        totals = sub.sum(dim=2)                     # (L, m)
+        totals = sub.sum(dim=2).clamp_min(0.0)       # (L, m) —— 同 eda_weights 的非负不变量
         denom = totals.sum(dim=1, keepdim=True).clamp_min(eps)   # (L, 1)
         w[:, idx] = (totals / denom) / C
     # 归一化（浮点误差修正）
