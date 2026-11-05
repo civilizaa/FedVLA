@@ -49,6 +49,21 @@ pick_global () {
   ls -dt "$1"/global_r* 2>/dev/null | head -1
 }
 
+# 模型的**实际目录**。两种布局：
+#   联邦变体：$OUT/<name>/global_r<N>/          （pick_global）
+#   集中式变体：$OUT/<name>/task1/              （没有 global_r*！）
+# ⚠️ 2026-11-05 修正：g2b_central_eq 下只有 task1/，用 pick_global 会返回空
+#    → E3 基线被静默跳过，表格里 E3 列全空。
+pick_model_dir () {
+  local root="$1"
+  local g; g=$(pick_global "$root")
+  if [ -n "$g" ]; then echo "$g"; return 0; fi
+  for cand in "$root"/task1 "$root"/task2 "$root"/task3; do
+    [ -f "$cand/model.pth" ] && { echo "$cand"; return 0; }
+  done
+  echo ""
+}
+
 # 评估是否已经完成（3 个 seed -> 3 张表）
 eval_done () {
   local logf="$1" n
@@ -85,29 +100,36 @@ eval_one () {
 }
 
 # 评估一个变体（按 split 决定任务集）
+# eval_variant <目录名> <split> [log_tag]
+#   目录名：$OUT/<name> 下的 global_r*
+#   log_tag：评估日志的 tag 前缀。**默认与目录名相同**，
+#            但门2' 的三个基线必须显式传**带轮次后缀**的 tag，
+#            否则会与门2' 评估守护（run_gate2b_eval.sh）生成的日志
+#            不同名 → eval_done 判不出来 → **同一个模型被重复评估**
+#            （历史：基线占 5 次评估 ≈ 55 分钟纯浪费）。
 eval_variant () {
-  local tag="$1" split="$2"
+  local tag="$1" split="$2" log_tag="${3:-$1}"
   has_stage "$tag" || return 0
-  local g; g=$(pick_global "$OUT/$tag")
+  local g; g=$(pick_model_dir "$OUT/$tag")
   if [ -z "$g" ]; then
-    log "[SKIP] $tag 无全局模型目录（$OUT/$tag/global_r*）"
+    log "[SKIP] $tag 无可用模型目录（$OUT/$tag/global_r* 或 task1/）"
     return 0
   fi
   if [ "$split" = "iid" ]; then
-    eval_one "$g" mujoco_metaworld_task1 reach-v2 "$tag"
+    eval_one "$g" mujoco_metaworld_task1 reach-v2 "$log_tag"
   else
-    eval_one "$g" mujoco_metaworld_task1 reach-v2                "$tag"
-    eval_one "$g" mujoco_metaworld_task2 push-v2                "$tag"
-    eval_one "$g" mujoco_metaworld_task3 button-press-topdown-v2 "$tag"
+    eval_one "$g" mujoco_metaworld_task1 reach-v2                "$log_tag"
+    eval_one "$g" mujoco_metaworld_task2 push-v2                "$log_tag"
+    eval_one "$g" mujoco_metaworld_task3 button-press-topdown-v2 "$log_tag"
   fi
 }
 
 log "===== 第 3 阶段成功率评估（stages=$STAGES n_jobs=$N_JOBS）====="
 
 # 门2' 的基线（门2' 评估守护已用不同 LOG_TAG 评过一遍，这里用统一 tag 再评一次）
-eval_variant g2b_central_eq      iid
-eval_variant g2b_iid_e4          iid
-eval_variant g2b_hetero          hetero
+eval_variant g2b_central_eq      iid    g2b_central_eq
+eval_variant g2b_iid_e4          iid    g2b_iid_e4_r49
+eval_variant g2b_hetero          hetero g2b_hetero_r49
 # 第 3 阶段四个实验组
 eval_variant p3_moe_fedavg       hetero
 eval_variant p3_moe_eda          hetero
