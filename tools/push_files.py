@@ -333,6 +333,24 @@ def push_text(text, remote, label="", retries=3):
     return False
 
 
+def cleanup_parts(remote_dir="/root/HPT/federated"):
+    """删掉历史推送遗留的分片残骸（*.part000 / *.part000.h0.h1... / x.h0）。
+
+    这些是旧版"整目录 tar 推送"失败时留下的半成品：
+    内容无害，但会让 `ls federated/` 一片狼藉，
+    更糟的是 —— **掩盖真实文件的缺失**（看起来文件很多，实际关键的可能不在）。
+    """
+    d = fix_remote(remote_dir).rstrip("/")
+    cmd = f'find {d} -maxdepth 1 -name "*.part*" -delete 2>/dev/null; true'
+    try:
+        cid, _ = enqueue(cmd, timeout=60)
+        if cid is not None:
+            wait_results([cid], timeout=120)
+        log("    [清理] 已删除历史分片残骸")
+    except Exception as e:  # noqa: BLE001
+        log(f"    [清理] 跳过（{type(e).__name__}）")
+
+
 def push_file(local, remote):
     remote = fix_remote(remote)
     text = open(local, encoding="utf-8").read()
@@ -472,6 +490,9 @@ def main():
 
     log(f"开始推送 {len(items)} 个文件到 {URL}")
     wait_queue_drain(max_wait=60)
+    # 清理历史推送留下的分片残骸（旧的整目录 push_dir 会产生 *.part000.h0.h1...）。
+    # 它们无害但会让 `ls federated/` 一片狼藉，且掩盖真实文件的缺失。
+    cleanup_parts()
     allok = True
     for local, remote in items:
         cands = [local] if os.path.isabs(local) else [
