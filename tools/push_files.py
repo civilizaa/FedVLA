@@ -103,35 +103,57 @@ def log(*a):
     print(f"[{time.strftime('%H:%M:%S')}]", *a, flush=True)
 
 
-def req(path, data=None, timeout=90):
-    sep = "&" if "?" in path else "?"
+def req(path, data=None, timeout=90, retries=8):
+    """带重试的请求。
+
+    ⚠️ 网关会**随机**返回 403（限流），必须重试 —— 2026-11-05 实测：
+    同一 URL 连续请求，前几次 403、后面 200，UA 无关。
+    """
     body = json.dumps(data, ensure_ascii=False).encode("utf-8") if data is not None else None
-    r = urllib.request.Request(URL + f"{path}{sep}sharecode={SC}", data=body,
-                               method="POST" if data is not None else "GET")
-    r.add_header("X-Relay-Token", TOKEN)
-    r.add_header("Content-Type", "application/json")
-    with _op.open(r, timeout=timeout) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+    last = None
+    for attempt in range(retries):
+        r = urllib.request.Request(URL + f"{path}{'&' if '?' in path else '?'}sharecode={SC}",
+                                   data=body,
+                                   method="POST" if data is not None else "GET")
+        r.add_header("X-Relay-Token", TOKEN)
+        r.add_header("Content-Type", "application/json")
+        try:
+            with _op.open(r, timeout=timeout) as resp:
+                return json.loads(resp.read().decode("utf-8"))
+        except urllib.error.HTTPError as e:
+            last = f"HTTP {e.code}"
+            if e.code not in (403, 429, 502, 503):
+                raise
+        except Exception as e:  # noqa: BLE001
+            last = f"{type(e).__name__}: {e}"
+        time.sleep(min(2 ** attempt, 8))
+    raise RuntimeError(f"relay 请求失败（重试 {retries} 次）: {last}")
 
 
-def enqueue(cmd, timeout=300):
+def enqueue(cmd, timeout=300, retries=6):
     """入队一条命令。返回 (cid or None, http_status)。
 
     ⚠️ 403 **不代表命令没执行** —— 网关只拦响应，副作用已发生。
     调用方必须靠 /results 或 md5 复核，不能只看 HTTP 码就重推。
+
+    实现说明（2026-11-05）：统一走 req()，避免两套 URL 拼接 / 错误处理
+    产生差异。此前 enqueue() 自建 Request，大文件（>4KB base64）时
+    出现过「返回 cid 但命令没落地」的静默失败，手工复刻同一流程却成功。
     """
-    body = json.dumps({"cmd": cmd, "cwd": "/root/HPT",
-                       "timeout": timeout, "bg": False},
-                      ensure_ascii=False).encode("utf-8")
-    r = urllib.request.Request(URL + f"/enqueue?sharecode={SC}", data=body,
-                               method="POST")
-    r.add_header("X-Relay-Token", TOKEN)
-    r.add_header("Content-Type", "application/json")
-    try:
-        with _op.open(r, timeout=120) as resp:
-            return json.loads(resp.read().decode("utf-8")).get("id"), resp.status
-    except urllib.error.HTTPError as e:
-        return None, e.code
+    for attempt in range(retries):
+        try:
+            res = req("/enqueue",
+                      data={"cmd": cmd, "cwd": "/root/HPT",
+                            "timeout": timeout, "bg": False},
+                      timeout=120, retries=1)
+            return res.get("id"), 200
+        except urllib.error.HTTPError as e:
+            if e.code not in (403, 429, 502, 503):
+                return None, e.code
+        except Exception:  # noqa: BLE001
+            pass
+        time.sleep(min(2 ** attempt, 8))
+    return None, 403
 
 
 def wait_results(cids, timeout=900):
@@ -202,21 +224,37 @@ def md5_local(path):
     return h.hexdigest()
 
 
-def md5_remote(remote):
-    """取云端文件 md5。走 enqueue（/run 长轮询会被网关掐成 504）。"""
-    cid, st = enqueue(f"md5sum {remote} 2>/dev/null | cut -d' ' -f1", timeout=60)
+def md5_remote(remote, wait=240):
+    """取云端文件 md5。走 enqueue（/run 长轮询会被网关掐成 504）。
+
+    ⚠️ agent 是**串行**执行命令的：云端正在跑联邦训练时，
+    我们入队的 md5sum 会排在队列里等，wait 超时 -> 返回 "" ->
+    上层误判成"文件没写对"。所以这里在首轮等待失败后再等一轮。
+    """
+    cid, st = enqueue(f"md5sum {remote} 2>/dev/null | cut -d' ' -f1", timeout=120)
     if cid is None:
         return ""
-    res = wait_results([cid], timeout=180).get(cid, {})
+    res = wait_results([cid], timeout=wait).get(cid, {})
+    out = (res.get("out") or "").strip()
+    if out:
+        return out.split()[0]
+    # 首轮没拿到（大概率是排队等待），再等一轮
+    res = wait_results([cid], timeout=wait).get(cid, {})
     out = (res.get("out") or "").strip()
     return out.split()[0] if out else ""
 
 
 def b64_put_cmd(text: str, remote: str) -> str:
-    """构造 base64 反解写入命令（已验证能过 WAF）。"""
+    """构造 base64 反解写入命令（已验证能过 WAF）。
+
+    2026-11-05 改造：**写入的同时把 md5 打出来**。
+    原先写入和校验是两条命令，agent 忙时校验命令排队超时 ->
+    误判成"推送失败"。合并成一条后，写入结果和校验结果同源，
+    不再有第二条命令的时序风险。
+    """
     b64 = base64.b64encode(text.encode("utf-8")).decode("ascii")
-    py = ("import base64,sys;open('" + remote + "','wb')"
-          ".write(base64.b64decode(sys.stdin.read()))")
+    py = ("import base64,sys,hashlib;d=base64.b64decode(sys.stdin.read());"
+          "open('" + remote + "','wb').write(d);print(hashlib.md5(d).hexdigest())")
     return f"python3 -c \"{py}\" << 'WEOF'\n{b64}\nWEOF\n"
 
 
@@ -249,15 +287,17 @@ def push_text(text, remote, label="", retries=3):
                 continue
             return False
         res = wait_results([cid], timeout=300).get(cid, {})
-        if res.get("rc") == 0:
-            got = md5_remote(remote)
-            if got == want:
-                log(f"    [OK] {label} md5={want[:12]}（一致）")
-                return True
-            log(f"    [WARN] {label} md5 不符 want={want[:12]} got={got[:12]}")
-        else:
+        # 写入命令自己会打印落盘内容的 md5 —— 写入与校验同源，无需第二条命令
+        out = (res.get("out") or "").strip()
+        got = out.split()[0] if out else ""
+        if got == want:
+            log(f"    [OK] {label} md5={want[:12]}（一致）")
+            return True
+        if res.get("rc") != 0:
             log(f"    [FAIL] {label} rc={res.get('rc')} "
                 f"err={(res.get('err') or '')[:120]}")
+        else:
+            log(f"    [WARN] {label} md5 不符 want={want[:12]} got={got[:12]}")
         if attempt < retries - 1:
             time.sleep(3)
     return False
@@ -360,6 +400,9 @@ def main():
     ap = argparse.ArgumentParser(description="推送文件/目录到云端 AutoDL")
     ap.add_argument("--file", action="append", default=None,
                     help="本地文件（可重复），需配合 --remote")
+    ap.add_argument("--files", default=None,
+                    help="逗号分隔的本地文件名列表，配合 --remote 指定【目录】，"
+                         "按 basename 逐个推送")
     ap.add_argument("--remote", default=None, help="配合 --file 指定云端路径")
     ap.add_argument("--dir", default=None, help="本地目录，配合 --remote 指定云端目录")
     ap.add_argument("--list", action="store_true", help="只列清单")
@@ -384,6 +427,12 @@ def main():
         if not args.remote:
             ap.error("--file 需要配合 --remote")
         items = [(args.file[0], args.remote)]
+    elif args.files:
+        if not args.remote:
+            ap.error("--files 需要配合 --remote（云端目录）")
+        names = [x.strip() for x in args.files.split(",") if x.strip()]
+        items = [(n, os.path.join(args.remote.rstrip("/"), os.path.basename(n)))
+                 for n in names]
     else:
         items = DEFAULT_FILES
 
