@@ -105,6 +105,66 @@ doctor () {
 
 has_stage () { case " $STAGES " in *" $1 "*) return 0;; *) return 1;; esac; }
 
+# ── 拉起评估守护 ────────────────────────────────────────────────────────────
+# 背景（2026-11-05 第三次实例重启）：评估守护（gate2b_eval_watch /
+# phase3_eval_watch）是**独立进程**，实例关机时会被一起杀掉，而
+# resume_all.sh 原本只管训练 → 重启后训练续跑了，评估却永远不会触发，
+# 训练跑完也只有 loss 曲线、没有成功率。
+# 这里在实验启动**之前**把它们拉起来，且做幂等检查（已在跑就不重复起）。
+start_eval_watchers () {
+  banner "拉起评估守护"
+  for w in gate2b_eval_watch phase3_eval_watch; do
+    script="$SCRIPT_DIR/$w.sh"
+    [ -f "$script" ] || { echo "    -- $w.sh 不存在，跳过（需重新推送）"; continue; }
+    if pgrep -f "$w.sh" > /dev/null 2>&1; then
+      echo "    [OK] $w 已在运行 (pid $(pgrep -f "$w.sh" | head -1))"
+      continue
+    fi
+    nohup setsid bash "$script" > "$OUT/${w}.log" 2>&1 < /dev/null &
+    sleep 1
+    echo "    [OK] $w 已启动 (pid $(pgrep -f "$w.sh" | head -1))"
+  done
+}
+
+# ── 等评估完成 ──────────────────────────────────────────────────────────────
+# 背景：评估由守护进程**异步**执行（各等自己的 DONE 标记，然后独占 GPU 评估）。
+# 如果训练一结束就直接提取，成功率列会全是空 —— 这正是 2026-11-05 差点
+# 让 8 小时训练白跑的那个坑。这里在提取前显式等两个评估守护收工。
+wait_evals () {
+  banner "等待评估完成"
+  local timeout=${EVAL_WAIT:-21600}     # 默认最多等 6 小时
+  local deadline=$(( $(date +%s) + timeout ))
+  while :; do
+    local pending=""
+    for w_name in gate2b_eval_watch phase3_eval_watch; do
+      case "$w_name" in
+        gate2b_eval_watch) marker=GATE2B_EVAL_WATCH_DONE; logf=gate2b_eval_watch.log ;;
+        phase3_eval_watch) marker=PHASE3_EVAL_WATCH_DONE; logf=phase3_eval_watch.log ;;
+      esac
+      if grep -q "$marker" "$OUT/$logf" 2>/dev/null; then
+        continue                                   # 已完成
+      fi
+      if pgrep -f "$w_name.sh" > /dev/null 2>&1; then
+        alive=1                                   # 还在跑，等它
+        pending="$pending $w_name"
+      else
+        echo "    [WARN] $w_name 未运行且无完成标记 —— 跳过等待"
+      fi
+    done
+    if [ -z "$pending" ]; then
+      echo "    [OK] 评估全部完成（或无可等待项）"
+      return 0
+    fi
+    if [ "$(date +%s)" -gt "$deadline" ]; then
+      echo "    !! 等待评估超时，仍缺:$pending"
+      echo "    !! 先按现有产物提取（可能缺成功率列），稍后可重跑提取脚本"
+      return 1
+    fi
+    echo "    等待中:$pending  ($(date '+%H:%M:%S'))"
+    sleep 120
+  done
+}
+
 # ── 门2' ───────────────────────────────────────────────────────────────────
 run_gate2b () {
   banner "门2'：联邦管线损耗归因消融（V1 V2 E3 E4 E5）"
@@ -142,10 +202,15 @@ if [ "$CHECK_ONLY" = "1" ]; then
 fi
 
 RC=0
+# 守护必须先起：它们等的是各自的 DONE 标记，与训练并行不抢 GPU；
+# 但若训练跑完才起，中间已经完成的阶段会被跳过 —— 所以越早起越安全。
+start_eval_watchers
 has_stage gate2b && { run_gate2b || RC=1; }
 has_stage phase3 && { run_phase3 || RC=1; }
 
 banner "结果提取"
+# 先等评估守护收工，否则成功率列会是空的
+wait_evals || true
 run_extract
 
 banner "汇总"
