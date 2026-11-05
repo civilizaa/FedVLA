@@ -76,9 +76,17 @@ run_iid () {   # $1=tag $2=rounds $3=是否持久化 Adam
     return 0
   fi
   banner "IID 联邦：$tag  rounds=$rounds  Adam持久化=$optstate"
+  # 断点续跑：实例中途关机时不从头再来
+  local sr; sr=$(detect_start_round "$root" "$((rounds-1))")
+  if [ "$sr" -gt 0 ]; then
+    echo "[续跑] $tag 已有完整轮次到 r$((sr-1))，从第 $sr 轮继续（省下 $sr 轮）"
+  else
+    echo "[新跑] $tag 从第 0 轮开始"
+  fi
   ( cd /root/HPT && \
     OUTPUT_ROOT="$root" \
     NUM_ROUNDS="$rounds" \
+    START_ROUND="$sr" \
     USE_GLOBAL_LR=1 \
     WARMUP_FRAC=0.25 \
     CLIENT_DOMAINS_OVERRIDE="$IID_DOMAINS" \
@@ -93,6 +101,24 @@ run_iid () {   # $1=tag $2=rounds $3=是否持久化 Adam
 
 # run_fedavg.sh 里的 Adam 持久化开关：FEDVLA_PERSIST_OPT=0/1
 # （run_fedavg.sh 用它决定是否 export FEDVLA_OPT_STATE）
+
+# ── 断点续跑：找出最后一个"完整"轮次，从 N+1 继续 ─────────────────────────
+# 判据 global_r<N>/trunk.pth：只在**本轮 4 个客户端全部训练完 + 聚合完**后生成，
+# 所以它存在 == 第 N 轮真正跑完（不是半截）。
+# 安全性依据：
+#   1) 全局 lr 进度 P_START = r / NUM_ROUNDS（**绝对轮次**，不是进程内步数）
+#      → 续跑的 lr 轨迹与从头跑到同一轮**逐点相同**
+#   2) opt_state_c*.pt 每轮结束覆写 → global_r<N> 存在时它正好是第 N 轮状态
+#   3) cleanup_old_rounds(cur, keep) 只删 d < cur-keep → 续跑点 global_rN 不会被删
+detect_start_round () {
+  local root="$1" last="$2" d
+  for ((d=last; d>=0; d--)); do
+    if [ -f "$root/global_r${d}/trunk.pth" ]; then
+      echo $((d + 1)); return 0
+    fi
+  done
+  echo 0
+}
 
 if has_stage V1; then
   run_iid g2b_iid_v1 10 0 || echo "[WARN] V1 失败，继续下一阶段"
@@ -125,8 +151,15 @@ if has_stage E5; then
     echo "[SKIP] E5 已完成"
   else
     banner "E5：异构联邦 50 轮（全局 lr + Adam 持久化）"
+    # 断点续跑：实例中途关机时不从头再来
+    local sr; sr=$(detect_start_round "$root" 49)
+    if [ "$sr" -gt 0 ]; then
+      echo "[续跑] E5 已有完整轮次到 r$((sr-1))，从第 $sr 轮继续（省下 $sr 轮）"
+    else
+      echo "[新跑] E5 从第 0 轮开始"
+    fi
     ( cd /root/HPT && \
-      OUTPUT_ROOT="$root" NUM_ROUNDS=50 USE_GLOBAL_LR=1 WARMUP_FRAC=0.25 \
+      OUTPUT_ROOT="$root" NUM_ROUNDS=50 START_ROUND="$sr" USE_GLOBAL_LR=1 WARMUP_FRAC=0.25 \
       FEDVLA_PERSIST_OPT=1 \
       bash "$SCRIPT_DIR/run_fedavg.sh" ) > "$LOGDIR/e5_hetero.log" 2>&1
     echo "[---] E5 rc=$?，日志尾部："; tail -n 15 "$LOGDIR/e5_hetero.log"

@@ -70,6 +70,26 @@ MOE_LAYERS=${MOE_LAYERS:-half}
 has_stage () { case " $STAGES " in *" $1 "*) return 0;; *) return 1;; esac; }
 banner () { echo; echo "=============================================================="; echo ">>> $*"; echo "=============================================================="; }
 
+# ── 断点续跑：找出最后一个"完整"轮次，从 N+1 继续 ─────────────────────────
+# 判据用 global_r<N>/trunk.pth —— 该文件只在**本轮 4 个客户端全部训练完 + 聚合完**
+# 之后才生成，所以它存在 == 第 N 轮真正跑完（不是半截）。
+# 安全性的三个依据：
+#   1) 全局 lr 进度是 P_START = r / NUM_ROUNDS（按**绝对轮次**算，不是进程内步数）
+#      → 从第 N+1 轮续跑的 lr 轨迹与从头跑到第 N+1 轮**逐点相同**
+#   2) Adam 状态 opt_state_c*.pt 是每轮结束时覆写的
+#      → global_r<N> 存在时，opt_state 正好是第 N 轮的状态，与续跑点匹配
+#   3) run_fedavg.sh 的 cleanup_old_rounds(cur, keep) 只删 d < cur-keep 的轮次
+#      → 续跑点 global_rN 不会被清理掉（PRETRAINED 依赖它）
+detect_start_round () {
+  local root="$1" last="$2" d
+  for ((d=last; d>=0; d--)); do
+    if [ -f "$root/global_r${d}/trunk.pth" ]; then
+      echo $((d + 1)); return 0
+    fi
+  done
+  echo 0
+}
+
 # ── 阶段 0：前置检查 + 打补丁 ─────────────────────────────────────────────
 banner "阶段 0：前置检查 + 打 MoE 补丁"
 
@@ -112,6 +132,13 @@ run_exp () {  # $1=tag $2=agg_mode $3=client_split(iid|hetero)
     return 0
   fi
   banner "$tag  聚合=$agg  划分=$split  rounds=$NUM_ROUNDS"
+  # 断点续跑：实例中途关机时不从头再来
+  local sr; sr=$(detect_start_round "$root" "$last")
+  if [ "$sr" -gt 0 ]; then
+    echo "[续跑] $tag 已有完整轮次到 r$((sr - 1))，从第 $sr 轮继续（省下 $sr 轮）"
+  else
+    echo "[新跑] $tag 从第 0 轮开始"
+  fi
   local env_extra=()
   if [ "$split" = "iid" ]; then
     env_extra=(
@@ -123,6 +150,7 @@ run_exp () {  # $1=tag $2=agg_mode $3=client_split(iid|hetero)
   ( cd /root/HPT && \
     env OUTPUT_ROOT="$root" \
         NUM_ROUNDS="$NUM_ROUNDS" \
+        START_ROUND="$sr" \
         USE_GLOBAL_LR=1 \
         WARMUP_FRAC=0.25 \
         FEDVLA_PERSIST_OPT=1 \
