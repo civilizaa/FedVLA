@@ -75,16 +75,37 @@ def parse_log(path):
 
 
 def find_eval_log(out_root, tag, domain):
-    """评估日志名带 LOG_TAG 与 domain（见 eval_model.sh）。"""
+    """评估日志名带 LOG_TAG 与 domain（见 eval_model.sh）。
+
+    ⚠️ tag 可能带轮次后缀，必须容错匹配：
+       门2' 的评估守护用的是 `g2b_hetero_r49` / `g2b_iid_e4_r49` 这类 LOG_TAG，
+       而本提取器的 STAGES 用的是不带后缀的 `g2b_hetero` / `g2b_iid_e4`。
+       若只做精确匹配，基线三列会全空（表格只剩第 3 阶段的行）。
+       所以这里按「精确 → 带轮次后缀 → 任意后缀」逐级放宽。
+
+    多个候选同时存在时，选**表数最多**的那个（= 评估最完整），
+    而不是最新改动的那个（可能只跑了 1 个 seed 就中断）。
+    """
     cands = [
         os.path.join(out_root, f"eval_{tag}_{domain}.log"),
         os.path.join(out_root, f"eval_{tag}_{domain}.out"),
     ]
-    cands += sorted(glob.glob(os.path.join(out_root, f"eval_{tag}_{domain}*.log")))
+    # 带轮次后缀：eval_g2b_hetero_r49_<domain>.log
+    for pat in (f"eval_{tag}_r*_{domain}.log", f"eval_{tag}_*_{domain}.log"):
+        cands += sorted(glob.glob(os.path.join(out_root, pat)))
+
+    best, best_n = None, -1
     for c in cands:
-        if os.path.isfile(c):
-            return c
-    return None
+        if not os.path.isfile(c):
+            continue
+        try:
+            txt = open(c, "r", encoding="utf-8", errors="replace").read()
+        except Exception:
+            continue
+        n = len(AVG_RE.findall(txt))
+        if n > best_n:
+            best, best_n = c, n
+    return best
 
 
 def collect_stage(out_root, tag):

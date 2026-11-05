@@ -203,17 +203,38 @@ def fix_remote(remote: str) -> str:
     踩坑（2026-11-04）：在 Windows Git Bash 里传 `--remote /root/HPT/...`，
     MSYS 会把参数转成 `C:/Users/<user>/AppData/.../PortableGit/root/HPT/...`，
     原样发到云端 Linux 会写到非法相对路径。
+
+    ⚠️ 踩坑（2026-11-05，**静默写错位置**）：
+    下面三个 marker 都以 "/root/" 结尾，但代码只返回了 "/" + 剩余部分
+    → 把 "root" 这一段吃掉了：`C:/Program Files/Git/root/HPT/federated/`
+    被还原成 `/HPT/federated/`（少了一层）。
+    更糟的是它写到了一个**看起来合法**的路径上，
+    于是推送工具报 "md5 一致"（md5 确实是那个文件的内容），
+    但文件根本不在 /root/HPT/federated/ 下 —— 假成功。
+    现在三个 marker 统一还原成 "/root/" + 剩余部分。
     """
     if remote.startswith("/"):
         return remote
     for marker in ("/PortableGit/root/", "/msys64/root/", "/Git/root/"):
         idx = remote.find(marker)
         if idx >= 0:
-            return "/" + remote[idx + len(marker):]
+            return "/root/" + remote[idx + len(marker):]
     idx = remote.find("/root/")
     if idx >= 0:
         return remote[idx:]
     return remote
+
+
+def posix_join(directory: str, name: str) -> str:
+    """拼 Linux 路径。**不能用 os.path.join**。
+
+    踩坑（2026-11-05）：Windows 上 os.path.join 用反斜杠分隔，
+    结果得到 `/root/HPT/federated\\run_phase3_eval.sh`。
+    这个字符串进了云端的 python 代码后，`\r` 被 Python 当成**回车符**，
+    文件实际落到了 `/HPT/federated<CR>un_phase3_eval.sh` —— 路径彻底错位。
+    而且 md5 校验照样"通过"（校验的就是那个错位文件本身）。
+    """
+    return directory.rstrip("/") + "/" + name
 
 
 def md5_local(path):
@@ -291,8 +312,17 @@ def push_text(text, remote, label="", retries=3):
         out = (res.get("out") or "").strip()
         got = out.split()[0] if out else ""
         if got == want:
-            log(f"    [OK] {label} md5={want[:12]}（一致）")
-            return True
+            # ⚠️ 自报 md5 只证明「写了个内容对的文件」，**不证明写在了目标路径**。
+            # 2026-11-05 踩坑：路径被 Windows 反斜杠污染，文件落到 `/HPT/federated<CR>un_...`，
+            # 而自报 md5 完全正常 -> 假成功。必须独立回读目标路径再确认一次。
+            time.sleep(1)
+            back = md5_remote(remote)
+            if back == want:
+                log(f"    [OK] {label} md5={want[:12]}（一致，回读校验通过）")
+                return True
+            log(f"    [FAIL] {label} 目标路径回读 md5={back[:12] or '缺文件'} "
+                f"!= {want[:12]} —— 写到了别处，不算成功")
+            return False
         if res.get("rc") != 0:
             log(f"    [FAIL] {label} rc={res.get('rc')} "
                 f"err={(res.get('err') or '')[:120]}")
@@ -431,7 +461,7 @@ def main():
         if not args.remote:
             ap.error("--files 需要配合 --remote（云端目录）")
         names = [x.strip() for x in args.files.split(",") if x.strip()]
-        items = [(n, os.path.join(args.remote.rstrip("/"), os.path.basename(n)))
+        items = [(n, posix_join(args.remote, os.path.basename(n)))
                  for n in names]
     else:
         items = DEFAULT_FILES
