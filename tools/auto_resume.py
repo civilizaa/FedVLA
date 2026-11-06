@@ -130,21 +130,39 @@ def wait_agent(max_wait=7200, poll=30):
 
 
 def push_all():
-    """整目录推送 + md5 校验。返回 True/False。"""
-    log("推送 federated/ 整目录（base64 tar 包）...")
+    """逐文件推送 + md5 校验。返回 True/False。
+
+    刻意**不再用整目录 tar 推送**（2026-11-05 教训）：
+    整目录打包失败时会在云端留下 60+ 个 *.part000.h0.h1... 残骸，
+    残骸会**掩盖真实文件的缺失**（ls 看起来文件很多，关键的可能不在），
+    而且 tar 一次性覆盖，无法逐个回读校验。
+    逐文件推送每个都有独立回读校验，失败能定位到具体文件。
+    """
+    log("推送 federated/ 关键文件（逐文件，带回读校验）...")
     pf.wait_queue_drain(max_wait=120)
-    if not pf.push_dir(FED, "/root/HPT/federated"):
-        log("!! 整目录推送失败，退回逐文件推送")
-        for local, remote in pf.DEFAULT_FILES:
-            cands = [os.path.join(FED, local), local]
-            path = next((p for p in cands if os.path.exists(p)), cands[0])
-            if os.path.exists(path):
-                pf.push_file(path, remote)
-    return True
+    pf.cleanup_parts("/root/HPT/federated")
+    n_ok = n_bad = 0
+    for local, remote in pf.DEFAULT_FILES:
+        cands = [os.path.join(FED, local), local]
+        path = next((p for p in cands if os.path.exists(p)), None)
+        if not path:
+            log(f"  [MISS] {local}（本地不存在，跳过）")
+            continue
+        if pf.push_file(path, remote):
+            n_ok += 1
+        else:
+            n_bad += 1
+            log(f"  [FAIL] {local}")
+    log(f"  推送完成：成功 {n_ok}，失败 {n_bad}")
+    return n_bad == 0
 
 
 def verify():
-    """逐文件比对云端 md5，不一致的重推一次。"""
+    """逐文件比对云端 md5，不一致的重推一次。返回**重推后**的真实结果。
+
+    （旧版返回的是重推**前**的 bad 列表 → 即使重推成功也返回 False，
+      是个假阳性，会让调用方误以为推送失败。）
+    """
     log("校验云端文件 md5 ...")
     bad = []
     for local, remote in pf.DEFAULT_FILES:
@@ -164,11 +182,16 @@ def verify():
         for path, remote in bad:
             pf.push_file(path, remote)
         log("重推完成，再次校验")
+        still_bad = []
         for path, remote in bad:
             lm = pf.md5_local(path)
             rm = pf.md5_remote(pf.fix_remote(remote))
-            log(f"  {'[OK]' if lm == rm else '[FAIL]'} {os.path.basename(path)}")
-    return not bad
+            ok = (lm == rm)
+            log(f"  {'[OK]' if ok else '[FAIL]'} {os.path.basename(path)}")
+            if not ok:
+                still_bad.append(path)
+        return not still_bad
+    return True
 
 
 def start_experiment():
@@ -233,7 +256,11 @@ def main():
     push_all()
     ok = verify()
     if not ok:
-        log("!! md5 仍有不一致")
+        # 用**没同步成功的代码**跑 8 小时实验 = 白烧 8 小时 GPU 且产出一份
+        # 不可信的表格。宁可停下来让人看一眼。
+        log("!! md5 校验仍有不一致 —— 拒绝启动实验")
+        log("!! 请手动检查云端文件，或重跑本脚本")
+        return 2
     start_experiment()
     log("=== 接管完成，实验已启动 ===")
     log("日志: /root/HPT/output/resume_all.log")

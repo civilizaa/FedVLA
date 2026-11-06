@@ -64,12 +64,21 @@ DEFAULT_FILES = [
     ("run_fedavg.sh", "/root/HPT/federated/run_fedavg.sh"),
     ("run_centralized_equal_budget.sh", "/root/HPT/federated/run_centralized_equal_budget.sh"),
     ("run_gate2b.sh", "/root/HPT/federated/run_gate2b.sh"),
+    # 门2' 的评估链路（训练守护 + 评估守护 + 提取器）
+    # —— 少任何一个，"训练跑完但成功率列全空"，且不报错
+    ("run_gate2b_eval.sh", "/root/HPT/federated/run_gate2b_eval.sh"),
+    ("gate2b_eval_watch.sh", "/root/HPT/federated/gate2b_eval_watch.sh"),
+    ("extract_gate2b_results.py", "/root/HPT/federated/extract_gate2b_results.py"),
     # 第 3 阶段：MoE + EDA
     ("fedvla_moe.py", "/root/HPT/federated/fedvla_moe.py"),
     ("eda.py", "/root/HPT/federated/eda.py"),
     ("aggregate.py", "/root/HPT/federated/aggregate.py"),
     ("extract_phase3_results.py", "/root/HPT/federated/extract_phase3_results.py"),
+    ("build_phase3_report.py", "/root/HPT/federated/build_phase3_report.py"),
     ("run_phase3.sh", "/root/HPT/federated/run_phase3.sh"),
+    # 第 3 阶段的评估链路（同上，少一个就白跑 8 小时）
+    ("run_phase3_eval.sh", "/root/HPT/federated/run_phase3_eval.sh"),
+    ("phase3_eval_watch.sh", "/root/HPT/federated/phase3_eval_watch.sh"),
     # 实例重启后的一键恢复
     ("resume_all.sh", "/root/HPT/federated/resume_all.sh"),
 ]
