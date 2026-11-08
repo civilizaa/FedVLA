@@ -304,7 +304,11 @@ PY
         --seed "${COMM_SEED:-1}" --round "$r" --mode "${COMM_DROP_MODE:-fixed}")
     DROPPED_CSV=$(printf '%s' "$DROPPED_JSON" | tr -d '[] ')
     if [ -n "$DROPPED_CSV" ]; then
-      CHANNEL_ARGS+=( --drop-clients $DROPPED_CSV )
+      # ⚠️ 2026-11-08 修正：argparse 的 nargs="*" 要求**空格分隔**（--drop-clients 0 1）。
+      #    传逗号串 "0,1" 会报 "invalid int value: '0,1'" ⇒ 该轮聚合直接失败。
+      #    c_drop25（只丢 1 个）侥幸通过，c_drop50/c_drop75 在 round 1 就静默失败。
+      DROPPED_ARGS=$(printf '%s' "$DROPPED_CSV" | tr ',' ' ')
+      CHANNEL_ARGS+=( --drop-clients $DROPPED_ARGS )
       CHANNEL_ARGS+=( --prev-global "$OUTPUT_ROOT/global_r$((r-1))" )
       echo "[round $r] 通信损伤：本轮丢弃客户端 ($DROPPED_CSV)，回退源 global_r$((r-1))"
     else

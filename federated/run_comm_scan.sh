@@ -219,9 +219,26 @@ echo "轮数=$NUM_ROUNDS_COMM  配置数=${#CONFIG_TAGS[@]}  评估任务=$COMM_
 echo "丢包口径=fixed（每轮固定丢 k 个 + 轮换）  量化口径=comm_analysis.py 同源"
 echo "=============================================================="
 
+# ⚠️ 2026-11-08 修正：原来 for 循环**忽略 run_one 的返回值**，任何配置失败
+#    （训练未完成 / 评估未齐全）脚本仍然退出 0 ⇒ 上层 watcher 会 touch
+#    PHASE4_DONE ⇒ **残缺结果被当成完成**（silent failure）。
+#    c_drop50/c_drop75 就因为 --drop-clients "0,1" 传参错误在 round 1 聚合失败，
+#    而扫描"正常结束"。现在必须收集失败项并以非 0 退出。
+FAILED_TAGS=()
 for i in "${!CONFIG_TAGS[@]}"; do
-  run_one "${CONFIG_TAGS[$i]}" "${CONFIG_DROP[$i]}" "${CONFIG_QUANT[$i]}"
+  if ! run_one "${CONFIG_TAGS[$i]}" "${CONFIG_DROP[$i]}" "${CONFIG_QUANT[$i]}"; then
+    FAILED_TAGS+=("${CONFIG_TAGS[$i]}")
+    log "[!!] 配置 ${CONFIG_TAGS[$i]} 未完成（训练或评估缺失）"
+  fi
 done
+
+if [ "${#FAILED_TAGS[@]}" -gt 0 ]; then
+  echo "=============================================================="
+  log "[!!] 第4阶段通信扫描**未全部完成**：${FAILED_TAGS[*]}"
+  log "     修好问题后重跑本脚本即可续跑（幂等：已完成的配置按评估日志跳过）"
+  echo "=============================================================="
+  exit 1
+fi
 
 echo "=============================================================="
 echo "第4阶段通信损伤扫描全部处理完毕"

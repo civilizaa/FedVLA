@@ -437,8 +437,13 @@ def main(argv=None):
     p.add_argument("--tasks", nargs="+", default=None,
                    help="可选：各客户端对应的任务名，用于 EDA 诊断报告")
     # ===== 第4阶段：通信损伤 =====
-    p.add_argument("--drop-clients", nargs="*", type=int, default=None,
-                   help="本轮上行丢失的客户端索引（0 起）；不参与聚合")
+    # ⚠️ 2026-11-08 修正：原为 type=int，调用方传逗号串 "0,1" 会直接
+    #    argparse 报错 "invalid int value: '0,1'" ⇒ 整轮聚合失败。
+    #    c_drop25（只丢 1 个客户端）侥幸通过，c_drop50/c_drop75 静默失败。
+    #    改成字符串 + 手工解析，同时兼容 "0 1" 与 "0,1" 两种写法。
+    p.add_argument("--drop-clients", nargs="*", default=None,
+                   help="本轮上行丢失的客户端索引（0 起）；不参与聚合。"
+                        "支持空格分隔 '0 1' 或逗号分隔 '0,1'")
     p.add_argument("--quant-scheme", default=None,
                    help="上行共享参数的量化方案（fp32/fp16/int8_g/int4_g/int2_g/bit1/sparse1pct）")
     p.add_argument("--prev-global", default=None,
@@ -456,10 +461,17 @@ def main(argv=None):
     if args.drop_clients and not args.prev_global:
         p.error("--drop-clients 必须配合 --prev-global（否则被丢弃客户端独占的域会缺失）")
 
+    # 统一解析：容忍 "0 1" / "0,1" / "0, 1"
+    drop_idx = []
+    for tok in (args.drop_clients or []):
+        drop_idx.extend(int(x) for x in str(tok).replace(",", " ").split())
+    if drop_idx:
+        print(f"[aggregate][通信损伤] 本轮丢弃客户端索引 = {sorted(set(drop_idx))}")
+
     aggregate(args.clients, args.out, args.weights, eda_mode=args.eda,
               client_tasks=args.tasks, eda_cluster=args.eda_cluster,
               num_clusters=args.num_clusters,
-              drop_idx=args.drop_clients, quant_scheme=args.quant_scheme,
+              drop_idx=drop_idx, quant_scheme=args.quant_scheme,
               prev_global=args.prev_global, comm_report=args.comm_report)
 
 
