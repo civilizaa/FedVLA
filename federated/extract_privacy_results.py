@@ -133,6 +133,44 @@ def make_tables(agg: Dict, out_dir: str) -> str:
     return md
 
 
+def make_budget_table(runs: List[Dict], out_dir: str) -> str:
+    """预算方案对照表：每种方案在每个 σ 点上的 ε/σ/SNR/保真度。"""
+    lines = ["\n## C. 预算方案对照（相同 σ_ref ⇒ 相同总 ε）\n"]
+    lines.append("| σ_ref | 方案 | 总 ε | ε_shared | σ_shared | σ_vision | "
+                 "SNR_shared | 保真度_shared | ε_vision | ε_state | ε_action |")
+    lines.append("|---|---|---|---|---|---|---|---|---|---|---|")
+    seen = {}
+    for r in runs:
+        if r.get("kind") != "inversion" or r.get("sigma_ref") is None:
+            continue
+        key = (r["sigma_ref"], r["mode"])
+        if key in seen:
+            continue
+        seen[key] = r
+    for (sig, mode) in sorted(seen, key=lambda k: (k[0], k[1])):
+        r = seen[(sig, mode)]
+        eps_m = r.get("eps_by_modality", {})
+        sig_m = r.get("sigma_by_modality", {})
+        snr = r.get("snr_by_modality", {})
+        fid = r.get("fidelity_by_group", {})
+        eps = r.get("achieved_epsilon")
+        lines.append(
+            f"| {sig:g} | {mode} | {eps:.4g} | "
+            f"{eps_m.get('shared', float('nan')):.4g} | "
+            f"{sig_m.get('shared', float('nan')):.6g} | "
+            f"{sig_m.get('vision', float('nan')):.6g} | "
+            f"{snr.get('shared', float('nan')):.4f} | "
+            f"{fid.get('shared', float('nan')):.4f} | "
+            f"{eps_m.get('vision', float('nan')):.4g} | "
+            f"{eps_m.get('state', float('nan')):.4g} | "
+            f"{eps_m.get('action', float('nan')):.4g} |")
+    md = "\n".join(lines) + "\n"
+    with open(os.path.join(out_dir, "privacy_budget_table.md"), "w",
+              encoding="utf-8") as f:
+        f.write(md)
+    return md
+
+
 # ---------------------------------------------------------------------------
 # 图
 # ---------------------------------------------------------------------------
@@ -141,7 +179,9 @@ def fig_recon_curves(agg: Dict, out_dir: str) -> Optional[str]:
         return None
     targets = ["action", "state", "image"]
     fig, axes = plt.subplots(1, 3, figsize=(14, 4.2))
-    styles = {"uniform": ("o", "#d1495b"), "modality": ("s", "#1b6ca8")}
+    styles = {"uniform": ("o", "#d1495b"),
+              "modality": ("s", "#1b6ca8"),
+              "modality_rev": ("^", "#2a9d5c")}
     for ax, tgt in zip(axes, targets):
         for mode, (mk, col) in styles.items():
             pts = [(r["sigma_ref"], _metric(r, tgt))
@@ -338,6 +378,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     agg = _agg(runs)
     agg["_sens"] = [r for r in runs if r.get("kind") == "sensitivity"]
     make_tables(agg, args.out)
+    make_budget_table(runs, args.out)
     print("[fig]", fig_recon_curves(agg, args.out))
     print("[fig]", fig_recon_action(runs, args.out))
     print("[fig]", fig_image_feature(runs, args.out))

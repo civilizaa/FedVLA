@@ -83,9 +83,9 @@ try:
 except Exception:
     pass
 
-from dp import (DPConfig, allocate_by_sigma, allocate_modality_budget,
-                apply_dp_to_update, effective_snr, epsilon_from_sigma,
-                group_by_modality, is_shared_uplink_key)
+from dp import (DEFAULT_MODALITY_WEIGHTS, DPConfig, allocate_by_sigma,
+                allocate_modality_budget, apply_dp_to_update, effective_snr,
+                epsilon_from_sigma, group_by_modality, is_shared_uplink_key)
 from inversion import invert_observation, rel_l2
 
 DEFAULT_MODEL_DIR = "/root/HPT/output/p3_moe_eda_cluster/global_r49"
@@ -95,6 +95,21 @@ DEFAULT_OUT = "/root/HPT/output/privacy"
 
 #: 完整 MoE policy 的参数量下限（实测：完整 22.380M / 残缺 13.94M）
 MOE_PARAM_FLOOR = 18e6
+
+#: 各预算方案的**模态敏感度权重**（ε_m ∝ w_m，并行组合下 max_m ε_m = 总 ε）
+#:
+#: · `uniform`     —— 不分模态，所有通路同一个 σ
+#: · `modality`    —— **先验**权重（dp.py 的 DEFAULT_MODALITY_WEIGHTS）：
+#:   视觉最敏感 → 拿满额预算、动作噪声最大。
+#:   ⚠️ 这套权重是**事前**定的（路线图 5.2 原始设定），不因实验结果调整。
+#: · `modality_rev` —— **按实测可攻击性**重新分配（事后分析）：
+#:   消融法测得的"方向泄漏强度 1−cos"排序是 action 1.358 > image 0.760 > state 0.136，
+#:   与先验假设（视觉最敏感）**相反**。这个方案回答：
+#:   "若按实测可攻击性分配预算，保护能强多少？"
+#:   shared 权重压到 0.10 ⇒ 外传的 trunk 只拿 0.2ε_total ⇒ σ 显著更大。
+EXTRA_MODE_WEIGHTS: Dict[str, Dict[str, float]] = {
+    "modality_rev": {"vision": 0.30, "state": 0.10, "action": 0.50, "shared": 0.10},
+}
 
 
 def log(*a):
@@ -372,7 +387,9 @@ def run(args) -> Dict:
                 alloc = allocate_by_sigma(DPConfig(
                     delta=args.delta, steps=args.dp_steps,
                     num_clients=args.clients,
-                    modality_aware=(mode == "modality")), sig)
+                    modality_aware=mode.startswith("modality"),
+                    modality_weights=EXTRA_MODE_WEIGHTS.get(
+                        mode, DEFAULT_MODALITY_WEIGHTS)), sig)
                 # DP 作用在**本地全部参数**上；服务器看到的是它的 trunk 子集。
                 noisy_local = apply_dp_to_update(local_grad, alloc,
                                                  clip_norm=args.clip_norm,
@@ -417,6 +434,9 @@ def run(args) -> Dict:
                     rec["snr_by_modality"] = snr
                     rec["fidelity_by_group"] = fid
                     all_results.append(rec)
+                    # ⚠️ 每条结果**立刻**落盘：AutoDL 实例会被关机，
+                    #    只在样本末尾保存会整段丢失（实测过好几次）。
+                    _save(results_path, all_results, args)
                     log(f"[inv] σ={sig:g}/{mode}/{tgt}: {_metric_str(res)} "
                         f"(ε={alloc.achieved_epsilon:.4g}) "
                         f"保真度={json.dumps({k: round(v, 3) for k, v in fid.items()})} "
