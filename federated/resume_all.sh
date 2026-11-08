@@ -113,7 +113,11 @@ has_stage () { case " $STAGES " in *" $1 "*) return 0;; *) return 1;; esac; }
 # 这里在实验启动**之前**把它们拉起来，且做幂等检查（已在跑就不重复起）。
 start_eval_watchers () {
   banner "拉起评估守护"
-  for w in gate2b_eval_watch phase3_eval_watch; do
+  # phase3_early_eval：P3-A 训完就立刻评估，不等 P3-B/C/D（省 ~3 小时 GPU 空转）。
+  #   2026-11-07 补：之前只在手工启动时跑过，实例一重启就丢 → 必须进重启清单。
+  # phase4_watch：第4阶段通信损伤扫描（约 6 小时）。2026-11-08 补：
+  #   同理，不进清单就会在实例重启后丢失，且第4章的全部实验都要重跑。
+  for w in gate2b_eval_watch phase3_eval_watch phase3_early_eval phase4_watch; do
     script="$SCRIPT_DIR/$w.sh"
     [ -f "$script" ] || { echo "    -- $w.sh 不存在，跳过（需重新推送）"; continue; }
     if pgrep -f "$w.sh" > /dev/null 2>&1; then
@@ -136,10 +140,15 @@ wait_evals () {
   local deadline=$(( $(date +%s) + timeout ))
   while :; do
     local pending=""
-    for w_name in gate2b_eval_watch phase3_eval_watch; do
+    # ⚠️ 不等 phase4_watch：第4阶段约 6 小时，而 resume_all.sh 是挂在 relay agent
+    #    下的（单命令上限 600s，超时 SIGKILL 整个进程组）。守护本身是 nohup setsid
+    #    起的独立会话，不会被牵连；但提取不该被它阻塞 —— 第4阶段的成功率由它自己
+    #    写日志，提取脚本随时可以单独重跑。
+    for w_name in gate2b_eval_watch phase3_eval_watch phase3_early_eval; do
       case "$w_name" in
         gate2b_eval_watch) marker=GATE2B_EVAL_WATCH_DONE; logf=gate2b_eval_watch.log ;;
         phase3_eval_watch) marker=PHASE3_EVAL_WATCH_DONE; logf=phase3_eval_watch.log ;;
+        phase3_early_eval) marker=PHASE3_EARLY_EVAL_DONE; logf=phase3_early_eval.log ;;
       esac
       if grep -q "$marker" "$OUT/$logf" 2>/dev/null; then
         continue                                   # 已完成
@@ -212,6 +221,18 @@ banner "结果提取"
 # 先等评估守护收工，否则成功率列会是空的
 wait_evals || true
 run_extract
+
+# 第4阶段（通信损伤扫描）由 phase4_watch 守护在后台跑，约 6 小时。
+# 这里只报状态，不阻塞 —— 它的结果单独用 extract_comm_results.py 提取。
+if grep -q "PHASE4_DONE" "$OUT/phase4_watch.log" 2>/dev/null; then
+  banner "第 4 阶段：通信损伤扫描 —— 已完成"
+elif pgrep -f "phase4_watch.sh" > /dev/null 2>&1; then
+  banner "第 4 阶段：通信损伤扫描 —— 后台运行中（pid $(pgrep -f phase4_watch.sh | head -1)）"
+  echo "    日志：$OUT/phase4_watch.log"
+else
+  banner "第 4 阶段：通信损伤扫描 —— 未运行"
+  echo "    手动拉起：nohup setsid bash $SCRIPT_DIR/phase4_watch.sh > $OUT/phase4_watch.log 2>&1 &"
+fi
 
 banner "汇总"
 echo "结束于 $(date)  rc=$RC"

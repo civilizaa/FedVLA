@@ -290,10 +290,40 @@ PY
     fi
   fi
 
+  # ---- 上行通信损伤注入（第4阶段，可选，默认关闭）----
+  # COMM_DROP_RATE  ：本轮上行丢失的客户端比例（0=不丢）。用"固定丢 k 个 + 轮换"口径，
+  #                   不用 Bernoulli —— 实测 Bernoulli 在 n=4、rate=0.1 时会连续 50 轮
+  #                   一个都不丢（损伤被随机性完全稀释），做不出曲线。
+  # COMM_QUANT_SCHEME：上行共享参数的量化方案（fp32/int8_g/int4_g/bit1/...）。
+  # ⚠️ 第 0 轮**不注入丢包**：初始轮需要所有客户端在场，否则被丢弃客户端独占的域
+  #    在全局模型里缺失，后续轮次从这个全局模型续训也会一直缺失 → 评估直接崩。
+  CHANNEL_ARGS=()
+  if [ -n "${COMM_DROP_RATE:-}" ] && [ "${COMM_DROP_RATE}" != "0" ] && [ "$r" -ge 1 ]; then
+    DROPPED_JSON=$("$HPT_PY" "$SCRIPT_DIR/comm_channel.py" drop \
+        --n "$NUM_CLIENTS" --rate "$COMM_DROP_RATE" \
+        --seed "${COMM_SEED:-1}" --round "$r" --mode "${COMM_DROP_MODE:-fixed}")
+    DROPPED_CSV=$(printf '%s' "$DROPPED_JSON" | tr -d '[] ')
+    if [ -n "$DROPPED_CSV" ]; then
+      CHANNEL_ARGS+=( --drop-clients $DROPPED_CSV )
+      CHANNEL_ARGS+=( --prev-global "$OUTPUT_ROOT/global_r$((r-1))" )
+      echo "[round $r] 通信损伤：本轮丢弃客户端 ($DROPPED_CSV)，回退源 global_r$((r-1))"
+    else
+      echo "[round $r] 通信损伤：本轮无客户端被丢弃"
+    fi
+  fi
+  if [ -n "${COMM_QUANT_SCHEME:-}" ] && [ "$COMM_QUANT_SCHEME" != "fp32" ]; then
+    CHANNEL_ARGS+=( --quant-scheme "$COMM_QUANT_SCHEME" )
+    echo "[round $r] 通信损伤：上行量化方案 = $COMM_QUANT_SCHEME"
+  fi
+
   # ---- 服务器端聚合 ----
   CLIENT_DIRS=()
   for ((c=0; c<NUM_CLIENTS; c++)); do CLIENT_DIRS+=("$OUTPUT_ROOT/client_${c}_r${r}"); done
   AGG_ARGS=( --clients "${CLIENT_DIRS[@]}" --out "$GLOBAL_DIR" )
+  if [ "${#CHANNEL_ARGS[@]}" -gt 0 ]; then
+    AGG_ARGS+=( "${CHANNEL_ARGS[@]}" )
+  fi
+  AGG_ARGS+=( --comm-report "$OUTPUT_ROOT/comm_report_r${r}.json" )
   if [ "$AGG_MODE" = "eda" ] || [ "$AGG_MODE" = "eda_cluster" ]; then
     # EDA：逐层权重由各客户端的专家计数算出（无需外部指定 --weights）
     TASKS=()

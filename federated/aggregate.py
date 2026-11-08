@@ -34,6 +34,21 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from eda import (aggregate_state_dicts, block_indices_from_names,  # noqa: E402
                  cluster_clients, cluster_report, eda_cluster_weights,
                  eda_diagnostics, eda_weights, format_weight_report)
+from comm_channel import Quantizer  # noqa: E402
+
+
+def _is_shared_param(key: str) -> bool:
+    """这个键是否属于**上行共享**的参数（会经过链路传输）。
+
+    FedVLA 的设计是「trunk 共享聚合、stem/head 个性化」：
+      - `stems.<domain>_*` / `heads.<domain>` 是**个性化**参数，留在客户端本地不上传；
+      - `trunk.*`、`normalizer.<domain>`、`modalities_tokens.*` 是共享参数，会走链路。
+
+    所以量化（模拟链路压缩）只应作用在共享参数上 —— 这与 comm_cost.py 的
+    「上行 = trunk 参数量」口径一致。若把 stems/heads 也量化了，
+    等于把客户端本地的个性化参数也压了一遍，物理上不成立。
+    """
+    return not (key.startswith("stems.") or key.startswith("heads."))
 
 
 def _load_state(path: str) -> dict:
@@ -236,10 +251,82 @@ def extract_extras(full: dict) -> dict:
 
 def aggregate(client_dirs: list[str], out_dir: str, weights: list[float] | None = None,
               eda_mode: bool = False, client_tasks: list[str] | None = None,
-              eda_cluster: bool = False, num_clusters: int | None = None):
+              eda_cluster: bool = False, num_clusters: int | None = None,
+              drop_idx: list[int] | None = None,
+              quant_scheme: str | None = None,
+              prev_global: str | None = None,
+              comm_report: str | None = None):
+    """服务器端聚合。
+
+    第4阶段的通信损伤注入（可选，三个参数全默认 None → 行为与原来完全一致）：
+      * drop_idx     —— 这些客户端的上行更新在本轮**丢失**（信道中断/设备掉线）。
+                        它们不参与本轮平均；同时其独占域的 stem/head / normalizer
+                        必须从**上一轮全局模型**回退补齐（prev_global），
+                        否则全局模型缺域 → 评估直接崩。
+      * quant_scheme —— 上行共享参数按该量化方案压缩后再聚合（如 int8_g）。
+      * prev_global  —— 丢包时用于回退补齐的上一轮全局模型目录（含 model.pth）。
+      * comm_report  —— 通信量统计（每客户端字节数、总字节数）落盘路径。
+    """
     os.makedirs(out_dir, exist_ok=True)
     client_models = [os.path.join(d, "model.pth") for d in client_dirs]
     states = [_load_state(m) for m in client_models]
+
+    # ===== 第4阶段：上行链路损伤 =====
+    comm_info = {"dropped": [], "kept": list(range(len(states))),
+                  "quant_scheme": quant_scheme, "bytes_per_client": [],
+                  "total_bytes": 0}
+
+    if drop_idx:
+        drop_set = set(int(i) for i in drop_idx)
+        keep = [i for i in range(len(states)) if i not in drop_set]
+        if not keep:
+            raise ValueError("所有客户端都被丢弃，无法聚合（至少要保留一路）")
+        if not prev_global:
+            raise ValueError(
+                "丢包必须提供 prev_global：被丢弃客户端独占的 stem/head/normalizer "
+                "需要从上一轮全局模型回退补齐，否则全局模型缺域 → 评估直接崩。")
+        if eda_mode:
+            # 丢包 + EDA 是**兼容**的，而且语义天然自洽：
+            #   被丢弃客户端的 expert_counts.pt 本轮也没上传（它属于上行内容），
+            #   所以簇划分与权重只用**本轮收到的**客户端重算 ——
+            #   等价于"服务器这一轮只收到了 keep 这些客户端的一切"。
+            #   代价：簇结构可能随丢包波动（簇数由 elbow 启发式在 keep 子集上重定），
+            #   论文里需注明这一点。
+            print(f"[aggregate][通信损伤] 丢包 + EDA：簇结构将在本轮收到的 "
+                  f"{len(keep)} 个客户端上重算")
+        comm_info["dropped"] = sorted(drop_set)
+        comm_info["kept"] = keep
+        states = [states[i] for i in keep]
+        client_models = [client_models[i] for i in keep]
+        client_dirs = [client_dirs[i] for i in keep]
+        if weights is not None:
+            weights = [weights[i] for i in keep]
+        if client_tasks is not None:
+            client_tasks = [client_tasks[i] for i in keep]
+        print(f"[aggregate][通信损伤] 本轮丢弃客户端 {sorted(drop_set)}，"
+              f"参与聚合 {keep}")
+
+    if quant_scheme:
+        q = Quantizer(quant_scheme)
+        new_states = []
+        bytes_list = []
+        for st in states:
+            qsd = {}
+            for k, v in st.items():
+                # 只压共享参数（stems/heads 是个性化的，不上行）
+                if torch.is_tensor(v) and _is_shared_param(k) and v.is_floating_point():
+                    qsd[k] = q.apply_tensor(v)
+                else:
+                    qsd[k] = v
+            new_states.append(qsd)
+            bytes_list.append(q.theoretical_bytes({k: v for k, v in st.items()
+                                                   if _is_shared_param(k)}))
+        states = new_states
+        comm_info["bytes_per_client"] = bytes_list
+        comm_info["total_bytes"] = int(sum(bytes_list))
+        print(f"[aggregate][通信损伤] 上行量化方案 = {quant_scheme}，"
+              f"单客户端 {bytes_list[0]/1048576:.2f} MiB，"
+              f"本轮上行合计 {comm_info['total_bytes']/1048576:.2f} MiB")
 
     if eda_mode:
         print(f"[aggregate] EDA 模式：客户端数={len(states)}"
@@ -290,6 +377,26 @@ def aggregate(client_dirs: list[str], out_dir: str, weights: list[float] | None 
         trunk_avg = average_trunk(states, weights)
 
     full = build_global_model(states, trunk_avg, weights)
+
+    # ===== 丢包补偿：把被丢弃客户端独占的键从上一轮全局模型回退补齐 =====
+    # 为什么必须补：某客户端被丢弃 → 它独占域的 stems./heads./normalizer.<domain>
+    #   在本轮 states 里缺席 → 全局模型缺域 → 评估该域时 HPT 直接崩。
+    # 为什么用上一轮全局模型是对的：真实 FL 服务器本来就持有上一轮的全局模型，
+    #   丢包的客户端只是"这一轮没贡献新信息"，服务器沿用旧值继续服务，
+    #   这与真实系统的行为一致（也正是"陈旧更新/staleness"的温和版本）。
+    if drop_idx and prev_global:
+        prev_path = os.path.join(prev_global, "model.pth")
+        if os.path.exists(prev_path):
+            prev_sd = _load_state(prev_path)
+            restored = [k for k in prev_sd if k not in full]
+            for k in restored:
+                full[k] = prev_sd[k]
+            print(f"[aggregate][通信损伤] 从上一轮全局模型回退补齐 {len(restored)} 个"
+                  f"被丢弃客户端独占的键（例：{restored[:3]}）")
+        else:
+            print(f"[aggregate][通信损伤][WARN] 找不到上一轮全局模型 {prev_path}，"
+                  f"被丢弃客户端独占的域将缺失 —— 评估该域会崩！")
+
     trunk_only = extract_trunk_only(trunk_avg)
 
     torch.save(full, os.path.join(out_dir, "model.pth"))
@@ -307,6 +414,12 @@ def aggregate(client_dirs: list[str], out_dir: str, weights: list[float] | None 
             print(f"[aggregate] 复制 {fname}")
     print(f"[aggregate] 已写出全局模型 -> {out_dir}  (trunk.pth / model.pth / config*)")
 
+    if comm_report:
+        import json
+        with open(comm_report, "w", encoding="utf-8") as f:
+            json.dump(comm_info, f, ensure_ascii=False, indent=2)
+        print(f"[aggregate][通信损伤] 通信量统计 -> {comm_report}")
+
 
 def main(argv=None):
     p = argparse.ArgumentParser(description="FedVLA 聚合（FedAvg / EDA）")
@@ -323,6 +436,15 @@ def main(argv=None):
                    help="簇感知聚合的目标簇数；省略则自动")
     p.add_argument("--tasks", nargs="+", default=None,
                    help="可选：各客户端对应的任务名，用于 EDA 诊断报告")
+    # ===== 第4阶段：通信损伤 =====
+    p.add_argument("--drop-clients", nargs="*", type=int, default=None,
+                   help="本轮上行丢失的客户端索引（0 起）；不参与聚合")
+    p.add_argument("--quant-scheme", default=None,
+                   help="上行共享参数的量化方案（fp32/fp16/int8_g/int4_g/int2_g/bit1/sparse1pct）")
+    p.add_argument("--prev-global", default=None,
+                   help="上一轮全局模型目录；丢包时用于回退补齐被丢弃客户端独占的键")
+    p.add_argument("--comm-report", default=None,
+                   help="通信量统计 JSON 的落盘路径")
     args = p.parse_args(argv)
 
     if args.weights is not None and len(args.weights) != len(args.clients):
@@ -331,10 +453,14 @@ def main(argv=None):
         p.error("--tasks 数量必须与 --clients 一致")
     if args.eda_cluster and not args.eda:
         p.error("--eda-cluster 需要配合 --eda 一起使用")
+    if args.drop_clients and not args.prev_global:
+        p.error("--drop-clients 必须配合 --prev-global（否则被丢弃客户端独占的域会缺失）")
 
     aggregate(args.clients, args.out, args.weights, eda_mode=args.eda,
               client_tasks=args.tasks, eda_cluster=args.eda_cluster,
-              num_clusters=args.num_clusters)
+              num_clusters=args.num_clusters,
+              drop_idx=args.drop_clients, quant_scheme=args.quant_scheme,
+              prev_global=args.prev_global, comm_report=args.comm_report)
 
 
 

@@ -133,7 +133,8 @@ def write_md(rows, path, data):
     bmap = {r["tag"]: r for r in rows}
     lines = []
     lines.append("# 第 3 阶段结果表（MoE + EDA）\n")
-    lines.append(f"统计口径：3 seeds × 20 rollouts/seed，均值 ± 95% CI（t 分布）。"
+    lines.append(f"统计口径：3 seeds × 20 rollouts/seed，均值 ± 95% CI"
+                 f"（t 分布，df = n−1 = 2 → t₀.₉₇₅ = 4.303）。"
                  f"提取于 {data.get('generated_at','?')}。\n")
     lines.append("## 主对比表\n")
     lines.append("| 阶段 | seeds | reach-v2 | push-v2 | button-press | 三任务均值 | Δ vs 异构基线 |")

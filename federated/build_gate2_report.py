@@ -58,7 +58,7 @@ def mean_ci(vals):
     if n < 2:
         return m, 0.0, m, m
     sd = math.sqrt(sum((v - m) ** 2 for v in vals) / (n - 1))
-    half = T_CRIT_95.get(n, 1.96) * sd / math.sqrt(n)
+    half = T_CRIT_95.get(n - 1, 1.96) * sd / math.sqrt(n)   # 自由度 df = n - 1（2026-11-08 修正：原来错用 n）
     return m, half, m - half, m + half
 
 
@@ -201,7 +201,7 @@ def write_md(rows, path):
 
     lines = []
     lines.append("# FedVLA 门2 结果表\n")
-    lines.append("统计口径：**3 seeds × 20 rollouts/seed**，报均值 ± 95% 置信区间（t 分布，n=3 → t₀.₉₇₅=3.182）。")
+    lines.append("统计口径：**3 seeds × 20 rollouts/seed**，报均值 ± 95% 置信区间（t 分布，df = n−1 = 2 → t₀.₉₇₅ = 4.303）。")
     lines.append("评估环境：Meta-World (MuJoCo)，主干 HPT-Base 12.6M（冻结 stem，只训 trunk+head）。\n")
     lines.append("## 1. 主对比表（task1 = reach-v2）\n")
     lines.append("| 方法 | 任务 | 逐 seed | 均值 ± 95% CI |")

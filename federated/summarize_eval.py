@@ -67,7 +67,7 @@ def mean_ci(vals):
         return m, 0.0, m, m
     var = sum((v - m) ** 2 for v in vals) / (n - 1)
     sd = math.sqrt(var)
-    t = T_CRIT_95.get(n, 1.96)
+    t = T_CRIT_95.get(n - 1, 1.96)   # 自由度 df = n - 1（2026-11-08 修正：原来错用 n）
     half = t * sd / math.sqrt(n)
     return m, half, m - half, m + half
 

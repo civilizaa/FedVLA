@@ -79,6 +79,10 @@ DEFAULT_FILES = [
     # 第 3 阶段的评估链路（同上，少一个就白跑 8 小时）
     ("run_phase3_eval.sh", "/root/HPT/federated/run_phase3_eval.sh"),
     ("phase3_eval_watch.sh", "/root/HPT/federated/phase3_eval_watch.sh"),
+    # 提前评估：P3-A 一训完就开评，与 P3-B/C/D 训练并行（省 ~1.5h）
+    ("phase3_early_eval.sh", "/root/HPT/federated/phase3_early_eval.sh"),
+    # MoE 评估体检（证明评估链路是否真的加载了专家权重）
+    ("probe_moe_eval.py", "/root/HPT/federated/probe_moe_eval.py"),
     # 实例重启后的一键恢复
     ("resume_all.sh", "/root/HPT/federated/resume_all.sh"),
 ]

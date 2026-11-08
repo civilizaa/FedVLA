@@ -30,6 +30,11 @@ import sys
 AVG_RE = re.compile(r"^\|\s*avg\s*\|\s*([0-9]*\.?[0-9]+)\s*\|", re.M | re.I)
 TASK_RE = re.compile(r"^\|\s*([A-Za-z0-9_\-]+-v\d)\s*\|\s*([0-9]*\.?[0-9]+)\s*\|", re.M)
 
+# t 分布 95% 临界值，**键是自由度 df**（不是样本数 n！）
+# ⚠️ 2026-11-08 修正：原来写的是 `t = T_CRIT_95.get(n, 1.96)`，
+#    n=3 个样本时取到了 df=3 的 3.182，而正确的 df = n-1 = 2 → 4.303。
+#    结果是所有 3-seed 的 95% CI 被**系统性低估**（P3-C task3: 0.382 vs 正确的 0.517）。
+#    统计口径是论文的硬底线，必须按 df = n-1 取。
 T_CRIT_95 = {1: 12.706, 2: 4.303, 3: 3.182, 4: 2.776, 5: 2.571,
              6: 2.447, 7: 2.365, 8: 2.306, 9: 2.262, 10: 2.228}
 
@@ -56,7 +61,7 @@ def mean_ci(vals):
     if n < 2:
         return {"mean": m, "ci": 0.0, "lo": m, "hi": m, "n": n}
     sd = math.sqrt(sum((v - m) ** 2 for v in vals) / (n - 1))
-    t = T_CRIT_95.get(n, 1.96)
+    t = T_CRIT_95.get(n - 1, 1.96)      # 自由度 df = n - 1
     half = t * sd / math.sqrt(n)
     return {"mean": m, "ci": half, "lo": m - half, "hi": m + half, "n": n}
 
