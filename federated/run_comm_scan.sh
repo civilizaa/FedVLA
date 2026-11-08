@@ -146,7 +146,14 @@ run_one () {
   local root="$OUT/$tag"
   local last=$((NUM_ROUNDS_COMM - 1))
 
-  # ---- 完成判据：训练到最后一轮 且 评估已完成 ----
+  # ---- 完成判据：**评估齐全** ----
+  # ⚠️ 2026-11-08 修正：原来写的是
+  #      [ -f "$root/global_r${last}/trunk.pth" ] && [ "$all_eval_done" = "1" ]
+  #    但 CLEAN_AFTER_EVAL=1 会在评估完成后**删除整个权重目录** →
+  #    实例一重启，已完成配置的 global_r24/trunk.pth 已不存在 → 判据失效 →
+  #    该配置会被**从头重训 25 轮**（×7 配置 = 7 小时纯浪费），且日志被追加污染。
+  #    正确判据：评估日志 eval_<tag>_<domain>.log 存在且 ≥SEEDS 张表。
+  #    评估永远在训练之后 ⇒ "评估齐全" 蕴含 "训练完成"，是唯一可靠凭据。
   local all_eval_done=1 t d e model_dir
   for t in ${COMM_EVAL_TASKS//,/ }; do
     case "$t" in
@@ -157,8 +164,8 @@ run_one () {
     esac
     eval_done "$OUT/eval_${tag}_${d}.log" || { all_eval_done=0; break; }
   done
-  if [ -f "$root/global_r${last}/trunk.pth" ] && [ "$all_eval_done" = "1" ]; then
-    log "[SKIP] $tag 已完成（训练到 r$last 且评估齐全）"
+  if [ "$all_eval_done" = "1" ]; then
+    log "[SKIP] $tag 已完成（评估齐全：$OUT/eval_${tag}_*.log）"
     return 0
   fi
 
