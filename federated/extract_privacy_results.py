@@ -3,10 +3,10 @@
 
 读 `privacy_results.json`，产出：
   · `privacy_table.md` / `privacy_table.csv`  —— 主表
-  · `fig6_recon_action.png`   —— **动作重建对比图**（论文最直观的一张）
-  · `fig6_recon_curves.png`   —— 重建质量 vs σ（三通路 × 两种预算方案）
-  · `fig6_sensitivity.png`    —— 逐通路敏感度（消融法）
-  · `fig6_image_feature.png`  —— 视觉特征重建对比（证明视觉通路反演失败）
+  · `fig7_recon_action.png`   —— **动作重建对比图**（论文最直观的一张）
+  · `fig7_recon_curves.png`   —— 重建质量 vs σ（三通路 × 两种预算方案）
+  · `fig7_sensitivity.png`    —— 逐通路敏感度（消融法）
+  · `fig7_image_feature.png`  —— 视觉特征重建对比（证明视觉通路反演失败）
   · `第4阶段隐私侧结果与结论.md` —— 自动汇总的结论文本
 
 用法：
@@ -73,6 +73,26 @@ def _metric(rec: Dict, target: str) -> float:
     return rec.get("cos", float("nan"))
 
 
+def _fmt(v, spec: str = ".4g", dash: str = "—") -> str:
+    """安全格式化：None / NaN 一律显示破折号，避免整张表因为一个空字段崩掉。
+
+    （2026-11-08 实测：clean 基线记录与部分续跑记录没有 eps / rel_l2，
+      直接 f"{None:.4g}" 会抛 TypeError，整份报告生成不出来。）
+    """
+    if v is None:
+        return dash
+    try:
+        fv = float(v)
+    except (TypeError, ValueError):
+        return dash
+    if fv != fv:                       # NaN
+        return dash
+    try:
+        return format(fv, spec)
+    except (TypeError, ValueError):
+        return dash
+
+
 def make_tables(agg: Dict, out_dir: str) -> str:
     lines = []
     lines.append("# 第 4 阶段隐私侧结果表（DP-SGD 上行加噪 + 梯度反演）\n")
@@ -82,28 +102,43 @@ def make_tables(agg: Dict, out_dir: str) -> str:
     csv_rows = ["kind,sample,mode,sigma_ref,target,n,metric,metric_std,"
                 "rel_l2,rel_l2_std,eps,fidelity_shared"]
 
-    sens = [r for r in agg.get("_sens", [])]
+    # ⚠️ 每个扫描进程启动时都会重算一次敏感度 ⇒ modality_rev 那遍会**重复**
+    #    同 sample 的记录。表格里出现两行 sample 0 就是这么来的。
+    #    按 sample 去重（保留第一条，数值一致）。
+    sens = []
+    seen_samples = set()
+    for r in agg.get("_sens", []):
+        si = r.get("sample")
+        if si in seen_samples:
+            continue
+        seen_samples.add(si)
+        sens.append(r)
     for s in sens:
         sm = s.get("sensitivity", {})
         cg = s.get("sensitivity_cos", {})
         lines.append(
-            f"| {s['sample']} | {sm.get('image', float('nan')):.4f} | "
-            f"{sm.get('state', float('nan')):.4f} | {sm.get('action', float('nan')):.4f} | "
-            f"{1-cg.get('image', float('nan')):.4f} | {1-cg.get('state', float('nan')):.4f} | "
-            f"{1-cg.get('action', float('nan')):.4f} |")
+            f"| {s['sample']} | {_fmt(sm.get('image'), '.4f')} | "
+            f"{_fmt(sm.get('state'), '.4f')} | {_fmt(sm.get('action'), '.4f')} | "
+            f"{_fmt(1-cg.get('image') if cg.get('image') is not None else None, '.4f')} | "
+            f"{_fmt(1-cg.get('state') if cg.get('state') is not None else None, '.4f')} | "
+            f"{_fmt(1-cg.get('action') if cg.get('action') is not None else None, '.4f')} |")
         csv_rows.append(
             f"sensitivity,{s['sample']},none,,all,1,"
-            f"{sm.get('image', float('nan')):.6f},0,"
-            f"{sm.get('state', float('nan')):.6f},0,,"
-            f"{1-cg.get('image', float('nan')):.6f}")
+            f"{_fmt(sm.get('image'), '.6f')},0,"
+            f"{_fmt(sm.get('state'), '.6f')},0,,"
+            f"{_fmt(1-cg.get('image') if cg.get('image') is not None else None, '.6f')}")
 
     lines.append("\n## B. 重建质量 vs 噪声倍率 σ（均值，样本数见 n）\n")
     lines.append("| 目标 | 方案 | σ_ref | 总 ε | 指标 | 均值 | std | 相对L2 | 学习信号保真度(shared) | n |")
     lines.append("|---|---|---|---|---|---|---|---|---|---|")
-    order = sorted(agg.keys(),
+    # ⚠️ agg["_sens"] 是**字符串键**，不是三元组。
+    #    用 `k != "_sens"` 判断永远为真（字符串切片只有 1 个字符），
+    #    会把 "_sens" 当成 (mode='_', sigma='s', target='e') 混进排序与绘图，
+    #    轻则 unpack 报错，重则静默画错。必须用 `k != "_sens"` 整体比较。
+    order = sorted([k for k in agg.keys() if k != "_sens"],
                    key=lambda k: (k[2], (k[1] is None), k[1] or 0, k[0]))
     for key in order:
-        if key[0] == "_sens":
+        if key == "_sens":
             continue
         rec = agg[key]
         mode, sig, tgt = key
@@ -113,17 +148,18 @@ def make_tables(agg: Dict, out_dir: str) -> str:
         sig_s = "clean" if sig is None else f"{sig:g}"
         lines.append(
             f"| {LAB.get(tgt, tgt)} | {mode} | {sig_s} | "
-            f"{eps:.4g} | {'corr' if tgt=='image' else 'cos'} | {m:.4f} | "
-            f"{rec.get('metric_std', rec.get('cos_std', rec.get('corr_mean_std', float('nan')))):.4f} | "
-            f"{rec.get('rel_l2', float('nan')):.4f} | "
-            f"{(f'{fid:.4f}' if fid is not None else '—')} | {rec['n']} |")
+            f"{_fmt(eps)} | {'corr' if tgt=='image' else 'cos'} | {_fmt(m, '.4f')} | "
+            f"{_fmt(rec.get('metric_std', rec.get('cos_std', rec.get('corr_mean_std'))), '.4f')} | "
+            f"{_fmt(rec.get('rel_l2'), '.4f')} | "
+            f"{_fmt(fid, '.4f')} | {rec['n']} |")
         csv_rows.append(
             f"inversion,,{mode},{'' if sig is None else sig},{tgt},{rec['n']},"
-            f"{m:.6f},{rec.get('cos_std', rec.get('corr_mean_std', 0)):.6f},"
-            f"{rec.get('rel_l2', float('nan')):.6f},"
-            f"{rec.get('rel_l2_std', 0):.6f},"
-            f"{'' if eps is None else f'{eps:.6g}'},"
-            f"{'' if fid is None else f'{fid:.6f}'}")
+            f"{_fmt(m, '.6f')},"
+            f"{_fmt(rec.get('cos_std', rec.get('corr_mean_std')), '.6f')},"
+            f"{_fmt(rec.get('rel_l2'), '.6f')},"
+            f"{_fmt(rec.get('rel_l2_std'), '.6f')},"
+            f"{_fmt(eps, '.6g')},"
+            f"{_fmt(fid, '.6f')}")
 
     md = "\n".join(lines) + "\n"
     with open(os.path.join(out_dir, "privacy_table.md"), "w", encoding="utf-8") as f:
@@ -155,15 +191,15 @@ def make_budget_table(runs: List[Dict], out_dir: str) -> str:
         fid = r.get("fidelity_by_group", {})
         eps = r.get("achieved_epsilon")
         lines.append(
-            f"| {sig:g} | {mode} | {eps:.4g} | "
-            f"{eps_m.get('shared', float('nan')):.4g} | "
-            f"{sig_m.get('shared', float('nan')):.6g} | "
-            f"{sig_m.get('vision', float('nan')):.6g} | "
-            f"{snr.get('shared', float('nan')):.4f} | "
-            f"{fid.get('shared', float('nan')):.4f} | "
-            f"{eps_m.get('vision', float('nan')):.4g} | "
-            f"{eps_m.get('state', float('nan')):.4g} | "
-            f"{eps_m.get('action', float('nan')):.4g} |")
+            f"| {sig:g} | {mode} | {_fmt(eps)} | "
+            f"{_fmt(eps_m.get('shared'))} | "
+            f"{_fmt(sig_m.get('shared'), '.6g')} | "
+            f"{_fmt(sig_m.get('vision'), '.6g')} | "
+            f"{_fmt(snr.get('shared'), '.4f')} | "
+            f"{_fmt(fid.get('shared'), '.4f')} | "
+            f"{_fmt(eps_m.get('vision'))} | "
+            f"{_fmt(eps_m.get('state'))} | "
+            f"{_fmt(eps_m.get('action'))} |")
     md = "\n".join(lines) + "\n"
     with open(os.path.join(out_dir, "privacy_budget_table.md"), "w",
               encoding="utf-8") as f:
@@ -186,7 +222,7 @@ def fig_recon_curves(agg: Dict, out_dir: str) -> Optional[str]:
         for mode, (mk, col) in styles.items():
             pts = [(r["sigma_ref"], _metric(r, tgt))
                    for k, r in agg.items()
-                   if k[0] != "_sens" and r["target"] == tgt and r["mode"] == mode
+                   if k != "_sens" and r["target"] == tgt and r["mode"] == mode
                    and r["sigma_ref"] is not None]
             if not pts:
                 continue
@@ -194,12 +230,12 @@ def fig_recon_curves(agg: Dict, out_dir: str) -> Optional[str]:
             ax.plot([p[0] for p in pts], [p[1] for p in pts], marker=mk,
                     color=col, label=mode, lw=2, ms=6)
         clean = [r for k, r in agg.items()
-                 if k[0] != "_sens" and r["target"] == tgt and r["mode"] == "clean"]
+                 if k != "_sens" and r["target"] == tgt and r["mode"] == "clean"]
         if clean:
             ax.axhline(_metric(clean[0], tgt), ls="--", c="gray", lw=1.4,
                        label="no noise")
         base = [r for k, r in agg.items()
-                if k[0] != "_sens" and r["target"] == tgt and r["mode"] == "clean"]
+                if k != "_sens" and r["target"] == tgt and r["mode"] == "clean"]
         if base:
             b = base[0].get("baseline_corr_mean" if tgt == "image" else "baseline_cos")
             if b is not None:
@@ -214,7 +250,7 @@ def fig_recon_curves(agg: Dict, out_dir: str) -> Optional[str]:
     fig.suptitle("FedVLA uplink gradient inversion vs DP noise  "
                  "(3 samples, mean)", y=1.02)
     fig.tight_layout()
-    p = os.path.join(out_dir, "fig6_recon_curves.png")
+    p = os.path.join(out_dir, "fig7_recon_curves.png")
     fig.savefig(p, dpi=160, bbox_inches="tight")
     plt.close(fig)
     return p
@@ -267,7 +303,7 @@ def fig_recon_action(runs: List[Dict], out_dir: str) -> Optional[str]:
     fig.suptitle("Gradient-inversion reconstruction of the private ACTION "
                  "(label channel) from the FedVLA uplink", y=1.04)
     fig.tight_layout()
-    p = os.path.join(out_dir, "fig6_recon_action.png")
+    p = os.path.join(out_dir, "fig7_recon_action.png")
     fig.savefig(p, dpi=160, bbox_inches="tight")
     plt.close(fig)
     return p
@@ -324,7 +360,7 @@ def fig_image_feature(runs: List[Dict], out_dir: str) -> Optional[str]:
                  "recoverable from the FedVLA uplink (dimension curse)",
                  y=1.06)
     fig.tight_layout()
-    p = os.path.join(out_dir, "fig6_image_feature.png")
+    p = os.path.join(out_dir, "fig7_image_feature.png")
     fig.savefig(p, dpi=160, bbox_inches="tight")
     plt.close(fig)
     return p
@@ -358,7 +394,7 @@ def fig_sensitivity(runs: List[Dict], out_dir: str) -> Optional[str]:
                  "(ablation: replace one modality with another trajectory's)",
                  y=1.04)
     fig.tight_layout()
-    p = os.path.join(out_dir, "fig6_sensitivity.png")
+    p = os.path.join(out_dir, "fig7_sensitivity.png")
     fig.savefig(p, dpi=160, bbox_inches="tight")
     plt.close(fig)
     return p

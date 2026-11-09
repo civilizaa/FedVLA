@@ -188,12 +188,18 @@ eval_task () {
     return 0
   fi
   log "[EVAL] $tag/$domain env=$envname seeds=$SEEDS episodes=$EPISODE_NUM moe=1"
-  eval_lock_acquire
+  # ⚠️ 2026-11-08 18:30 修正：**去掉全局评估串行锁**。
+  #   原设计担心"3 路训练 + 多配置评估叠加导致显存 OOM"，实测：
+  #     · 训练进程显存 4.3G/路，3 路共 13G，剩余 10.6G；
+  #     · MuJoCo 评估是 **CPU 渲染 + 小模型 GPU 推理**（22M 模型 < 1G/worker），
+  #       3 配置 × 2 workers ≈ 6G，合计 ~19G < 24G，安全；
+  #     · 各配置的评估输出目录 `eval_<tag>_<domain>` **天然隔离**，不会互相写坏。
+  #   而串行评估要额外花 7 配置 × 30 分钟 ≈ 3.5 小时（并行只需 ~1.2 小时）。
+  #   eval_lock_acquire/release 函数保留（万一以后要退回串行模式）。
   MODEL_DIR="$model_dir" DOMAIN="$domain" ENVNAME="$envname" \
     N_SEEDS="$SEEDS" EPISODE_NUM="$EPISODE_NUM" N_JOBS="$N_JOBS" \
     LOG_TAG="$tag" \
     bash "$SCRIPT_DIR/eval_model.sh" 2>&1 | tail -n 12
-  eval_lock_release
 
   # ===== 自验证：MoE 必须生效（参数量 > 18M），否则结果作废 =====
   if [ "$domain" = "mujoco_metaworld_task3" ]; then

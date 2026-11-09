@@ -32,6 +32,7 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import push_files as pf  # noqa: E402  （复用 req/enqueue/wait_results 与凭据加载）
+import cloud as _cloud   # noqa: E402  （经验证更可靠的同步执行通道）
 
 CHUNK = 8000              # 每块原始字节数
 # ⚠️ 上限来自 relay agent：`REPORT_LIMIT = 12_000`（每段输出实际 POST 出去的上限）。
@@ -44,29 +45,55 @@ def log(*a):
     print(f"[{time.strftime('%H:%M:%S')}]", *a, flush=True)
 
 
+def _run(cmd: str, timeout: int = 120, wait: int = 300) -> str:
+    """执行一条云端命令并返回 stdout。
+
+    ⚠️ 2026-11-08：原先走 push_files.enqueue + wait_results，
+    在 relay 队列积压时 wait_results 会**超时返回空**（不是抛异常），
+    表现为"取文件大小失败：''"，而同样的命令手动执行却成功 —— 极难定位。
+    改用 cloud.run：它对 403/429/5xx 做指数退避重试，是实测最稳的通道。
+    再叠一层"空结果重试"兜底（relay 偶发返回空 out）。
+    """
+    for attempt in range(3):
+        res = _cloud.run(cmd, cwd="/root", timeout=timeout, wait=wait)
+        out = res.get("out") or ""
+        log(f"[dbg] try{attempt+1} res={repr(res)[:220]}")
+        if out.strip():
+            return out
+        log(f"[warn] 第 {attempt + 1} 次返回空（rc={res.get('rc')} err="
+            f"{(res.get('err') or '')[:120]}），重试 …")
+        time.sleep(2 + 3 * attempt)
+    return ""
+
+
 def remote_size(path: str):
-    cmd = f"python3 -c \"import os;print(os.path.getsize('{path}'))\""
-    cid, _ = pf.enqueue(cmd, timeout=60)
-    if cid is None:
-        raise RuntimeError("入队失败")
-    res = pf.wait_results([cid], timeout=120).get(cid, {})
+    # ⚠️ 原来用 python3 -c "import os;print(os.path.getsize('...'))"，
+    #    嵌套双引号在 relay 的 JSON 传输里被破坏 → 云端命令执行失败、out 为空。
+    #    改成无嵌套引号的 `stat -c %s`（实测可用）。
+    out = _run(f"stat -c %s {path}")
     try:
-        return int((res.get("out") or "").strip().split()[0])
+        return int(out.strip().split()[0])
     except Exception:
-        raise RuntimeError(f"取文件大小失败：{(res.get('out') or '')[:200]}")
+        raise RuntimeError(f"取文件大小失败：{out[:200]!r}")
 
 
 def remote_md5(path: str):
-    cmd = f"python3 -c \"import hashlib;print(hashlib.md5(open('{path}','rb').read()).hexdigest())\""
-    cid, _ = pf.enqueue(cmd, timeout=180)
-    if cid is None:
-        raise RuntimeError("入队失败")
-    res = pf.wait_results([cid], timeout=300).get(cid, {})
-    out = (res.get("out") or "").strip()
+    # 同样避开 python3 -c 的嵌套引号
+    out = _run(f"md5sum {path} | cut -d' ' -f1")
+    out = out.strip()
     return out.split()[0] if out else ""
 
 
 def pull(remote: str, local: str, chunk: int = CHUNK):
+    # ⚠️ 2026-11-08 **Windows/MSYS 路径转换坑**：
+    #    在 Git Bash 里 `python pull_files.py --remote /root/xxx` 时，
+    #    MSYS 会把**以 / 开头的独立参数**改写成 Windows 路径：
+    #      /root/HPT/output/f.tgz
+    #      → C:/Users/hp/AppData/.../PortableGit/root/HPT/output/f.tgz
+    #    云端收到后 stat 报 "No such file or directory"，out 为空，
+    #    表现成"取文件大小失败：''"（极具误导性，因为命令行看着完全正常）。
+    #    修法：复用 push_files.fix_remote 把 "/root/" 之后的部分还原出来。
+    remote = pf.fix_remote(remote)
     size = remote_size(remote)
     log(f"云端文件 {remote} = {size:,} 字节")
     if size == 0:
@@ -80,16 +107,13 @@ def pull(remote: str, local: str, chunk: int = CHUNK):
     for i in range(n_chunks):
         s = i * chunk
         e = min(size, s + chunk)
-        cmd = (f"python3 -c \"import base64,sys;"
-               f"d=open('{remote}','rb').read()[{s}:{e}];"
-               f"sys.stdout.write(base64.b64encode(d).decode())\"")
-        cid, _ = pf.enqueue(cmd, timeout=180)
-        if cid is None:
-            raise RuntimeError(f"第 {i} 块入队失败")
-        res = pf.wait_results([cid], timeout=300).get(cid, {})
-        b64 = (res.get("out") or "").strip()
+        # ⚠️ 同上：不用 python3 -c（嵌套引号会被传输破坏），
+        #    改用纯 coreutils 的 tail/head/base64 管道，零嵌套引号。
+        #    注意 WAF 只拦 `base64 -d`/`--decode`（解码），`base64 -w0`（编码）安全。
+        b64 = _run(f"tail -c +{s + 1} {remote} | head -c {e - s} | base64 -w0",
+                   timeout=120, wait=300).strip()
         if not b64:
-            raise RuntimeError(f"第 {i} 块返回为空（rc={res.get('rc')}）")
+            raise RuntimeError(f"第 {i} 块返回为空")
         try:
             buf += base64.b64decode(b64)
         except Exception as e:

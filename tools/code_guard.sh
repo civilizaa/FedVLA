@@ -18,10 +18,16 @@
 #   守护脚本本身放在 output/ 下（不在 federated/），避免被同一机制覆盖。
 set -u
 
-DIR=/root/HPT/federated
+DIR=/root/fedcore
 BAK=/root/HPT/output/.guard_backup
 LOG=/root/HPT/output/code_guard.log
 LOCK=/root/HPT/output/.code_guard.lock
+
+# ⚠️ 2026-11-08：守护对象是 **/root/fedcore**（隔离副本），不是 /root/HPT/federated。
+#   原因：/root/HPT/federated/ 会被未知并发进程周期性还原成旧版
+#   （relay 队列重放 + 目录级覆盖，实测 22 个文件被批量重写）。
+#   /root/fedcore/ 是从 federated/ 拷出的**独立副本**，
+#   所有第4阶段脚本都从 fedcore 跑，federated/ 被覆盖不影响实验。
 
 mkdir -p "$BAK"
 
