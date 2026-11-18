@@ -32,7 +32,9 @@ CONFIGS = [
     ("c_bit1",   0.00, "bit1",   "1-bit 符号化"),
 ]
 
-T_CRIT_DF2 = 4.302652729911275      # t(0.975, df=2)
+T_CRIT_DF2 = 4.302652729911275      # t(0.975, df=2)  ← 3 seeds 时用这个
+T_CRIT_DF1 = 12.706204736432095     # t(0.975, df=1)  ← 2 seeds 时用这个
+T_CRIT_DF0 = 0.0                    # n=1 没法算 CI（只有 1 个观测）
 
 
 def parse_seed_successes(path: str):
@@ -54,18 +56,25 @@ def parse_seed_successes(path: str):
 
 
 def mean_ci(vals):
-    """均值 ± 95% CI（t 分布）。"""
+    """均值 ± 95% CI（t 分布）。
+
+    ⚠️ 2026-11-09 修正：临界值必须按 **df = n−1** 取，不能一律用 df=2。
+    n=3 → df=2 → t=4.303；n=2 → df=1 → t=12.706。
+    原实现对 n=2 也用 4.303，会把 CI **系统性低估约 66%**，
+    进而让"CI 重叠 ⇒ 不显著"的判据失效（2026-11-08 在 3-seed CI 上踩过同类坑）。
+    """
     n = len(vals)
     if n == 0:
         return None
     m = sum(vals) / n
     if n == 1:
-        return {"mean": m, "ci": 0.0, "n": 1, "seeds": vals}
-    var = sum((v - m) ** 2 for v in vals) / (n - 1)
+        # 单次观测无法估计方差 ⇒ CI 无意义，明确标 0 而不是编一个数
+        return {"mean": m, "ci": 0.0, "n": 1, "seeds": vals, "df": 0}
+    var = sum((v - m) ** 2 for v in vals) / (n - 1)      # 样本方差，df = n-1
     sd = math.sqrt(var)
-    half = T_CRIT_DF2 * sd / math.sqrt(n) if n == 2 else \
-        (T_CRIT_DF2 * sd / math.sqrt(n) if n == 3 else 1.96 * sd / math.sqrt(n))
-    return {"mean": m, "ci": half, "n": n, "seeds": vals,
+    tcrit = {2: T_CRIT_DF1, 3: T_CRIT_DF2}.get(n, 1.96)
+    half = tcrit * sd / math.sqrt(n)
+    return {"mean": m, "ci": half, "n": n, "seeds": vals, "df": n - 1,
             "sd": sd, "lo": m - half, "hi": m + half}
 
 
@@ -145,6 +154,32 @@ def main():
             d = (base["mean"] - r["mean"]) * 100
             print(f"  {r['label']:<26} {d:+6.1f} pp"
                   f"   （{r['mean']:.3f} vs {base['mean']:.3f}）")
+
+    # ===== 基线自检（关键：曲线能不能用全看这一条）=====
+    # c_drop00 的实验台与第3阶段的 P3-C 完全相同（异构 + MoE + 簇感知），
+    # 只是轮数也对齐到 50 ⇒ 它的 task3 成功率**必须**落在 P3-C 的观测附近
+    # （P3-C task3 = 0.60/0.50，均值 0.55）。
+    # 若 c_drop00 明显偏低（例如 0.02），说明这次运行本身有问题
+    # （基线没训好 / 权重串味 / 评估加载了残缺模型），
+    # 此时其它配置的相对下降值全部**不可解释** → 曲线必须作废，不能写进论文。
+    P3C_REF = 0.55
+    P3C_TOL = 0.20          # 允许 ±0.20 的偏离（P3-C 两个 seed 本身就有 0.10 的差）
+    print()
+    if base is None or base["mean"] is None:
+        print("[!!] 基线自检：**c_drop00 没有评估结果** —— 无法确认基线有效，整组曲线不可用")
+        print("     处置：先修好 c_drop00 的训练/评估，再重跑提取。")
+    elif base["mean"] < P3C_REF - P3C_TOL:
+        print(f"[!!] 基线自检**未通过**：c_drop00 = {base['mean']:.3f}，"
+              f"远低于 P3-C 参考值 {P3C_REF:.2f}（容差 ±{P3C_TOL:.2f}）")
+        print("     这说明本次扫描的基线本身有问题（不是通信损伤导致的），")
+        print("     其余配置的相对下降值**不可解释** → 本组曲线作废，不得写进论文。")
+        print(f"     参考：P3-C task3 实测 0.60 / 0.50；"
+              f"c_drop00 的 seeds = {base['seeds']}")
+    else:
+        print(f"[OK] 基线自检通过：c_drop00 = {base['mean']:.3f} ± {base['ci']:.3f}"
+              f"（P3-C 参考 {P3C_REF:.2f}，容差 ±{P3C_TOL:.2f}）")
+        print("     ⇒ 相对下降值可解释，曲线可用。")
+
     print()
     print(f"[输出] {args.out}")
     print("COMM_EXTRACT_DONE")

@@ -11,7 +11,12 @@
 #   实测 load average 冲到 22~29，评估慢一倍不止。第3阶段只剩 P3-D 一项，
 #   等它跑完再开第4阶段，省时间也省心。
 #
-# 幂等：run_comm_scan.sh 自身幂等（已完成的配置按"训练到最后一轮 + 评估齐全"跳过）。
+# 幂等：run_comm_scan_v2.sh 自身幂等（已完成的配置按"评估齐全"跳过）。
+#
+# ⚠️ 2026-11-09 修正：原来这里调的是 **run_comm_scan.sh（v1，25 轮）**。
+#   v1 的 25 轮下基线 c_drop00 在 task3 上只有 0.017、c_int8 是 0.000 ⇒ 基线落在地板，
+#   曲线零区分度。必须走 v2（50 轮，与第3阶段 P3-C 对齐）。
+#   保留 run_comm_scan.sh 是为了留 25 轮的对照数据，不是为了跑。
 set -u
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -51,8 +56,8 @@ while :; do
   waited=$((waited + POLL))
 done
 
-log "开始第4阶段：通信损伤扫描"
-bash "$SCRIPT_DIR/run_comm_scan.sh"
+log "开始第4阶段：通信损伤扫描（v2，50 轮）"
+bash "$SCRIPT_DIR/run_comm_scan_v2.sh"
 rc=$?
 log "第4阶段结束 rc=$rc"
 
