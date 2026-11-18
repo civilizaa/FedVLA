@@ -1,0 +1,24 @@
+{
+  "base": 950000,
+  "outdir": "/root/HPT/output",
+  "files": [
+    {
+      "name": "relay_push_test.txt",
+      "mode": "text",
+      "id": 950001,
+      "size": 24,
+      "sha256": "8df37a92f693383f1a1a605f39128c1f1fc5c7ed06af1516105d11717d7cebc1"
+    },
+    {
+      "name": "relay_push_test.bin",
+      "mode": "b64",
+      "ids": [
+        950002,
+        950003,
+        950004
+      ],
+      "size": 130000,
+      "sha256": "9ff1a47438ebfc3348d51622ec1f77a3c1096b411ffbb8266655801fe8191283"
+    }
+  ]
+}
