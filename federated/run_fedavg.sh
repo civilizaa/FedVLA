@@ -23,6 +23,15 @@ export HF_ENDPOINT=https://hf-mirror.com
 export OMP_NUM_THREADS=8
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/.mujoco/mujoco210/bin
 
+# ===== HPT 源码必须在 import 路径上（2026-11-18 血案）=====
+# `python -m hpt.run` 靠 sys.path 找 hpt 包：HPT 在云端**没有** pip install（只有源码树），
+# 所以只有 CWD 在 /root/HPT 时才能 import。
+# DP 标定脚本是从 /root/fedcore 启动的 ⇒ CWD=/root ⇒ 报
+#   "No module named 'hpt'" → 标定直接失败 → DP 阶段整条链断掉（实测踩坑）。
+# 正解：显式把 HPT 源码目录挂进 PYTHONPATH，与 CWD 无关。
+export HPT_ROOT="${HPT_DIR:-/root/HPT}"
+export PYTHONPATH="$HPT_ROOT${PYTHONPATH:+:$PYTHONPATH}"
+
 START_ROUND=${START_ROUND:-0}
 
 # ===== 磁盘水位守卫 =====
@@ -76,6 +85,21 @@ echo "从轮 $START_ROUND 开始"
 echo "========================="
 
 mkdir -p "$OUTPUT_ROOT"
+
+# ===== 开训前硬拦截：HPT 源码必须可 import（2026-11-18 血案）=====
+# `python -m hpt.run` 在云端只能靠 PYTHONPATH 找到 hpt 包（HPT 未 pip install）。
+# 之前 DP 标定从 /root/fedcore 启动 ⇒ "No module named 'hpt'" ⇒ 标定失败 ⇒
+# DP 阶段整条链断掉，而**错误信息藏在日志里**、上层只看到 "标定失败(rc=1)"。
+# 这里提前硬拦截：import 不通就直接退出，并把 PYTHONPATH 打出来。
+if ! "$HPT_PY" -c "import hpt" >/dev/null 2>&1; then
+  echo "[!!] python -c 'import hpt' 失败 —— HPT 源码不在 import 路径上！"
+  echo "     HPT_ROOT=$HPT_ROOT"
+  echo "     PYTHONPATH=${PYTHONPATH:-<空>}"
+  echo "     CWD=$(pwd)"
+  echo "     修法：export PYTHONPATH=\"$HPT_ROOT:\$PYTHONPATH\"，或 cd 到 \$HPT_ROOT 后再跑"
+  exit 1
+fi
+echo "[OK] hpt 可 import（PYTHONPATH=$HPT_ROOT）"
 
 # ===== 开训前硬拦截：load_trunk 补丁必须存在 =====
 # 不打补丁的后果是"静默"的：客户端每轮都从 hf 原始权重重新开始，

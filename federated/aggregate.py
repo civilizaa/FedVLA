@@ -24,6 +24,7 @@ stem/head 个性化"。所以全局模型 = 平均 trunk + 各客户端 stem/hea
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import shutil
 import sys
@@ -276,6 +277,29 @@ def aggregate(client_dirs: list[str], out_dir: str, weights: list[float] | None 
                   "quant_scheme": quant_scheme, "bytes_per_client": [],
                   "total_bytes": 0}
 
+    # ===== 上行通信量：**无条件**统计（2026-11-18 补）=====
+    # 为什么必须无条件：原来的字节统计写在 `if quant_scheme:` 里，
+    # 于是 fp32 基线与三个丢包配置的 `total_bytes` 全是 null
+    # ⇒ 论文的"上行流量–任务性能"曲线**缺基线点**（只有量化三档有横坐标）。
+    # 这里按「所有客户端的共享参数都按当前方案上传」口径算 offered 流量，
+    # 与丢包/量化无关，两个口径都写进 comm_report：
+    #   offered_bytes_per_round —— 供给量（信道面对的负载）
+    #   total_bytes             —— 实际送达量（丢包后只剩 kept 客户端）
+    _bits = 32
+    if quant_scheme:
+        _bits = Quantizer(quant_scheme).spec["bits"]
+    _byte_q = Quantizer(quant_scheme) if quant_scheme else Quantizer("fp32")
+    _per_client_offered = [
+        _byte_q.theoretical_bytes({k: v for k, v in st.items()
+                                    if _is_shared_param(k)})
+        for st in states]
+    comm_info["offered_bytes_per_client"] = _per_client_offered
+    comm_info["offered_bytes_per_round"] = int(sum(_per_client_offered))
+    comm_info["uplink_bits"] = _bits
+    print(f"[aggregate] 上行流量 offered = "
+          f"{comm_info['offered_bytes_per_round']/1048576:.2f} MiB/轮"
+          f"（{_bits} bit × {len(states)} 客户端，共享参数口径）")
+
     if drop_idx:
         drop_set = set(int(i) for i in drop_idx)
         keep = [i for i in range(len(states)) if i not in drop_set]
@@ -310,7 +334,19 @@ def aggregate(client_dirs: list[str], out_dir: str, weights: list[float] | None 
         q = Quantizer(quant_scheme)
         new_states = []
         bytes_list = []
-        for st in states:
+        # ===== 量化自检（2026-11-18 新增，铁律 A：silent failure 必须显式自检）=====
+        # 为什么必须有这层闸：第4阶段通信扫描里 int8_g / int4_g / bit1 三个配置
+        # 实测成功率**全为 0.000**（3 seeds × 20 rollouts 全 0），
+        # 而离线在真实模型上模拟的 int8_g 相对误差只有 **0.005**（几乎无损）。
+        # 0.5% 的权重扰动不可能把策略从 0.75 打到 0.00 ⇒ 两者矛盾 ⇒ 强烈指向
+        # "量化链路把权重搞坏了"（NaN / scale 错位 / 统计量错配）而不是信道现象。
+        # 没有这层闸 ⇒ 烧 8 小时算力得到 3 个 0.000，且零报错。
+        # 现在：NaN/Inf 或相对误差超阈值 → **立刻抛错中止**，不产出不可信的曲线。
+        _LIMIT = {"int8_g": 0.10, "int4_g": 0.35, "int2_g": 1.00, "bit1": 1.50}
+        limit = _LIMIT.get(quant_scheme, 1.00)
+        qerrs = []
+        orig_states = states          # 量化前的原始客户端状态（漂移诊断要用）
+        for ci, st in enumerate(states):
             qsd = {}
             for k, v in st.items():
                 # 只压共享参数（stems/heads 是个性化的，不上行）
@@ -318,10 +354,68 @@ def aggregate(client_dirs: list[str], out_dir: str, weights: list[float] | None 
                     qsd[k] = q.apply_tensor(v)
                 else:
                     qsd[k] = v
+            # --- 自检：NaN/Inf + 实际相对误差 ---
+            num = 0.0
+            den = 0.0
+            bad = []
+            for k, v in st.items():
+                if not (torch.is_tensor(v) and _is_shared_param(k) and v.is_floating_point()):
+                    continue
+                qv = qsd[k]
+                if torch.isnan(qv).any() or torch.isinf(qv).any():
+                    bad.append(k)
+                num += float(torch.linalg.norm((qv - v).float()))
+                den += float(torch.linalg.norm(v.float()))
+            rel = (num / den) if den > 0 else 0.0
+            qerrs.append(rel)
+            print(f"[aggregate][通信损伤] 量化自检 client{ci}: "
+                  f"相对误差={rel:.6f}（阈值 {limit}）"
+                  + (f" NaN/Inf 键={bad[:3]}" if bad else ""))
+            if bad:
+                raise ValueError(
+                    f"[量化自检] 方案 {quant_scheme} 在 client{ci} 上产生 NaN/Inf"
+                    f"（例：{bad[:3]}）—— 拒绝聚合（否则会得到全 0 的假曲线）")
+            if rel > limit:
+                raise ValueError(
+                    f"[量化自检] 方案 {quant_scheme} 在 client{ci} 上的相对误差 "
+                    f"{rel:.6f} 超过阈值 {limit} —— 拒绝聚合"
+                    f"（离线基准：int8_g≈0.005 / int4_g≈0.089 / bit1≈0.557）")
             new_states.append(qsd)
-            bytes_list.append(q.theoretical_bytes({k: v for k, v in st.items()
-                                                   if _is_shared_param(k)}))
+            bytes_list.append(q.theoretical_bytes(
+                {k: v for k, v in st.items() if _is_shared_param(k)}))
         states = new_states
+        # ---- 每轮「量化→全局模型」的漂移诊断（误差累积的直接证据）----
+        # 为什么会累积：客户端每轮从**上一轮已被量化聚合过的**全局权重继续训练，
+        # 所以量化误差不是每轮重置，而是逐轮叠加。
+        # 若漂移随轮数线性增长到 O(1)，就能解释"成功率逐步塌到 0"。
+        # 这里按等权近似（EDA 模式下权重逐层不同，仅作趋势诊断）。
+        try:
+            _tk = [k for k in orig_states[0] if _is_trunk_key(k)]
+            _un = average_trunk(orig_states, None)
+            _qt = average_trunk(new_states, None)
+            _num = sum(float(torch.linalg.norm((_qt[k].float() - _un[k].float())))
+                       for k in _tk)
+            _den = sum(float(torch.linalg.norm(_un[k].float())) for k in _tk)
+            drift = (_num / _den) if _den > 0 else 0.0
+        except Exception as e:  # noqa: BLE001
+            print(f"[aggregate][通信损伤][WARN] 漂移诊断失败：{e}")
+            drift = float("nan")
+        print(f"[aggregate][通信损伤] 量化→全局模型漂移 = {drift:.6f}（本轮，等权近似）")
+        comm_info["quant_drift"] = drift
+        try:
+            _drift_file = os.path.join(out_dir, "quant_drift.jsonl")
+            _rnd = 0
+            if os.path.exists(_drift_file):
+                with open(_drift_file, "r", encoding="utf-8") as fh:
+                    _rnd = sum(1 for _ in fh)
+            with open(_drift_file, "a", encoding="utf-8") as fh:
+                fh.write(json.dumps({"round": _rnd + 1,
+                                     "scheme": quant_scheme, "drift": drift,
+                                     "rel_err_max": max(qerrs) if qerrs else 0.0},
+                                    ensure_ascii=False) + "\n")
+        except Exception as e:  # noqa: BLE001
+            print(f"[aggregate][通信损伤][WARN] 漂移诊断落盘失败：{e}")
+        comm_info["quant_rel_err_max"] = max(qerrs) if qerrs else 0.0
         comm_info["bytes_per_client"] = bytes_list
         comm_info["total_bytes"] = int(sum(bytes_list))
         print(f"[aggregate][通信损伤] 上行量化方案 = {quant_scheme}，"
@@ -415,7 +509,9 @@ def aggregate(client_dirs: list[str], out_dir: str, weights: list[float] | None 
     print(f"[aggregate] 已写出全局模型 -> {out_dir}  (trunk.pth / model.pth / config*)")
 
     if comm_report:
-        import json
+        # 注意：不要再在这里 `import json` —— 函数内有 import 会让 json 变成
+        # aggregate() 的**局部名**，导致本函数前面用 json.dumps 时报
+        # "cannot access local variable 'json'"（2026-11-18 单测实测踩到）。
         with open(comm_report, "w", encoding="utf-8") as f:
             json.dump(comm_info, f, ensure_ascii=False, indent=2)
         print(f"[aggregate][通信损伤] 通信量统计 -> {comm_report}")

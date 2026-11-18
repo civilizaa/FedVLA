@@ -90,7 +90,15 @@ def mean_ci(vals):
 
 
 def avg_comm_bytes(root: str):
-    """该配置所有轮次的上行字节数均值（总上行/轮，含所有客户端）。"""
+    """该配置所有轮次的上行字节数均值（总上行/轮，含所有客户端）。
+
+    口径优先级（2026-11-18 补）：
+      1) `offered_bytes_per_round` —— 供给量（所有客户端 × 当前位宽），
+         **fp32 基线与丢包配置只有这个值**（旧代码把字节统计写在量化分支里，
+         导致这些配置的 total_bytes 是 null ⇒ 曲线缺基线点）。
+      2) `total_bytes` —— 实际送达量（丢包后只剩 kept 客户端）。
+      3) 两者都没有 ⇒ None。
+    """
     files = sorted(glob.glob(os.path.join(root, "comm_report_r*.json")))
     if not files:
         return None
@@ -100,7 +108,7 @@ def avg_comm_bytes(root: str):
             d = json.load(open(f, encoding="utf-8"))
         except Exception:
             continue
-        tb = d.get("total_bytes")
+        tb = d.get("offered_bytes_per_round") or d.get("total_bytes")
         if tb:
             tot.append(tb)
     if not tot:
