@@ -125,7 +125,8 @@ def push_all() -> bool:
     allok = True
     for path, feat in checks:
         r = cloud.run(f"grep -c '{feat}' {path} 2>/dev/null || echo 0", timeout=60, wait=120)
-        out = (r.get("stdout") or "").strip().splitlines()
+        # 服务端返回的键是 out/err，不是 stdout/stderr —— 读错键名会让校验恒为失败
+        out = (r.get("out") or r.get("stdout") or "").strip().splitlines()
         n = out[-1].strip() if out else "0"
         if not n.isdigit():
             n = "0"

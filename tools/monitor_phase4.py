@@ -24,7 +24,7 @@ for t in c_drop00 c_drop25 c_drop50 c_drop75 c_int8 c_int4 c_bit1; do
   if [ -d /root/HPT/output/$t ]; then
     n=$(ls /root/HPT/output/$t 2>/dev/null | grep -c '^global_r')
     last=$(ls /root/HPT/output/$t 2>/dev/null | grep '^global_r' | sed 's/global_r//' | sort -n | tail -1)
-    ev=$(ls /root/HPT/output/eval_c_${t#c_}*.log 2>/dev/null | wc -l)
+    ev=$(ls /root/HPT/output/eval_${t}_*.log 2>/dev/null | wc -l)
     echo "$t rounds=$n last=r$last evallogs=$ev"
   else
     echo "$t (未开始)"
@@ -38,6 +38,9 @@ echo "### PROC"
 ps aux | grep -c '[h]pt.run'
 echo "### DISK"
 df -BG /root 2>/dev/null | awk 'NR==2{print $4" "$5}'
+echo "### PRIV"
+ls /root/HPT/output/privacy/PRIVACY_REV_DONE 2>/dev/null || echo "rev未完成"
+tail -n 2 /root/HPT/output/privacy/privacy_rev3.log 2>/dev/null
 echo "### DONE"
 ls /root/HPT/output/PHASE4_DONE 2>/dev/null || echo "未完成"
 """

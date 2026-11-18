@@ -49,10 +49,18 @@ def do_probe(cmd):
             continue
         for x in res.get("results", []):
             if int(x["id"]) == cid:
-                print(f"--- stdout ---")
-                print(x.get("stdout", "")[:6000])
+                # 服务端存的是 out/err（不是 stdout/stderr）—— 读错键名会打印空白，
+                # 看起来像"命令没执行"，极具误导性。两个键都兼容。
+                out = x.get("out")
+                if out is None:
+                    out = x.get("stdout", "")
+                err = x.get("err")
+                if err is None:
+                    err = x.get("stderr", "")
+                print(f"--- stdout (rc={x.get('rc')}) ---")
+                print((out or "")[:6000])
                 print(f"--- stderr ---")
-                print((x.get("stderr") or "")[:2000])
+                print((err or "")[:2000])
                 return
         time.sleep(2)
     print(f"!! cid={cid} 100s 内未返回")
