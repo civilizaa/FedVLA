@@ -19,6 +19,13 @@ import math
 import os
 import re
 
+try:
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+except Exception:                                    # pragma: no cover
+    plt = None
+
 OUT = "/root/HPT/output"
 
 # (tag, 丢包率, 量化方案, 人类可读标签)
@@ -31,6 +38,10 @@ CONFIGS = [
     ("c_int4",   0.00, "int4_g", "int4 per-group(64)"),
     ("c_bit1",   0.00, "bit1",   "1-bit 符号化"),
 ]
+
+# 量化配置的显示位宽（用于横轴；fp32=32bit, int8=8bit, int4=4bit, bit1=1bit）
+QUANT_BITS = {"fp32": 32, "int8_g": 8, "int4_g": 4, "bit1": 1}
+QUANT_LABEL = {"fp32": "FP32", "int8_g": "INT8", "int4_g": "INT4", "bit1": "1-bit"}
 
 T_CRIT_DF2 = 4.302652729911275      # t(0.975, df=2)  ← 3 seeds 时用这个
 T_CRIT_DF1 = 12.706204736432095     # t(0.975, df=1)  ← 2 seeds 时用这个
@@ -97,6 +108,114 @@ def avg_comm_bytes(root: str):
     return sum(tot) / len(tot)
 
 
+def _ok(row):
+    """该配置是否有可用结果。"""
+    return row.get("mean") is not None
+
+
+def plot_results(rows, outdir, domain):
+    """出 3 张论文图（英文标注，避免云端 matplotlib 缺中文字形）。
+
+    fig7_comm_drop   : 丢包率 vs 成功率（含 95% CI 误差棒）
+    fig7_comm_quant  : 量化位宽 vs 成功率（含 95% CI 误差棒）
+    fig7_comm_tradeoff : 上行带宽 vs 成功率（通信-性能权衡）
+    """
+    if plt is None:
+        print("[warn] matplotlib 不可用，跳过绘图")
+        return []
+    made = []
+    os.makedirs(outdir, exist_ok=True)
+
+    def _ser(pred):
+        """挑出满足条件的配置，按 x 排序。"""
+        out = [r for r in rows if _ok(r) and pred(r)]
+        return out
+
+    # ---------- 图 1：丢包率 vs 成功率 ----------
+    drops = _ser(lambda r: r["quant"] == "fp32")
+    if drops:
+        drops.sort(key=lambda r: r["drop_rate"])
+        fig, ax = plt.subplots(figsize=(5.2, 3.6))
+        xs = [r["drop_rate"] * 100 for r in drops]
+        ys = [r["mean"] for r in drops]
+        es = [r["ci"] for r in drops]
+        ax.errorbar(xs, ys, yerr=es, fmt="o-", color="#2f6fbf", capsize=4,
+                    lw=1.8, ms=6, label="MoE + cluster-aware EDA")
+        for r, x, y in zip(drops, xs, ys):
+            ax.annotate(f"{y:.2f}", (x, y), textcoords="offset points",
+                        xytext=(0, 9), ha="center", fontsize=8)
+        ax.set_xlabel("Packet drop rate (%)")
+        ax.set_ylabel("Task success rate")
+        ax.set_title(f"Robustness to packet loss ({domain.replace('mujoco_metaworld_','')})",
+                     fontsize=10)
+        ax.set_xticks(xs)
+        ax.grid(alpha=0.3, ls="--")
+        ax.legend(fontsize=8)
+        p = os.path.join(outdir, "fig7_comm_drop.png")
+        fig.savefig(p, dpi=160, bbox_inches="tight")
+        plt.close(fig)
+        made.append(p)
+
+    # ---------- 图 2：量化位宽 vs 成功率 ----------
+    quants = [r for r in rows if _ok(r) and r["quant"] != "fp32" and r["drop_rate"] == 0.0]
+    base = next((r for r in rows if r["tag"] == "c_drop00" and _ok(r)), None)
+    if quants:
+        quants.sort(key=lambda r: QUANT_BITS.get(r["quant"], 99))
+        fig, ax = plt.subplots(figsize=(5.2, 3.6))
+        if base is not None:
+            ax.axhline(base["mean"], color="#8a8a8a", ls=":", lw=1.5,
+                       label=f"FP32 baseline ({base['mean']:.2f})")
+            ax.fill_between([0.5, 32], base["mean"] - base["ci"], base["mean"] + base["ci"],
+                            color="#bbbbbb", alpha=0.3)
+        xs = [QUANT_BITS.get(r["quant"], 0) for r in quants]
+        ys = [r["mean"] for r in quants]
+        es = [r["ci"] for r in quants]
+        ax.errorbar(xs, ys, yerr=es, fmt="s-", color="#c1544a", capsize=4,
+                    lw=1.8, ms=6, label="Quantized uplink")
+        for r, x, y in zip(quants, xs, ys):
+            ax.annotate(f"{y:.2f}", (x, y), textcoords="offset points",
+                        xytext=(0, 9), ha="center", fontsize=8)
+        ax.set_xscale("log", base=2)
+        ax.set_xticks(xs)
+        ax.set_xticklabels([QUANT_LABEL.get(r["quant"], r["quant"]) for r in quants])
+        ax.set_xlabel("Uplink quantization bit-width")
+        ax.set_ylabel("Task success rate")
+        ax.set_title(f"Robustness to quantization ({domain.replace('mujoco_metaworld_','')})",
+                     fontsize=10)
+        ax.grid(alpha=0.3, ls="--")
+        ax.legend(fontsize=8)
+        p = os.path.join(outdir, "fig7_comm_quant.png")
+        fig.savefig(p, dpi=160, bbox_inches="tight")
+        plt.close(fig)
+        made.append(p)
+
+    # ---------- 图 3：上行带宽 vs 成功率（权衡） ----------
+    both = [r for r in rows if _ok(r) and r.get("up_mib_per_round")]
+    if len(both) >= 2:
+        fig, ax = plt.subplots(figsize=(5.2, 3.6))
+        for r in both:
+            ax.scatter(r["up_mib_per_round"], r["mean"], s=70,
+                       marker="o" if r["quant"] == "fp32" else "s",
+                       color="#2f6fbf" if r["quant"] == "fp32" else "#c1544a")
+            ax.annotate(r["tag"].replace("c_", ""),
+                        (r["up_mib_per_round"], r["mean"]),
+                        textcoords="offset points", xytext=(7, 4), fontsize=7)
+        if base is not None:
+            ax.axhline(base["mean"], color="#8a8a8a", ls=":", lw=1.5)
+        ax.set_xlabel("Uplink payload per round (MiB)")
+        ax.set_ylabel("Task success rate")
+        ax.set_title("Communication-performance trade-off", fontsize=10)
+        ax.grid(alpha=0.3, ls="--")
+        p = os.path.join(outdir, "fig7_comm_tradeoff.png")
+        fig.savefig(p, dpi=160, bbox_inches="tight")
+        plt.close(fig)
+        made.append(p)
+
+    for p in made:
+        print(f"[图] {p}")
+    return made
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=os.path.join(OUT, "comm_raw.json"))
@@ -147,41 +266,52 @@ def main():
     base = next((r for r in rows if r["tag"] == "c_drop00"), None)
     if base and base["mean"] is not None:
         print()
-        print("相对无损基线的下降（百分点）：")
+        print("相对无损基线的成功率变化（pp，正=变差，负=变好）：")
         for r in rows:
             if r["mean"] is None or r["tag"] == "c_drop00":
                 continue
             d = (base["mean"] - r["mean"]) * 100
-            print(f"  {r['label']:<26} {d:+6.1f} pp"
+            verdict = "变差" if d > 0 else ("变好" if d < 0 else "持平")
+            print(f"  {r['label']:<26} {d:+6.1f} pp ({verdict})"
                   f"   （{r['mean']:.3f} vs {base['mean']:.3f}）")
 
     # ===== 基线自检（关键：曲线能不能用全看这一条）=====
     # c_drop00 的实验台与第3阶段的 P3-C 完全相同（异构 + MoE + 簇感知），
-    # 只是轮数也对齐到 50 ⇒ 它的 task3 成功率**必须**落在 P3-C 的观测附近
-    # （P3-C task3 = 0.60/0.50，均值 0.55）。
-    # 若 c_drop00 明显偏低（例如 0.02），说明这次运行本身有问题
-    # （基线没训好 / 权重串味 / 评估加载了残缺模型），
-    # 此时其它配置的相对下降值全部**不可解释** → 曲线必须作废，不能写进论文。
-    P3C_REF = 0.55
-    P3C_TOL = 0.20          # 允许 ±0.20 的偏离（P3-C 两个 seed 本身就有 0.10 的差）
+    # 只是轮数也对齐到 50 ⇒ 它的 task3 成功率**必须**落在 P3-C 的观测附近。
+    #
+    # ⚠️ 2026-11-18 修正：P3-C 的 task3 是 **3 个 seed = 0.90 / 0.60 / 0.50**
+    #   （均值 0.667）。早先写的 "0.60 / 0.50，均值 0.55" 是**漏掉 seed 0** 的
+    #   2-seed 观测，与第3阶段报告里的 0.667 自相矛盾 ⇒ 参考值偏低 0.117。
+    #   容差仍取 ±0.20：P3-C 三个 seed 自身跨度就有 0.40（0.90 vs 0.50），
+    #   说明该任务的 seed 方差本来就大，容差过窄会把正常基线误杀。
+    P3C_REF = 0.667
+    P3C_TOL = 0.20
+    P3C_SEEDS = "0.90 / 0.60 / 0.50（3 seeds，均值 0.667）"
     print()
     if base is None or base["mean"] is None:
         print("[!!] 基线自检：**c_drop00 没有评估结果** —— 无法确认基线有效，整组曲线不可用")
         print("     处置：先修好 c_drop00 的训练/评估，再重跑提取。")
     elif base["mean"] < P3C_REF - P3C_TOL:
         print(f"[!!] 基线自检**未通过**：c_drop00 = {base['mean']:.3f}，"
-              f"远低于 P3-C 参考值 {P3C_REF:.2f}（容差 ±{P3C_TOL:.2f}）")
+              f"低于 P3-C 参考值 {P3C_REF:.3f}（容差 ±{P3C_TOL:.2f}）")
         print("     这说明本次扫描的基线本身有问题（不是通信损伤导致的），")
         print("     其余配置的相对下降值**不可解释** → 本组曲线作废，不得写进论文。")
-        print(f"     参考：P3-C task3 实测 0.60 / 0.50；"
+        print(f"     参考：P3-C task3 实测 {P3C_SEEDS}；"
               f"c_drop00 的 seeds = {base['seeds']}")
     else:
         print(f"[OK] 基线自检通过：c_drop00 = {base['mean']:.3f} ± {base['ci']:.3f}"
-              f"（P3-C 参考 {P3C_REF:.2f}，容差 ±{P3C_TOL:.2f}）")
+              f"（P3-C 参考 {P3C_REF:.3f}，容差 ±{P3C_TOL:.2f}）")
         print("     ⇒ 相对下降值可解释，曲线可用。")
 
     print()
     print(f"[输出] {args.out}")
+
+    # ---- 出图（英文标注）----
+    try:
+        plot_results(rows, os.path.dirname(os.path.abspath(args.out)), args.domain)
+    except Exception as e:  # noqa: BLE001
+        print(f"[warn] 绘图失败：{type(e).__name__}: {e}")
+
     print("COMM_EXTRACT_DONE")
 
 
