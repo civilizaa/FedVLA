@@ -255,6 +255,31 @@ for ((r=START_ROUND; r<NUM_ROUNDS; r++)); do
     if [ ! -f "$CLIENT_OUT/model.pth" ]; then
       echo "[round $r] client $c 训练失败，查看 $LOG"; tail -n 30 "$LOG"; exit 1
     fi
+
+    # ---- 上行 DP 加噪钩子（第4阶段 DP-效用扫描；**默认关闭**）----
+    # ⚠️ 默认 POST_CLIENT_HOOK 为空 ⇒ 这段代码整块跳过，
+    #    训练行为与改造前**逐字节一致**，对任何既有实验零影响。
+    # 用途：DP-FedAvg 形式的上行隐私 —— 客户端在上传共享参数前，
+    #    对更新做 L2 裁剪 + 高斯加噪（Δ·min(1,C/‖Δ‖) + N(0,(σC)²)）。
+    #    ε 只依赖 σ（噪声倍率），C 只影响效用 ⇒ C 可按实测更新范数标定。
+    # 与隐私侧 dp.py 同口径：上行 = 非 stems./heads. 的全部键。
+    if [ -n "${POST_CLIENT_HOOK:-}" ]; then
+      HOOK_ARGS=(
+        --client-dir "$CLIENT_OUT"
+        --prev-global "$PRETRAINED"
+        --sigma "${DP_SIGMA:-0}"
+        --clip-norm "${DP_CLIP_NORM:-1.0}"
+        --seed "${DP_SEED:-1234}"
+        --round "$r" --client "$c"
+      )
+      [ "${DP_CALIBRATE:-0}" = "1" ] && HOOK_ARGS+=( --calibrate )
+      [ -n "${DP_STAT_OUT:-}" ] && HOOK_ARGS+=( --stat-out "$DP_STAT_OUT" )
+      "$HPT_PY" "$SCRIPT_DIR/$POST_CLIENT_HOOK" "${HOOK_ARGS[@]}" \
+        >> "$OUTPUT_ROOT/log_dp_noise.txt" 2>&1 \
+        || { echo "[round $r] client $c DP 钩子失败，查看 $OUTPUT_ROOT/log_dp_noise.txt";
+             tail -n 20 "$OUTPUT_ROOT/log_dp_noise.txt"; exit 1; }
+    fi
+
     # 记录本客户端实际的 epoch_size 与步数（首轮实测优先于配置值）
     grep -m1 "Epoch size:" "$LOG" | sed "s/^/[round $r] client $c /" || true
   done
