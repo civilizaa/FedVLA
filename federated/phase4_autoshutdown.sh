@@ -170,13 +170,13 @@ PUSH_FILES=$(cd "$OUT" && ls -1 *.json *.md *.csv *.png \
              autoshutdown.log scanlog_*.log 2>/dev/null \
              | tr '\n' ' ')
 "$PY" "$CORE/relay_push_out.py" --outdir "$OUT" --files "$PUSH_FILES" \
-      --idbase 900000 >> "$OUT/relay_push.log" 2>&1
+      --idbase 980000 >> "$OUT/relay_push.log" 2>&1
 push_rc=$?
 if [ "$push_rc" -ne 0 ]; then
     log "relay 推送失败 rc=$push_rc，等 20 秒重试一次"
     sleep 20
     "$PY" "$CORE/relay_push_out.py" --outdir "$OUT" --files "$PUSH_FILES" \
-          --idbase 900000 >> "$OUT/relay_push.log" 2>&1
+          --idbase 980000 >> "$OUT/relay_push.log" 2>&1
     push_rc=$?
 fi
 push_n=$(echo $PUSH_FILES | wc -w)
@@ -192,7 +192,7 @@ log "relay_push rc=$push_rc  文件数=$push_n"
     echo "dp_rc=$(count_rc "$DP_TAGS")/$EXPECT_DP"
     echo "relay_push_rc=$push_rc"
     echo "relay_push_files=$push_n"
-    echo "relay_fetch_cmd=python tools/relay_fetch_out.py --since 900000 --outdir results/cloud_final"
+    echo "relay_fetch_cmd=python tools/relay_fetch_out.py --since 980000 --outdir results/cloud_final"
 } > "$OUT/PHASE4_ALL_DONE"
 
 log "✓ 产物已打包（/root/fedcore/final_out.tgz）+ 已推进 relay + 完成标记已写"

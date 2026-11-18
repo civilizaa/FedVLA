@@ -53,11 +53,16 @@ def main():
 
     by_id = {}
     manifest = None
+    manifest_id = -1
     for r in results:
         rid = int(r.get("id") or 0)
         out = r.get("out") or ""
         by_id[rid] = out
-        if out.startswith("MANIFEST:"):
+        # 🔴 必须取 **id 最大** 的 manifest，不是"最后遇到的"：
+        #    正式推送用 idbase 980000，测试用 950000/960000 也会留在存储里，
+        #    若按遍历顺序取会拿到测试清单（id 更大）⇒ 正式结果取不回来。
+        if out.startswith("MANIFEST:") and rid > manifest_id:
+            manifest_id = rid
             manifest = json.loads(out[len("MANIFEST:"):])
 
     if manifest is None:

@@ -100,7 +100,7 @@ def main():
     ap.add_argument("--outdir", default="/root/HPT/output")
     ap.add_argument("--files", required=True,
                     help='空格分隔的相对文件名（相对 --outdir）')
-    ap.add_argument("--idbase", type=int, default=900000)
+    ap.add_argument("--idbase", type=int, default=980000)
     ap.add_argument("--url", default="")
     args = ap.parse_args()
 

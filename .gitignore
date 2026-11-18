@@ -61,3 +61,7 @@ relay/relay_state.json
 
 # WorkBuddy 项目数据不入库
 .workbuddy/
+
+# relay 往返测试产物（不入库）
+results/_relay_test/
+results/cloud_final/
