@@ -47,6 +47,17 @@ FINAL_SLEEP=${FINAL_SLEEP:-60}    # 关机前等待（打包产物 flush）
 GPU_UTIL_CMD=${GPU_UTIL_CMD:-"nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits"}
 PGREP_BIN=${PGREP_BIN:-pgrep}
 
+# 🔴 2026-11-18 修正：评估阶段会误触发「卡死保护」而**提前关机**。
+#   旧判据：util < 10% 且 轮次文件 30 分钟未变 ⇒ 判定卡死。
+#   问题：MuJoCo 评估（eval_model.sh / hpt.run_eval）**不产生新的 global_r***
+#         且 GPU 负载极低（实测 util=3%/7%）⇒ 训练一结束进入评估，
+#         两个条件同时成立 ⇒ 被误判卡死 ⇒ 丢掉 DP 阶段（3.3 小时）成果。
+#   新判据：必须**同时**满足三条才判卡死——
+#     ① GPU 空闲；② 没有任何训练/评估进程存活；③ 轮次文件未变。
+#   其中 ② 是关键：只要还有 eval_model.sh / hpt.run / hpt.run_eval 在跑，
+#   就说明系统正在干活，绝不能关机。
+WORKER_PAT='run_comm_scan_v2|run_fedavg|run_dp_utility|chain_phase4_dp|calibrate_dp_clip|eval_model\.sh|hpt\.run|hpt\.run_eval|privacy_experiment'
+
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"; }
 
 count_rc() {
@@ -55,6 +66,15 @@ count_rc() {
         [ -f "$OUT/.rc_$t" ] && n=$((n + 1))
     done
     echo "$n"
+}
+
+# 是否有训练/评估进程活着（排除守护脚本自身与本次探测命令）
+worker_alive() {
+    # 用 ps 过滤，避免 pgrep 匹配到调用它的 shell 自身
+    ps -eo pid,cmd 2>/dev/null \
+      | grep -E "$WORKER_PAT" \
+      | grep -v -E 'grep -E|phase4_autoshutdown\.sh' \
+      | grep -q .
 }
 
 start_ts=$(date +%s)
@@ -94,14 +114,18 @@ while : ; do
             break
         fi
     fi
-    # --- GPU 卡死保护：利用率低且轮次不变，持续 IDLE_MIN 分钟 ---
+    # --- GPU 卡死保护（2026-11-18 加严）---
+    #     必须同时满足：① GPU 空闲 ② 无任何训练/评估进程存活 ③ 轮次文件未变
+    #     缺 ② 会误杀「评估阶段」（评估不产生 global_r* 且 GPU 负载极低）
     util=$($GPU_UTIL_CMD 2>/dev/null | head -1)
     util=${util:-100}
     sig=$(ls -1dt "$OUT"/*/global_r* 2>/dev/null | head -1)
-    if [ "$util" -lt 10 ] && [ "$sig" = "$last_sig" ]; then
+    busy="否"
+    if worker_alive; then busy="是"; fi
+    if [ "$util" -lt 10 ] && [ "$sig" = "$last_sig" ] && [ "$busy" = "否" ]; then
         idle_hits=$((idle_hits + 1))
         if [ $((idle_hits * POLL)) -ge $((IDLE_MIN * 60)) ]; then
-            REASON="GPU 空闲 ${IDLE_MIN} 分钟且轮次无变化（util=${util}%）→ 判定卡死"
+            REASON="GPU 空闲 ${IDLE_MIN} 分钟且无工作进程且轮次无变化（util=${util}%）→ 判定卡死"
             break
         fi
     else
@@ -112,7 +136,7 @@ while : ; do
     # --- 心跳（每 10 轮记一行，方便确认守护还活着）---
     poll_n=$((poll_n + 1))
     if [ $((poll_n % 10)) -eq 0 ]; then
-        log "心跳：通信 .rc=$(count_rc "$COMM_TAGS")/$EXPECT_COMM  DP .rc=$(count_rc "$DP_TAGS")/$EXPECT_DP  util=${util}%  链=$([ -n "$chain_alive" ] && echo 活 || echo 死)"
+        log "心跳：通信 .rc=$(count_rc "$COMM_TAGS")/$EXPECT_COMM  DP .rc=$(count_rc "$DP_TAGS")/$EXPECT_DP  util=${util}%  链=$([ -n "$chain_alive" ] && echo 活 || echo 死)  有任务=${busy}"
     fi
 
     # --- 绝对时限 ---
@@ -183,6 +207,73 @@ push_n=$(echo $PUSH_FILES | wc -w)
 log "relay_push rc=$push_rc  文件数=$push_n"
 
 # ------------------------------------------------------------------------------
+# 🔴 2026-11-18 新增：推送后**回读自检**（关机前的最后一道闸）
+#
+# 为什么必须做：关机 ⇒ relay agent 一起死 ⇒ 再也无法从云端取产物。
+#   若推送其实失败（网关 403 / 磁盘满 / token 失效），而脚本照样关机，
+#   ⇒ 本轮 10+ 小时的算力成果**永久丢失**（AutoDL 关机不删盘，但要重开实例
+#   手工捞文件，非常被动）。
+#   ⇒ 推送失败时**不关机**：保留实例、保留磁盘产物、把失败原因写进标记文件，
+#     让本地监控/automation 能看到并决定重推。
+# ------------------------------------------------------------------------------
+log "--- 回读自检：确认产物真的进了 relay 结果存储 ---"
+VERIFY_RC=1
+if [ "$push_rc" -eq 0 ]; then
+    # 用 relay_push_out.py 里的凭据读法，直接查服务端最新 manifest 是否可读
+    "$PY" - <<'PYEOF' >> "$OUT/relay_verify.log" 2>&1
+import json, os, re, sys, urllib.request
+
+AGENT = "/root/HPT/agent.py"
+txt = open(AGENT, encoding="utf-8", errors="ignore").read()
+def grab(name, default=""):
+    m = re.search(name + r'\s*=\s*"([^"]*)"', txt)
+    return m.group(1) if m else default
+tok, sc = grab("RELAY_TOKEN"), grab("RELAY_SHARECODE")
+url = grab("RELAY_URL", "https://fedvla-relay.app.workbuddy.host").rstrip("/")
+if not tok or not sc:
+    print("[FATAL] 读不到 relay 凭据"); sys.exit(2)
+req = urllib.request.Request(url + "/results?since=980000&sharecode=" + sc,
+                             headers={"X-Relay-Token": tok})
+with urllib.request.urlopen(req, timeout=120) as r:
+    data = json.loads(r.read().decode("utf-8"))
+res = data.get("results") or []
+mans = [x for x in res if (x.get("out") or "").startswith("MANIFEST:")]
+print(f"取到 {len(res)} 条结果，其中 manifest {len(mans)} 条")
+if not mans:
+    print("[FATAL] 没找到 manifest —— 推送没生效"); sys.exit(3)
+best = max(mans, key=lambda x: int(x["id"]))
+mf = json.loads(best["out"][len("MANIFEST:"):])
+files = mf.get("files") or []
+print(f"manifest id={best['id']} 文件数={len(files)}")
+if not files:
+    print("[FATAL] manifest 里 0 个文件"); sys.exit(4)
+# 逐文件核对：分块是否都真的在服务端、size 是否吻合
+by_id = {int(x["id"]): (x.get("out") or "") for x in res}
+missing, badsize = [], []
+for f in files:
+    if f.get("mode") == "text":
+        ids = [int(f["id"])]
+    else:
+        ids = [int(i) for i in (f.get("ids") or [])]
+    for i in ids:
+        if i not in by_id:
+            missing.append((f.get("name"), i)); break
+    else:
+        if int(f.get("size") or 0) > 0 and len(by_id.get(ids[0], "")) == 0:
+            badsize.append(f.get("name"))
+print(f"缺失分块文件数={len(missing)}  内容为空={len(badsize)}")
+if missing:
+    print("[FATAL] 缺失示例:", missing[:5]); sys.exit(5)
+if badsize:
+    print("[FATAL] 空内容示例:", badsize[:5]); sys.exit(6)
+print("[OK] 所有文件分块均可在服务端取回 —— 产物安全")
+sys.exit(0)
+PYEOF
+    VERIFY_RC=$?
+fi
+log "回读自检 rc=$VERIFY_RC"
+
+# ------------------------------------------------------------------------------
 # 完成标记
 # ------------------------------------------------------------------------------
 {
@@ -192,10 +283,20 @@ log "relay_push rc=$push_rc  文件数=$push_n"
     echo "dp_rc=$(count_rc "$DP_TAGS")/$EXPECT_DP"
     echo "relay_push_rc=$push_rc"
     echo "relay_push_files=$push_n"
+    echo "relay_verify_rc=$VERIFY_RC"
     echo "relay_fetch_cmd=python tools/relay_fetch_out.py --since 980000 --outdir results/cloud_final"
 } > "$OUT/PHASE4_ALL_DONE"
 
-log "✓ 产物已打包（/root/fedcore/final_out.tgz）+ 已推进 relay + 完成标记已写"
+# 🔴 闸门：产物没确认进 relay ⇒ **不关机**（保命 > 省电）
+if [ "$VERIFY_RC" -ne 0 ]; then
+    log "✗ 回读自检失败 rc=$VERIFY_RC —— 产物未能确认进入 relay 存储"
+    log "  ⇒ **不关机**：保留实例与磁盘产物，避免成果永久丢失"
+    log "  ⇒ 请查看 $OUT/relay_verify.log 与 $OUT/relay_push.log"
+    log "  ⇒ 手动重推：$PY $CORE/relay_push_out.py --outdir $OUT --files '<文件列表>' --idbase 980000"
+    exit 9
+fi
+
+log "✓ 产物已打包（/root/fedcore/final_out.tgz）+ 已推进 relay + 回读自检通过 + 完成标记已写"
 log "60 秒后自动关机（AutoDL 将停止计费）"
 
 # ------------------------------------------------------------------------------
