@@ -47,6 +47,14 @@ FINAL_SLEEP=${FINAL_SLEEP:-60}    # 关机前等待（打包产物 flush）
 GPU_UTIL_CMD=${GPU_UTIL_CMD:-"nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits"}
 PGREP_BIN=${PGREP_BIN:-pgrep}
 
+# 🔴 2026-11-19 新增：推送 id 基址可配置。
+#   为什么必须能改：relay_push_out.py 从 idbase+1 开始**顺序分配** id，
+#   所以用同一个 idbase 再推一次，会把上一轮的 id **整体覆盖**，
+#   而且新 manifest 的 id 会**小于**上一轮 ⇒ 本地"取 id 最大的 manifest"
+#   会取到**上一轮的旧 manifest** ⇒ 拉回过期数据（极隐蔽的静默失败）。
+#   ⇒ 每一轮重跑都必须换一个**更大的** idbase（本轮用 990000）。
+PUSH_IDBASE=${PUSH_IDBASE:-980000}
+
 # 🔴 2026-11-18 修正：评估阶段会误触发「卡死保护」而**提前关机**。
 #   旧判据：util < 10% 且 轮次文件 30 分钟未变 ⇒ 判定卡死。
 #   问题：MuJoCo 评估（eval_model.sh / hpt.run_eval）**不产生新的 global_r***
@@ -194,13 +202,13 @@ PUSH_FILES=$(cd "$OUT" && ls -1 *.json *.md *.csv *.png \
              autoshutdown.log scanlog_*.log 2>/dev/null \
              | tr '\n' ' ')
 "$PY" "$CORE/relay_push_out.py" --outdir "$OUT" --files "$PUSH_FILES" \
-      --idbase 980000 >> "$OUT/relay_push.log" 2>&1
+      --idbase "$PUSH_IDBASE" >> "$OUT/relay_push.log" 2>&1
 push_rc=$?
 if [ "$push_rc" -ne 0 ]; then
     log "relay 推送失败 rc=$push_rc，等 20 秒重试一次"
     sleep 20
     "$PY" "$CORE/relay_push_out.py" --outdir "$OUT" --files "$PUSH_FILES" \
-          --idbase 980000 >> "$OUT/relay_push.log" 2>&1
+          --idbase "$PUSH_IDBASE" >> "$OUT/relay_push.log" 2>&1
     push_rc=$?
 fi
 push_n=$(echo $PUSH_FILES | wc -w)
@@ -220,9 +228,11 @@ log "--- 回读自检：确认产物真的进了 relay 结果存储 ---"
 VERIFY_RC=1
 if [ "$push_rc" -eq 0 ]; then
     # 用 relay_push_out.py 里的凭据读法，直接查服务端最新 manifest 是否可读
-    "$PY" - <<'PYEOF' >> "$OUT/relay_verify.log" 2>&1
+    # ⚠️ heredoc 用 'PYEOF' 引号 ⇒ 不做 shell 展开 ⇒ idbase 通过环境变量传进去
+    PUSH_IDBASE="$PUSH_IDBASE" "$PY" - <<'PYEOF' >> "$OUT/relay_verify.log" 2>&1
 import json, os, re, sys, urllib.request
 
+IDBASE = int(os.environ.get("PUSH_IDBASE", "980000"))
 AGENT = "/root/HPT/agent.py"
 txt = open(AGENT, encoding="utf-8", errors="ignore").read()
 def grab(name, default=""):
@@ -232,7 +242,7 @@ tok, sc = grab("RELAY_TOKEN"), grab("RELAY_SHARECODE")
 url = grab("RELAY_URL", "https://fedvla-relay.app.workbuddy.host").rstrip("/")
 if not tok or not sc:
     print("[FATAL] 读不到 relay 凭据"); sys.exit(2)
-req = urllib.request.Request(url + "/results?since=980000&sharecode=" + sc,
+req = urllib.request.Request(url + f"/results?since={IDBASE}&sharecode=" + sc,
                              headers={"X-Relay-Token": tok})
 with urllib.request.urlopen(req, timeout=120) as r:
     data = json.loads(r.read().decode("utf-8"))
@@ -283,8 +293,9 @@ log "回读自检 rc=$VERIFY_RC"
     echo "dp_rc=$(count_rc "$DP_TAGS")/$EXPECT_DP"
     echo "relay_push_rc=$push_rc"
     echo "relay_push_files=$push_n"
+    echo "relay_push_idbase=$PUSH_IDBASE"
     echo "relay_verify_rc=$VERIFY_RC"
-    echo "relay_fetch_cmd=python tools/relay_fetch_out.py --since 980000 --outdir results/cloud_final"
+    echo "relay_fetch_cmd=python tools/relay_fetch_out.py --since $PUSH_IDBASE --outdir results/cloud_final"
 } > "$OUT/PHASE4_ALL_DONE"
 
 # 🔴 闸门：产物没确认进 relay ⇒ **不关机**（保命 > 省电）

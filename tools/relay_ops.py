@@ -26,6 +26,25 @@ def do_clear():
     print(json.dumps(r, ensure_ascii=False))
 
 
+def do_clearall(before=0):
+    """硬清陈旧命令（铁律 B：推送后/查状态前必做），返回被丢弃的来源清单。"""
+    r = cloud.req("/clearall", data={"before": int(before)}, timeout=40, retries=3)
+    print(json.dumps(r, ensure_ascii=False, indent=2))
+
+
+def do_newcode(ttl=86400):
+    """签发一次性 bootstrap 码（用户贴到 AutoDL 终端拉起 agent 用）。"""
+    r = cloud.req("/newcode", data={"ttl": int(ttl)}, timeout=30, retries=3)
+    print(json.dumps(r, ensure_ascii=False, indent=2))
+    return r
+
+
+def do_peekcode(code):
+    r = cloud.req("/newcode", data={"code": code, "peek": True}, timeout=30, retries=3)
+    print(json.dumps(r, ensure_ascii=False, indent=2))
+    return r
+
+
 def do_ping():
     h, lag = health()
     print(json.dumps({"health": h, "agent_seen_lag_sec": lag,
@@ -70,6 +89,12 @@ if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else "ping"
     if cmd == "clear":
         do_clear()
+    elif cmd == "clearall":
+        do_clearall(int(sys.argv[2]) if len(sys.argv) > 2 else 0)
+    elif cmd == "newcode":
+        do_newcode(int(sys.argv[2]) if len(sys.argv) > 2 else 86400)
+    elif cmd == "peekcode":
+        do_peekcode(sys.argv[2])
     elif cmd == "ping":
         do_ping()
     elif cmd == "probe":

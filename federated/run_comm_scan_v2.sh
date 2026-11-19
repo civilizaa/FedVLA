@@ -91,9 +91,34 @@ HETERO_ENVS="reach-v2 push-v2 button-press-topdown-v2 reach-v2"
 HETERO_EPOCH_SIZE="15 19 24 15"
 
 # ===== 配置表 =====
-CONFIG_TAGS=( c_drop00 c_drop25 c_drop50 c_drop75 c_int8 c_int4 c_bit1 )
-CONFIG_DROP=(  0       0.25     0.5      0.75     0       0       0      )
-CONFIG_QUANT=( fp32    fp32     fp32     fp32     int8_g  int4_g  bit1   )
+# ⚠️ 2026-11-19：支持用环境变量 COMM_TAGS 指定**要跑的配置子集**。
+#   默认 = 全部 7 个（与历史行为一致）。
+#   修正版重跑时由外层脚本显式传 COMM_TAGS，保证只跑需要的配置，
+#   而且**保留配置（c_drop50/c_drop75）也要在列表里** ——
+#   它们会被"评估齐全"判据 SKIP 掉，同时让 .rc_<tag> 正常写出，
+#   下游 chain_phase4_dp.sh 的"7 个 .rc 齐全"判据才不会卡死。
+ALL_TAGS=( c_drop00 c_drop25 c_drop50 c_drop75 c_int8 c_int4 c_bit1 )
+CONFIG_TAGS=()
+CONFIG_DROP=()
+CONFIG_QUANT=()
+if [ -n "${COMM_TAGS:-}" ]; then
+  SELECTED="$COMM_TAGS"
+else
+  SELECTED="${ALL_TAGS[*]}"
+fi
+for _t in $SELECTED; do
+  case "$_t" in
+    c_drop00) _d=0;    _q=fp32  ;;
+    c_drop25) _d=0.25; _q=fp32  ;;
+    c_drop50) _d=0.5;  _q=fp32  ;;
+    c_drop75) _d=0.75; _q=fp32  ;;
+    c_int8)   _d=0;    _q=int8_g ;;
+    c_int4)   _d=0;    _q=int4_g ;;
+    c_bit1)   _d=0;    _q=bit1   ;;
+    *) echo "[FATAL] 未知的配置标签：$_t"; exit 2 ;;
+  esac
+  CONFIG_TAGS+=("$_t"); CONFIG_DROP+=("$_d"); CONFIG_QUANT+=("$_q")
+done
 
 log () { echo "[$(date '+%F %T')] $*"; }
 
