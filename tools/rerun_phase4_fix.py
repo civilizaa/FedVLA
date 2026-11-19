@@ -238,14 +238,13 @@ def wait_agent(interval: int = 60, max_wait: int = 5400) -> bool:
     return False
 
 
-def do_launch(wait: int = 5400) -> int:
-    if not wait_agent(max_wait=wait):
-        log("退出：agent 未复活（云端实例还没开机/agent 没起来）")
-        return 2
-    log("agent 已活，开始推送")
-    if not push_all():
-        log("退出：推送失败")
-        return 1
+def start_cloud() -> int:
+    """静默 → 回读校验 → 起跑云端总控（不重复推送）。
+
+    ⚠️ 2026-11-19：把「推送」与「起跑」拆开。原先只有 launch（推送+起跑一步到位），
+       若本地进程在 180 秒静默等待中被杀，下一次只能整个重来（重复推送 15 个文件）。
+       拆开后：推送归推送（幂等，可重复），起跑归起跑（幂等，可重来）。
+    """
     log("等 180s 让队列彻底静默（铁律：当场通过不代表 3 分钟后还在）")
     time.sleep(180)
     if not verify():
@@ -266,6 +265,17 @@ def do_launch(wait: int = 5400) -> int:
     return 0
 
 
+def do_launch(wait: int = 5400) -> int:
+    if not wait_agent(max_wait=wait):
+        log("退出：agent 未复活（云端实例还没开机/agent 没起来）")
+        return 2
+    log("agent 已活，开始推送")
+    if not push_all():
+        log("退出：推送失败")
+        return 1
+    return start_cloud()
+
+
 # --------------------------------------------------------------------- fetch
 def do_fetch(outdir: str = "results/cloud_final_rerun") -> int:
     py = local_py()
@@ -280,7 +290,7 @@ def do_fetch(outdir: str = "results/cloud_final_rerun") -> int:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["status", "launch", "fetch", "verify"])
+    ap.add_argument("cmd", choices=["status", "launch", "start", "fetch", "verify"])
     ap.add_argument("--wait", type=int, default=5400)
     ap.add_argument("--outdir", default="results/cloud_final_rerun")
     args = ap.parse_args()
@@ -288,6 +298,8 @@ def main() -> int:
         return do_status()
     if args.cmd == "launch":
         return do_launch(args.wait)
+    if args.cmd == "start":
+        return start_cloud()
     if args.cmd == "verify":
         return 0 if verify() else 1
     if args.cmd == "fetch":
