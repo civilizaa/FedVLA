@@ -85,11 +85,24 @@ def agent_lag() -> int:
 # --------------------------------------------------------------------- status
 STATUS_CMD = r"""
 OUT=/root/HPT/output
+# ⚠️ pgrep -f 会**自匹配**：relay 用 /bin/sh -c "<整段脚本>" 执行 ⇒
+#    该 sh 进程和命令替换派生的子 shell 的 cmdline 里都含目标字符串
+#    ⇒ 旧写法 pgrep -fc "run_comm_scan_v2" 恒返回 2（假活）。
+#    正解：用字符类 [r]un_... 让模式匹配不到自身命令行。
+#    ⚠️ 模式必须带 .sh 后缀，否则本脚本里的日志文件名（chain_phase4_dp.log
+#       等）会让模式匹配到自身。
 echo "=== 进程 ==="
-for p in run_comm_scan_v2 phase4_autoshutdown chain_phase4_dp run_dp_utility calibrate_dp_clip; do
-  n=$(pgrep -fc "$p" 2>/dev/null || echo 0)
-  echo "proc $p = $n"
-done
+echo "proc run_comm_scan_v2 = $(pgrep -fc '[r]un_comm_scan_v2.sh' || true)"
+echo "proc phase4_autoshutdown = $(pgrep -fc '[p]hase4_autoshutdown.sh' || true)"
+echo "proc chain_phase4_dp = $(pgrep -fc '[c]hain_phase4_dp.sh' || true)"
+echo "proc run_dp_utility = $(pgrep -fc '[r]un_dp_utility.sh' || true)"
+echo "proc calibrate_dp_clip = $(pgrep -fc '[c]alibrate_dp_clip.sh' || true)"
+echo "proc train_fedavg = $(pgrep -fc '[r]un_fedavg.sh' || true)"
+echo "proc hpt_module = $(pgrep -fc '[h]pt\.run' || true)"
+echo "proc eval_model = $(pgrep -fc '[e]val_model\.sh' || true)"
+echo "=== 残留锁/标记 ==="
+if [ -d "$OUT/.eval_lock" ]; then echo "LOCK_PRESENT .eval_lock pid=$(cat $OUT/.eval_lock/pid 2>/dev/null)"; else echo "no .eval_lock"; fi
+if [ -f "$OUT/.r25_logs_backed_up" ]; then echo "r25_backup_flag = YES"; else echo "r25_backup_flag = NO"; fi
 echo "=== rc 计数 ==="
 nc=0; for t in %s; do [ -f "$OUT/.rc_$t" ] && nc=$((nc+1)); done
 nd=0; for t in %s; do [ -f "$OUT/.rc_$t" ] && nd=$((nd+1)); done
@@ -107,7 +120,7 @@ for t in %s; do
   echo "eval $t = $n 表"
 done
 echo "=== GPU ==="
-nvidia-smi --query-gpu=utilization.gpu,memory.used --format=csv,noheader 2>/dev/null | head -1
+nvidia-smi --query-gpu=name,utilization.gpu,memory.used,memory.total --format=csv,noheader 2>/dev/null | head -1
 df -h /root 2>/dev/null | tail -1
 """ % (COMM_TAGS, DP_TAGS, COMM_TAGS)
 
@@ -133,25 +146,46 @@ def do_status() -> int:
 
 # --------------------------------------------------------------------- launch
 def push_all() -> bool:
+    """批量推送：一次会话推全部文件（铁律 C：省点数、别把 15×5 次往返拖成 180s 超时）。
+
+    ⚠️ 2026-11-19：原先逐文件调 push_files.py，每个文件要 5 次 relay 往返
+       ⇒ 第一个文件就 TimeoutExpired（180s）。改成 push_batch.py：
+       一次入队全部写入 + 一次等全部回传 + 一条 md5sum 校验全部。
+    """
     py = local_py()
+    pairs = []
     for local, remote in PUSH_FILES:
         p = os.path.join(REPO, local)
         if not os.path.exists(p):
             log(f"[跳过] 本地不存在 {local}")
             continue
-        cmd = [py, os.path.join(HERE, "push_files.py"), "--file", local, "--remote", remote]
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=180)
-        if r.returncode != 0:
-            log(f"[推送失败] {local} -> {remote}\n{(r.stderr or '')[:400]}")
-            return False
-        log(f"[推送] {local} -> {remote} OK")
+        pairs.append((p, remote))
 
-    # 🔴 铁律 B：推送后立刻清队列，防历史命令重放把新脚本覆盖回旧版
+    # 🔴 铁律 B：推送**前**先清队列 —— 上一次失败可能留了半截的写命令，
+    #    agent 复活后重放会把**旧版脚本**写回云端（2026-11-08 血案）。
     try:
         res = cloud.req("/clearall", data={}, timeout=40, retries=3)
-        log(f"[clearall] 清掉 {res.get('cleared')} 条残留命令（防重放）")
+        log(f"[clearall-前] 清掉 {res.get('cleared')} 条残留命令（防重放）")
     except Exception as e:  # noqa: BLE001
-        log(f"[clearall] 失败（不阻塞）: {type(e).__name__}")
+        log(f"[clearall-前] 失败（不阻塞）: {type(e).__name__}")
+
+    cmd = [py, os.path.join(HERE, "push_batch.py")]
+    for p, remote in pairs:
+        cmd += ["--file", p, "--remote", remote]
+    r = subprocess.run(cmd, capture_output=True, text=True, timeout=900)
+    for line in (r.stdout or "").splitlines():
+        log(line)
+    if r.returncode != 0:
+        log(f"[推送失败] rc={r.returncode}\n{(r.stderr or '')[:600]}")
+        return False
+
+    # 推送**后**再清一次：批量推送已全部回传（push_batch 等完了），
+    # 此时清队列不会误删我们的写入命令，只会清掉期间混入的历史命令。
+    try:
+        res = cloud.req("/clearall", data={}, timeout=40, retries=3)
+        log(f"[clearall-后] 清掉 {res.get('cleared')} 条残留命令")
+    except Exception as e:  # noqa: BLE001
+        log(f"[clearall-后] 失败（不阻塞）: {type(e).__name__}")
     return True
 
 
