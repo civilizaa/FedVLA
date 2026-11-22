@@ -1,0 +1,168 @@
+{
+  "eval_c_bit1": {
+    "seeds": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "mean": 0.0,
+    "n": 3,
+    "params_M": "22.38",
+    "sha256": "91b9dc7654776dc8b0e487bbb164d677d28ea1ea2a75b29bc1754c448fc5e894",
+    "bytes": 20715
+  },
+  "eval_c_drop00": {
+    "seeds": [
+      0.95,
+      0.6,
+      0.6
+    ],
+    "mean": 0.7167,
+    "n": 3,
+    "params_M": "22.38",
+    "sha256": "7779640843a4a352628087b19d2ea82d2753dca40b5b7c55eb1e1c28c8317d69",
+    "bytes": 49412
+  },
+  "eval_c_drop25": {
+    "seeds": [
+      0.9,
+      0.75,
+      0.8
+    ],
+    "mean": 0.8167,
+    "n": 3,
+    "params_M": "22.38",
+    "sha256": "79ce5a2b029692dbb65fb73a69e41662e95c771d4eaeb6d513607845c43a33e5",
+    "bytes": 49409
+  },
+  "eval_c_drop50": {
+    "seeds": [
+      0.5,
+      0.45,
+      0.6
+    ],
+    "mean": 0.5167,
+    "n": 3,
+    "params_M": "22.38",
+    "sha256": "21b6b4a49e711809d30035f60cbe38deb0865b1bebe064ba7f4f65eb63bc82b0",
+    "bytes": 49412
+  },
+  "eval_c_drop75": {
+    "seeds": [
+      0.7,
+      0.6,
+      0.55
+    ],
+    "mean": 0.6167,
+    "n": 3,
+    "params_M": "22.38",
+    "sha256": "870c92a6f273e6776e2973366a43bb7d2d0f4e4922b30bcec2ba644d39dba1cc",
+    "bytes": 49412
+  },
+  "eval_c_int4": {
+    "seeds": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "mean": 0.0,
+    "n": 3,
+    "params_M": "22.38",
+    "sha256": "c694af59ea63a353721cb8535ddd544bc60c1b4c343ca3c5f1a9e1d659b62cb5",
+    "bytes": 49392
+  },
+  "eval_c_int8": {
+    "seeds": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "mean": 0.0,
+    "n": 3,
+    "params_M": "22.38",
+    "sha256": "779d17dab729fadb15db9c973823485aa878001f295e4530bba86059b4709ffe",
+    "bytes": 49392
+  },
+  "eval_cf_int4_restore": {
+    "seeds": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "mean": 0.0,
+    "n": 3,
+    "params_M": "22.38",
+    "sha256": "a37e44c702208d5170f6b0a57a87de6c87630039288311747edbc52ea8bde668",
+    "bytes": 49389
+  },
+  "eval_cf_p3c_int4b_all": {
+    "seeds": [
+      0.6,
+      0.3,
+      0.5
+    ],
+    "mean": 0.4667,
+    "n": 3,
+    "params_M": "22.38",
+    "sha256": "81e3e2a353cc24f17a527383e5892ac6f7245f746b8da23d160b942e14a7e881",
+    "bytes": 49432
+  },
+  "eval_cf_p3c_int8_all": {
+    "seeds": [
+      0.95,
+      0.75,
+      0.75
+    ],
+    "mean": 0.8167,
+    "n": 3,
+    "params_M": "22.38",
+    "sha256": "d472285318c3d1cb7d383abe5560aa2e2bbd0d688a685854b40ecc8d0f78b5b1",
+    "bytes": 49425
+  },
+  "eval_cf_p3c_int8_cs": {
+    "seeds": [
+      0.95,
+      0.7,
+      0.75
+    ],
+    "mean": 0.8,
+    "n": 3,
+    "params_M": "22.38",
+    "sha256": "bbf796f1b3f5688a268ab5191754e48c4b19248a9a85afaf4536a97044cfcb70",
+    "bytes": 49418
+  },
+  "eval_cf_p3c_int8_norm": {
+    "seeds": [
+      0.95,
+      0.55,
+      0.7
+    ],
+    "mean": 0.7333,
+    "n": 3,
+    "params_M": "22.38",
+    "sha256": "60008ccf8b111aa20f617e8521fcce0aa8f5d0dd6407ea2a93b1159fc78e058e",
+    "bytes": 49432
+  },
+  "eval_cf_p3c_int8_trunk": {
+    "seeds": [
+      0.95,
+      0.6,
+      0.7
+    ],
+    "mean": 0.75,
+    "n": 3,
+    "params_M": "22.38",
+    "sha256": "3dd210c600a1eb7b60db26199ef97abaaaa035cf4b8a7c8bb073783c4dbfa570",
+    "bytes": 49439
+  },
+  "eval_cf_p3c_int8b_norm": {
+    "seeds": [
+      0.95
+    ],
+    "mean": 0.95,
+    "n": 1,
+    "params_M": "22.38",
+    "sha256": "890dfbb4cafb72ee4ac695df9c9c6d5d61070de4afbedc24ca7b3944df9cb172",
+    "bytes": 36741
+  }
+}

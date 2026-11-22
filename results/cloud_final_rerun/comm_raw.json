@@ -1,0 +1,138 @@
+{
+  "domain": "mujoco_metaworld_task3",
+  "rows": [
+    {
+      "tag": "c_drop00",
+      "label": "无损基线 (fp32)",
+      "drop_rate": 0.0,
+      "quant": "fp32",
+      "domain": "mujoco_metaworld_task3",
+      "seeds": [
+        0.95,
+        0.6,
+        0.6
+      ],
+      "n": 3,
+      "mean": 0.7166666666666667,
+      "ci": 0.501976151822982,
+      "lo": 0.21469051484368462,
+      "hi": 1.2186428184896487,
+      "up_bytes_per_round": 337326112.0,
+      "up_mib_per_round": 321.6992492675781
+    },
+    {
+      "tag": "c_drop25",
+      "label": "丢包 25%",
+      "drop_rate": 0.25,
+      "quant": "fp32",
+      "domain": "mujoco_metaworld_task3",
+      "seeds": [
+        0.9,
+        0.75,
+        0.8
+      ],
+      "n": 3,
+      "mean": 0.8166666666666668,
+      "ci": 0.1897291516869733,
+      "lo": 0.6269375149796934,
+      "hi": 1.0063958183536401,
+      "up_bytes_per_round": 337326112.0,
+      "up_mib_per_round": 321.6992492675781
+    },
+    {
+      "tag": "c_drop50",
+      "label": "丢包 50%",
+      "drop_rate": 0.5,
+      "quant": "fp32",
+      "domain": "mujoco_metaworld_task3",
+      "seeds": [
+        0.5,
+        0.45,
+        0.6
+      ],
+      "n": 3,
+      "mean": 0.5166666666666666,
+      "ci": 0.1897291516869732,
+      "lo": 0.32693751497969337,
+      "hi": 0.7063958183536398,
+      "up_bytes_per_round": null,
+      "up_mib_per_round": null
+    },
+    {
+      "tag": "c_drop75",
+      "label": "丢包 75%",
+      "drop_rate": 0.75,
+      "quant": "fp32",
+      "domain": "mujoco_metaworld_task3",
+      "seeds": [
+        0.7,
+        0.6,
+        0.55
+      ],
+      "n": 3,
+      "mean": 0.6166666666666666,
+      "ci": 0.18972915168697316,
+      "lo": 0.42693751497969346,
+      "hi": 0.8063958183536397,
+      "up_bytes_per_round": null,
+      "up_mib_per_round": null
+    },
+    {
+      "tag": "c_int8",
+      "label": "int8 per-group(64)",
+      "drop_rate": 0.0,
+      "quant": "int8_g",
+      "domain": "mujoco_metaworld_task3",
+      "seeds": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "n": 3,
+      "mean": 0.0,
+      "ci": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "up_bytes_per_round": 84331528.0,
+      "up_mib_per_round": 80.42481231689453
+    },
+    {
+      "tag": "c_int4",
+      "label": "int4 per-group(64)",
+      "drop_rate": 0.0,
+      "quant": "int4_g",
+      "domain": "mujoco_metaworld_task3",
+      "seeds": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "n": 3,
+      "mean": 0.0,
+      "ci": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "up_bytes_per_round": 42165752.0,
+      "up_mib_per_round": 40.21239471435547
+    },
+    {
+      "tag": "c_bit1",
+      "label": "1-bit 符号化",
+      "drop_rate": 0.0,
+      "quant": "bit1",
+      "domain": "mujoco_metaworld_task3",
+      "seeds": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "n": 3,
+      "mean": 0.0,
+      "ci": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "up_bytes_per_round": 10541408.0,
+      "up_mib_per_round": 10.053070068359375
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "dropped": [],
+  "kept": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "quant_scheme": null,
+  "bytes_per_client": [],
+  "total_bytes": 0,
+  "offered_bytes_per_client": [
+    84331528,
+    84331528,
+    84331528,
+    84331528
+  ],
+  "offered_bytes_per_round": 337326112,
+  "uplink_bits": 32
+}

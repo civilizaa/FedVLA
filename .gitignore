@@ -65,3 +65,12 @@ relay/relay_state.json
 # relay 往返测试产物（不入库）
 results/_relay_test/
 results/cloud_final/
+
+# ===== 第4阶段云端产物：只入库可公开的小体积证据 =====
+# 完整批次留在本地磁盘（results/cloud_final_*/），privacy_results.json 单文件 19.1 MB
+results/cloud_final_*/privacy/
+results/cloud_final_*/privacy_results.json
+results/cloud_final_*/MANIFEST.json
+results/cloud_final_*/fig7_*.png
+results/cloud_final_1122/
+results/cloud_final_1119/

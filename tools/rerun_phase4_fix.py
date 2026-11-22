@@ -32,7 +32,13 @@ sys.path.insert(0, HERE)
 import cloud  # noqa: E402
 
 LOG = os.path.join(HERE, "rerun_phase4_fix.log")
-IDBASE = 990000            # 本轮推送 id 基址（必须 > 上一轮 980000）
+# 取回用的 id 下界（**严格大于**才有返回）。
+# 990000 批次：因 DP 未完成，守护从未收工 ⇒ **从未推送**。
+# 实际推送批次：11-22 12:40 重启守护时用 PUSH_IDBASE=1000000。
+# 两者 id 段不重叠，且 relay_push_out.py 的 MANIFEST id = idbase+1+N（> idbase）
+# ⇒ since=990000 同时覆盖两个批次；relay_fetch_out.py 取 **id 最大** 的 MANIFEST
+#    ⇒ 会自动选中 1000000 批次。**不要**把这里改成 1000000 之前的值。
+IDBASE = 990000            # 取回下界（覆盖 990000 / 1000000 两个批次）
 COMM_TAGS = "c_drop00 c_drop25 c_drop50 c_drop75 c_int8 c_int4 c_bit1"
 DP_TAGS = "dp_s0001 dp_s0003 dp_s0012"
 

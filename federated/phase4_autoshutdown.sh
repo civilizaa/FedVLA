@@ -196,10 +196,15 @@ log "final_out.tgz = $(du -h "$CORE/final_out.tgz" 2>/dev/null | cut -f1)"
 log "--- 推进 relay 结果存储 ---"
 # ⚠️ extract_*.log 里存着**基线自检结论与数据表**（脚本把表打到 stdout），
 #    绝不能漏掉；scanlog_*.log 是训练轨迹证据（LR 轨迹、续跑起点）。
+# 🔴 2026-11-22 修正：**必须包含 eval_*.log**（评估原文，含逐 seed 成功率与参数量）。
+#    旧版只推 *.json/*.md/*.csv/*.png ⇒ 14 份评估日志全部漏推，
+#    导致"DP 侧评估原文"缺失、三个消融变体结果无法审计（结论虽可从 relay 原始记录还原，
+#    但审计链不完整）。⇒ 评估日志是**一级证据**，与 comm_report 同级。
 PUSH_FILES=$(cd "$OUT" && ls -1 *.json *.md *.csv *.png \
              privacy/*.json privacy/*.md privacy/*.csv privacy/*.png \
+             eval_*.log scanlog_*.log dplog_*.log \
              extract_comm.log extract_dp.log chain_phase4_dp.log \
-             autoshutdown.log scanlog_*.log 2>/dev/null \
+             autoshutdown.log 2>/dev/null \
              | tr '\n' ' ')
 "$PY" "$CORE/relay_push_out.py" --outdir "$OUT" --files "$PUSH_FILES" \
       --idbase "$PUSH_IDBASE" >> "$OUT/relay_push.log" 2>&1

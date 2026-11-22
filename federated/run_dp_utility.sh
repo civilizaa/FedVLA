@@ -135,19 +135,31 @@ run_one () {
         | head -1 | grep -oE "[0-9.]+$" || true)
   if [ -z "$npm" ]; then
     log "[!!] $tag 日志里找不到参数量 —— 无法确认 MoE 是否生效"
+    log "[!!] 权重保留（不清理），以便补评估；本配置标记为失败"
+    return 1          # 🔴 铁律 A：残缺模型的评估必须作废，不能只报警
   else
     awk -v v="$npm" 'BEGIN{ if (v > 18.0) exit 0; else exit 1 }' && ok=1
     if [ "$ok" = "1" ]; then
       log "[OK] $tag 参数量 ${npm}M（>18M，MoE 已生效）"
     else
       log "[!!] $tag 参数量仅 ${npm}M —— **MoE 没生效，评的是残缺模型**，本项作废"
+      log "[!!] 权重保留（不清理），以便补评估；本配置标记为失败"
+      return 1        # 🔴 铁律 A
     fi
   fi
 
   if eval_done "$logf"; then
     log "[OK] $tag 评估完成"
   else
-    log "[!!] $tag 评估未完成（表数=$(grep -c '| avg' "$logf" 2>/dev/null || echo 0)）"
+    local nt
+    nt=$(grep -c '| avg' "$logf" 2>/dev/null || true)
+    [ -n "$nt" ] || nt=0
+    log "[!!] $tag 评估未完成（表数=$nt，需 $SEEDS）"
+    log "[!!] 权重保留（不清理），以便补评估；本配置标记为失败"
+    # 🔴 必须 return 1：否则 run_one 末尾返回 0 ⇒ .rc_${tag} 写成 0
+    #    ⇒ 守护读到"DP 3/3 完成"就会提前关机 + 推送，而实际评估从未完成。
+    #    （2026-11-22 16:13 收工事故的直接成因）
+    return 1
   fi
 
   # ---- 磁盘回收 ----
