@@ -195,6 +195,41 @@ if [ "$AGG_MODE" != "fedavg" ]; then
   echo "[OK] 聚合模式 = $AGG_MODE"
 fi
 
+# ===== 第 5 阶段：联邦基线（FedProx / SCAFFOLD）=======================
+# 路线图 6.1 主实验矩阵要求与 FedProx、SCAFFOLD 对比 —— 这两个是通信评委
+# 最熟悉的联邦基线，此前全仓未实现（2026-11-22 补齐）。
+#
+# BASELINE 三态：
+#   ""        → 完全关闭（默认）。此时本段代码整块跳过，
+#               训练行为与改造前**逐字节一致** ⇒ 不影响已完成的 1~4 阶段实验。
+#   fedprox   → 近端项 μ/2·‖w − w_global‖²，梯度修正注入 backward 之后
+#   scaffold  → 控制变量修正 g ← g − c_k + c（客户端漂移校正）
+#
+# ⚠️ 这两个方法**不改服务器的参数聚合权重**，只改**客户端本地更新方向**，
+#    所以 AGG_MODE 仍可为 fedavg/eda/eda_cluster（可与 MoE 组合）。
+BASELINE=${BASELINE:-}
+PROX_MU=${PROX_MU:-0.01}          # FedProx 近端强度（论文常用 0.01~1）
+SCAFFOLD_LR=${SCAFFOLD_LR:-}      # 本地平均 lr；留空则由训练侧统计
+
+if [ -n "$BASELINE" ]; then
+  if [ "$BASELINE" != "fedprox" ] && [ "$BASELINE" != "scaffold" ]; then
+    echo "[!!] BASELINE=$BASELINE 非法（只能是 fedprox / scaffold / 空）"
+    exit 1
+  fi
+  # 硬拦截：HPT 的基线补丁必须已打上，否则会**静默退化成 FedAvg**
+  # （这正是第 4 阶段踩过的"silent failure"套路：没报错，结果全废）。
+  if ! grep -q "apply_baseline_hook" "${HPT_ROOT}/hpt/train_test.py" 2>/dev/null; then
+    echo "[!!] HPT 未打联邦基线补丁（hpt/train_test.py 里没有 apply_baseline_hook）"
+    echo "    先执行： python $SCRIPT_DIR/patch_hpt_fedbaseline.py --hpt-dir $HPT_ROOT"
+    exit 1
+  fi
+  echo "[OK] 联邦基线 = $BASELINE  (PROX_MU=$PROX_MU)"
+fi
+
+# SCAFFOLD 的控制变量目录（逐客户端持久化 c_k + 服务器全局 c）
+BASELINE_DIR="${BASELINE_DIR:-$OUTPUT_ROOT/_baseline}"
+mkdir -p "$BASELINE_DIR"
+
 # ===== 开训前硬拦截：全局目录必须有 extras.pth =====
 # extras.pth 存 modalities_tokens（policy 顶层 ParameterDict，不在 trunk 内）。
 # 缺失时续训的模态 token 保持随机初始化，共享 trunk 会收到不一致输入。
@@ -259,6 +294,74 @@ for ((r=START_ROUND; r<NUM_ROUNDS; r++)); do
     # ---- 专家计数导出路径（EDA 的输入信号）----
     if [ "$USE_MOE" = "1" ]; then
       export FEDVLA_MOE_COUNTS="$CLIENT_OUT/expert_counts.pt"
+    fi
+
+    # ---- 第 5 阶段：联邦基线环境变量（FedProx / SCAFFOLD）----
+    # ⚠️ BASELINE 为空时，本段整块跳过 ⇒ 训练行为与改造前逐字节一致。
+    #    FedProx 需要 w_global（= 本轮起始的全局模型）：
+    #      r=0 时是 INIT_PRETRAINED（hf 预训练），r>0 时是上一轮的 global_r{r-1}。
+    #      客户端已从它续训，所以把它显式落盘给钩子读取（钩子只认 .pt）。
+    if [ -n "$BASELINE" ]; then
+      export FEDVLA_BASELINE="$BASELINE"
+      # ---- 锚点 / w_global 的落盘（键空间必须是**全模型键空间**）----
+      # ⚠️ 键空间陷阱（2026-11-22）：模型参数名是 `trunk.trunk.xxx`，
+      #    而聚合写出的 trunk.pth 的键是 `trunk.xxx`（剥掉了第一层前缀）。
+      #    直接拿 trunk.pth 当锚点 ⇒ 键对不上 ⇒ 修正项作用不到任何参数
+      #    ⇒ 基线**静默**退化成 FedAvg（零报错）。
+      #    ⇒ 这里统一把前缀补回去，变成 `trunk.trunk.xxx`。
+      _write_anchor () {   # $1=源目录或 hf://   $2=输出 .pt
+        "$HPT_PY" - "$1" "$2" <<'PYANCHOR'
+import os, sys, torch
+src, dst = sys.argv[1], sys.argv[2]
+if src.startswith("hf://"):
+    from huggingface_hub import hf_hub_download
+    p = hf_hub_download("liruiw/hpt-base", "trunk.pth", repo_type="model")
+    sd = torch.load(p, map_location="cpu", weights_only=False)
+else:
+    tp = os.path.join(src, "trunk.pth")
+    if not os.path.exists(tp):
+        raise SystemExit(f"[FATAL] 找不到 {tp}")
+    sd = torch.load(tp, map_location="cpu", weights_only=False)
+# 键空间转换：trunk.pth 的 `trunk.xxx` -> 全模型键空间的 `trunk.trunk.xxx`
+# ⚠️ trunk.pth 的键**本来就以 "trunk." 开头**（那是 Policy.trunk 的内部键），
+#    所以这里必须**无条件**加前缀；写成"若不以 trunk. 开头才加"会漏转换
+#    ⇒ 键对不上 ⇒ 基线静默退化成 FedAvg（2026-11-22 单测抓到）。
+if sd and all(k.startswith("trunk.trunk.") for k in sd):
+    full = sd                      # 已经是全模型键空间，不动
+else:
+    full = {"trunk." + k: v for k, v in sd.items()}
+torch.save(full, dst)
+print(f"[baseline] 锚点已落盘: {dst} 键数={len(full)}（全模型键空间）")
+PYANCHOR
+      }
+      if [ "$BASELINE" = "fedprox" ]; then
+        export FEDVLA_PROX_MU="$PROX_MU"
+        ANCHOR_PT="$BASELINE_DIR/anchor_r${r}.pt"
+        _write_anchor "$PRETRAINED" "$ANCHOR_PT" || exit 1
+        export FEDVLA_PROX_ANCHOR="$ANCHOR_PT"
+      elif [ "$BASELINE" = "scaffold" ]; then
+        # c：服务器下发的全局控制变量（第 0 轮无 => 钩子走零初始化）
+        CG="$BASELINE_DIR/c_global_r${r}.pt"
+        if [ -f "$CG" ]; then export FEDVLA_SCAFFOLD_C="$CG"; else unset FEDVLA_SCAFFOLD_C; fi
+        # c_k：本客户端的本地控制变量（**逐轮持久化**）
+        #    ⚠️ 若不持久化，SCAFFOLD 会退化成 no-op（g - c_k + c = g），零报错。
+        CL="$BASELINE_DIR/ci_c${c}.pt"
+        if [ -f "$CL" ]; then export FEDVLA_SCAFFOLD_CV_LOCAL="$CL"; else unset FEDVLA_SCAFFOLD_CV_LOCAL; fi
+        # c_k 更新需要的 w_global（本轮起始全局模型）与本地步数 K
+        WG="$BASELINE_DIR/wglobal_r${r}.pt"
+        _write_anchor "$PRETRAINED" "$WG" || exit 1
+        export FEDVLA_SCAFFOLD_WGLOBAL="$WG"
+        export FEDVLA_SCAFFOLD_CV_OUT="$BASELINE_DIR/ci_c${c}_r${r}.pt"
+        export FEDVLA_SCAFFOLD_STEPS="$C_LOCAL_STEPS"
+        if [ -z "$SCAFFOLD_LR" ]; then
+          # 本地平均 lr：从训练日志里取最后一次的 lr（调度器输出）
+          LR_EST=$(grep -oE "lr[^0-9.eE+-]*[0-9.eE+-]+" "$LOG" 2>/dev/null | tail -1 \
+                   | grep -oE "[0-9.eE+-]+$" || true)
+          export FEDVLA_SCAFFOLD_LR="${LR_EST:-1e-4}"
+        else
+          export FEDVLA_SCAFFOLD_LR="$SCAFFOLD_LR"
+        fi
+      fi
     fi
 
     "$HPT_PY" -m hpt.run \
@@ -404,6 +507,39 @@ PY
   if [ ! -f "$GLOBAL_DIR/trunk.pth" ]; then
     echo "[round $r] 聚合失败，查看 $OUTPUT_ROOT/log_aggregate_r${r}.txt"; exit 1
   fi
+
+  # ---- 第 5 阶段：SCAFFOLD 服务端控制变量聚合 ----
+  # 客户端在本地训练结束时已把更新后的本地控制变量写到
+  # $BASELINE_DIR/ci_c{c}_r{r}.pt；这里聚合成全局 c，供下一轮下发。
+  # ⚠️ 失败必须 exit 1（铁律 Q）：若这里失败却继续，下一轮客户端拿到的是
+  #    **上一轮的旧 c** ⇒ SCAFFOLD 静默退化成近似 FedAvg ⇒ 结果全废且零报错。
+  if [ "$BASELINE" = "scaffold" ]; then
+    CV_DIRS=()
+    for ((c=0; c<NUM_CLIENTS; c++)); do
+      SRC="$BASELINE_DIR/ci_c${c}_r${r}.pt"
+      if [ ! -f "$SRC" ]; then
+        echo "[!!] 客户端 $c 缺本地控制变量 $SRC —— SCAFFOLD 聚合中止"
+        exit 1
+      fi
+      # 客户端目录里放一份（aggregate-cv 从客户端目录读）
+      cp "$SRC" "$OUTPUT_ROOT/client_${c}_r${r}/scaffold_cv.pt"
+      CV_DIRS+=("$OUTPUT_ROOT/client_${c}_r${r}")
+    done
+    "$HPT_PY" "$SCRIPT_DIR/fed_baselines.py" aggregate-cv \
+      --clients "${CV_DIRS[@]}" \
+      --out "$BASELINE_DIR/c_global_r$((r+1)).pt" \
+      >> "$OUTPUT_ROOT/log_baseline_r${r}.txt" 2>&1 \
+      || { echo "[!!] SCAFFOLD 控制变量聚合失败，查看 $OUTPUT_ROOT/log_baseline_r${r}.txt";
+           tail -n 20 "$OUTPUT_ROOT/log_baseline_r${r}.txt"; exit 1; }
+    # 回写 c_k 的持久化副本（下一轮客户端要读它）
+    # ⚠️ 顺序很重要：必须**先聚合成功**再回写。顺序反了的话，
+    #    聚合失败时 c_k 已被覆盖 ⇒ 下一轮拿到错的 c_k ⇒ 静默失真。
+    for ((c=0; c<NUM_CLIENTS; c++)); do
+      cp "$BASELINE_DIR/ci_c${c}_r${r}.pt" "$BASELINE_DIR/ci_c${c}.pt"
+    done
+    echo "[round $r] SCAFFOLD 全局控制变量 -> $BASELINE_DIR/c_global_r$((r+1)).pt"
+  fi
+
   echo "[round $r] 完成，全局模型 -> $GLOBAL_DIR"
 
   # ---- 磁盘水位守卫 + 清理历史轮次权重 ----
