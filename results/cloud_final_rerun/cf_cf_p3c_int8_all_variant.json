@@ -1,0 +1,6 @@
+{
+  "src": "/root/fedcore/keep/p3c_global_r49",
+  "dst": "/root/fedcore/cf/cf_p3c_int8_all",
+  "scope": "all",
+  "bits": 8
+}
