@@ -48,12 +48,14 @@ rm -rf "$OUT/smoke" "$OUT/smoke2"           # 冒烟产物
 if [ -d "$OUT/p5_iso_fedavg" ]; then
   rm -rf "$OUT/p5_iso_fedavg"/client_*_r* 2>/dev/null
 fi
-# 把第 3 阶段复用的 3 行评估日志复制进 phase5/ —— 守护脚本只推 phase5/ 下的文件，
-#   而第 3 阶段的日志在 output 根目录 ⇒ 不复制就推不上（主表的一级证据）。
-mkdir -p "$OUT/p3_reuse"
-for t in p3_moe_fedavg p3_moe_eda p3_moe_eda_cluster p3_moe_iid; do
-  cp -f "$ROOT/eval_${t}_"*.log "$OUT/p3_reuse/" 2>/dev/null
-done
+# 把第 3 阶段复用的 3 行评估日志**平铺复制**进 phase5/ —— 守护脚本只推 phase5/ 下的
+#   `eval_*.log`，而第 3 阶段的日志在 output 根目录 ⇒ 不复制就推不上。
+#   ⚠️ 必须**平铺**（不能放子目录）：守护的推送清单是 `ls -1 eval_*.log`，不递归。
+#   ⚠️ 这 3 份原始日志**只存在于云端**（本地仓库没有）⇒ 推不上就等于证据永久丢失。
+cp -f "$ROOT"/eval_p3_moe_fedavg_*.log "$ROOT"/eval_p3_moe_eda_*.log \
+      "$ROOT"/eval_p3_moe_eda_cluster_*.log "$ROOT"/eval_p3_moe_iid_*.log \
+      "$OUT/" 2>/dev/null
+echo "  已平铺复制第3阶段评估日志到 phase5/（守护推送清单用 eval_*.log 匹配）"
 echo "  清理完成；剩余 phase5 目录："; ls -1 "$OUT" 2>/dev/null | head -12
 
 # ---- 硬闸 1：磁盘（**清理后**再判）----
