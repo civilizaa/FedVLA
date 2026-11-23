@@ -1,0 +1,75 @@
+{
+  "quant_dir": "/root/fedcore/cf/cf_int4_restore",
+  "clean_dir": "",
+  "quant": [
+    {
+      "domain": "mujoco_metaworld_task1",
+      "state": {
+        "dim": 39,
+        "zero_scale_dims": 31,
+        "effective_dims": 8,
+        "scale_absmax": 1846.9068603515625,
+        "scale_min_nonzero": 263.8438415527344,
+        "offset_absmax": 299.3692932128906,
+        "var_max": 3306423.25,
+        "var_mean_live": 777031.0625
+      },
+      "action": {
+        "dim": 4,
+        "zero_scale_dims": 0,
+        "effective_dims": 4,
+        "scale_absmax": 1.0345180034637451,
+        "scale_min_nonzero": 0.44336482882499695,
+        "offset_absmax": 0.5287895798683167,
+        "var_max": 1.055551528930664,
+        "var_mean_live": 0.7370867133140564
+      }
+    },
+    {
+      "domain": "mujoco_metaworld_task2",
+      "state": {
+        "dim": 39,
+        "zero_scale_dims": 17,
+        "effective_dims": 22,
+        "scale_absmax": 93.04444122314453,
+        "scale_min_nonzero": 13.292062759399414,
+        "offset_absmax": 92.04444122314453,
+        "var_max": 9500.4462890625,
+        "var_mean_live": 1524.2125244140625
+      },
+      "action": {
+        "dim": 4,
+        "zero_scale_dims": 0,
+        "effective_dims": 4,
+        "scale_absmax": 3.3333332538604736,
+        "scale_min_nonzero": 0.9523809552192688,
+        "offset_absmax": 1.0,
+        "var_max": 11.320677757263184,
+        "var_mean_live": 4.388442039489746
+      }
+    },
+    {
+      "domain": "mujoco_metaworld_task3",
+      "state": {
+        "dim": 39,
+        "zero_scale_dims": 0,
+        "effective_dims": 39,
+        "scale_absmax": 28.40006446838379,
+        "scale_min_nonzero": 0.8284299969673157,
+        "offset_absmax": 18.11556053161621,
+        "var_max": 788.2142944335938,
+        "var_mean_live": 90.0963134765625
+      },
+      "action": {
+        "dim": 4,
+        "zero_scale_dims": 0,
+        "effective_dims": 4,
+        "scale_absmax": 1.5041121244430542,
+        "scale_min_nonzero": 0.8356776237487793,
+        "offset_absmax": 0.8029923439025879,
+        "var_max": 2.231329917907715,
+        "var_mean_live": 1.275694727897644
+      }
+    }
+  ]
+}

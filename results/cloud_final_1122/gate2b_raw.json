@@ -1,0 +1,206 @@
+{
+  "generated_at": "2026-11-08T13:51:13",
+  "statistic": "3 seeds x 20 rollouts, mean +- 95% CI (t-distribution)",
+  "variants": [
+    {
+      "stage": "V1",
+      "log_tag": "g2b_iid_v1_r9",
+      "domains": {
+        "mujoco_metaworld_task1": {
+          "log": "/root/HPT/output/eval_g2b_iid_v1_r9_mujoco_metaworld_task1.log",
+          "status": "ok",
+          "per_seed": [
+            0.45,
+            0.25,
+            0.45
+          ],
+          "per_task": {
+            "reach-v2": [
+              0.45,
+              0.25,
+              0.45
+            ]
+          },
+          "mean": 0.3833333333333333,
+          "ci": 0.2868666666666667,
+          "lo": 0.09646666666666659,
+          "hi": 0.6702,
+          "n": 3
+        }
+      },
+      "desc": "IID 联邦 10 轮 · 只开全局 lr"
+    },
+    {
+      "stage": "V2",
+      "log_tag": "g2b_iid_v2_r9",
+      "domains": {
+        "mujoco_metaworld_task1": {
+          "log": "/root/HPT/output/eval_g2b_iid_v2_r9_mujoco_metaworld_task1.log",
+          "status": "ok",
+          "per_seed": [
+            0.3,
+            0.15,
+            0.2
+          ],
+          "per_task": {
+            "reach-v2": [
+              0.3,
+              0.15,
+              0.2
+            ]
+          },
+          "mean": 0.21666666666666665,
+          "ci": 0.18974446485851557,
+          "lo": 0.02692220180815108,
+          "hi": 0.4064111315251822,
+          "n": 3
+        }
+      },
+      "desc": "IID 联邦 10 轮 · 全局 lr + Adam 持久化"
+    },
+    {
+      "stage": "E3",
+      "log_tag": "g2b_central_eq",
+      "domains": {
+        "mujoco_metaworld_task1": {
+          "log": "/root/HPT/output/eval_g2b_central_eq_mujoco_metaworld_task1.log",
+          "status": "ok",
+          "per_seed": [
+            0.95,
+            1.0,
+            0.85
+          ],
+          "per_task": {
+            "reach-v2": [
+              0.95,
+              1.0,
+              0.85
+            ]
+          },
+          "mean": 0.9333333333333332,
+          "ci": 0.1897444648585156,
+          "lo": 0.7435888684748176,
+          "hi": 1.123077798191849,
+          "n": 3
+        }
+      },
+      "desc": "集中式等预算 2250 步 · 全局 lr（调度口径上界）"
+    },
+    {
+      "stage": "E4",
+      "log_tag": "g2b_iid_e4_r49",
+      "domains": {
+        "mujoco_metaworld_task1": {
+          "log": "/root/HPT/output/eval_g2b_iid_e4_r49_mujoco_metaworld_task1.log",
+          "status": "ok",
+          "per_seed": [
+            0.45,
+            0.25,
+            0.2
+          ],
+          "per_task": {
+            "reach-v2": [
+              0.45,
+              0.25,
+              0.2
+            ]
+          },
+          "mean": 0.3,
+          "ci": 0.32864705358991636,
+          "lo": -0.02864705358991637,
+          "hi": 0.6286470535899163,
+          "n": 3
+        }
+      },
+      "desc": "IID 联邦 50 轮 · 全局 lr + Adam 持久化（修复后联邦基线）"
+    },
+    {
+      "stage": "E5",
+      "log_tag": "g2b_hetero_r49",
+      "domains": {
+        "mujoco_metaworld_task1": {
+          "log": "/root/HPT/output/eval_g2b_hetero_r49_mujoco_metaworld_task1.log",
+          "status": "ok",
+          "per_seed": [
+            0.05,
+            0.0,
+            0.0
+          ],
+          "per_task": {
+            "reach-v2": [
+              0.05,
+              0.0,
+              0.0
+            ]
+          },
+          "mean": 0.016666666666666666,
+          "ci": 0.07171666666666668,
+          "lo": -0.055050000000000016,
+          "hi": 0.08838333333333334,
+          "n": 3
+        },
+        "mujoco_metaworld_task2": {
+          "log": "/root/HPT/output/eval_g2b_hetero_r49_mujoco_metaworld_task2.log",
+          "status": "ok",
+          "per_seed": [
+            0.1,
+            0.0,
+            0.2
+          ],
+          "per_task": {
+            "push-v2": [
+              0.1,
+              0.0,
+              0.2
+            ]
+          },
+          "mean": 0.10000000000000002,
+          "ci": 0.24843382083229598,
+          "lo": -0.14843382083229595,
+          "hi": 0.348433820832296,
+          "n": 3
+        },
+        "mujoco_metaworld_task3": {
+          "log": "/root/HPT/output/eval_g2b_hetero_r49_mujoco_metaworld_task3.log",
+          "status": "ok",
+          "per_seed": [
+            0.5,
+            0.35,
+            0.5
+          ],
+          "per_task": {
+            "button-press-topdown-v2": [
+              0.5,
+              0.35,
+              0.5
+            ]
+          },
+          "mean": 0.45,
+          "ci": 0.21515000000000004,
+          "lo": 0.23484999999999998,
+          "hi": 0.66515,
+          "n": 3
+        }
+      },
+      "desc": "异构联邦 50 轮 · 全局 lr + Adam 持久化（第 4 章正式结论）"
+    }
+  ],
+  "old_baseline_gate2": {
+    "集中式 6000 步（旧）": {
+      "mujoco_metaworld_task1": 0.9,
+      "mujoco_metaworld_task2": 0.983,
+      "mujoco_metaworld_task3": 0.967
+    },
+    "等预算集中式 2250 步（旧）": {
+      "mujoco_metaworld_task1": 0.95
+    },
+    "IID 联邦 50 轮（旧调度）": {
+      "mujoco_metaworld_task1": 0.633
+    },
+    "异构联邦 50 轮（旧调度）": {
+      "mujoco_metaworld_task1": 0.017,
+      "mujoco_metaworld_task2": 0.0,
+      "mujoco_metaworld_task3": 0.183
+    }
+  }
+}

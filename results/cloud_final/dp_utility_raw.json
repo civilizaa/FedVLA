@@ -1,0 +1,65 @@
+{
+  "domain": "mujoco_metaworld_task3",
+  "calib": {},
+  "baseline": {
+    "mean": 0.75,
+    "ci": 0.4302652729911273,
+    "n": 3,
+    "seeds": [
+      0.95,
+      0.65,
+      0.65
+    ],
+    "df": 2,
+    "sd": 0.17320508075688767,
+    "lo": 0.3197347270088727,
+    "hi": 1.1802652729911274
+  },
+  "rows": [
+    {
+      "tag": "dp_s0001",
+      "label": "σ=1e-4 (噪声/信号 0.41)",
+      "sigma": 0.0001,
+      "epsilon": 4999999872.88349,
+      "best_order": 2,
+      "seeds": [],
+      "n": 0,
+      "mean": null,
+      "ci": null,
+      "lo": null,
+      "hi": null,
+      "proxy_fidelity": null,
+      "proxy_action_cos": null
+    },
+    {
+      "tag": "dp_s0003",
+      "label": "σ=1e-3 (噪声/信号 4.1)",
+      "sigma": 0.001,
+      "epsilon": 49999872.883489355,
+      "best_order": 2,
+      "seeds": [],
+      "n": 0,
+      "mean": null,
+      "ci": null,
+      "lo": null,
+      "hi": null,
+      "proxy_fidelity": null,
+      "proxy_action_cos": null
+    },
+    {
+      "tag": "dp_s0012",
+      "label": "σ=1e-2 (噪声/信号 41)",
+      "sigma": 0.01,
+      "epsilon": 499872.88348935294,
+      "best_order": 2,
+      "seeds": [],
+      "n": 0,
+      "mean": null,
+      "ci": null,
+      "lo": null,
+      "hi": null,
+      "proxy_fidelity": null,
+      "proxy_action_cos": null
+    }
+  ]
+}

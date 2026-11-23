@@ -1,0 +1,19 @@
+[2026-11-18 13:55:50] ===== c_int4 训练（drop=0 quant=int4_g 轮数=50 从第 0 轮开始）=====
+[2026-11-18 16:59:16] c_int4 训练完成
+[2026-11-18 16:59:16] [EVAL] c_int4/mujoco_metaworld_task3 env=button-press-topdown-v2 seeds=3 episodes=20 moe=1
+| task                    |   reward |
+解析到 1 个日志文件，3 张结果表
+
+===== 逐 seed =====
+  output: [0.0, 0.0, 0.0]
+
+===== 逐任务汇总（均值 ± 95% CI）=====
+  button-press-topdown-v2          n=3  0.000 ± 0.000   [0.000, 0.000]
+  OVERALL(avg 行)                   n=3  0.000 ± 0.000   [0.000, 0.000]
+
+SUMMARY_DONE
+完整日志: /root/HPT/output/eval_c_int4_mujoco_metaworld_task3.log
+[2026-11-18 17:43:47] [OK] c_int4/mujoco_metaworld_task3 参数量 22.38M（>18M，MoE 已生效）
+[2026-11-18 17:43:47] [OK] c_int4/mujoco_metaworld_task3 完成
+[2026-11-18 17:43:47] c_int4 权重已清理（保留日志与结果）
+[磁盘] overlay          30G   17G   14G  57% /

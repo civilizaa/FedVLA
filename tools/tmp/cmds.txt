@@ -1,0 +1,4 @@
+head -42 /root/HPT/hpt/run_eval.py
+grep -n make_policy /root/HPT/hpt/train_test.py | head -5
+grep -n init_domain_head /root/HPT/hpt/train_test.py /root/HPT/hpt/run.py | head -8
+grep -n load_model /root/HPT/hpt/train_test.py /root/HPT/hpt/run.py | head -8

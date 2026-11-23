@@ -157,13 +157,20 @@ def main(argv=None):
         shutil.copy(hook_file, hook_file + ".bak") if os.path.exists(hook_file) else None
 
     # 写钩子模块（从独立文件复制，避免嵌套三引号）
-    if os.path.exists(hook_file):
-        print("  [skip] fedvla_baseline.py：已存在")
+    # 🔴 2026-11-23：原来"已存在就 skip" ⇒ 改了钩子源码后重新打补丁**不会更新**
+    #    云端副本（训练仍用旧钩子 ⇒ 静默行为不一致）。现在改成"内容不同则更新"。
+    if not os.path.exists(HOOK_SRC_FILE):
+        raise SystemExit(f"[FATAL] 找不到钩子源文件 {HOOK_SRC_FILE}")
+    _new = open(HOOK_SRC_FILE, "rb").read()
+    _cur = open(hook_file, "rb").read() if os.path.exists(hook_file) else None
+    if _cur == _new:
+        print("  [skip] fedvla_baseline.py：已是最新（内容一致）")
     else:
-        if not os.path.exists(HOOK_SRC_FILE):
-            raise SystemExit(f"[FATAL] 找不到钩子源文件 {HOOK_SRC_FILE}")
+        if _cur is not None:
+            shutil.copy(hook_file, hook_file + ".bak")
         shutil.copy(HOOK_SRC_FILE, hook_file)
-        print(f"  [ok] 写入 {hook_file}（源：{os.path.basename(HOOK_SRC_FILE)}）")
+        print(f"  [ok] 写入 {hook_file}（源：{os.path.basename(HOOK_SRC_FILE)}"
+              f"{'，已更新旧版本' if _cur is not None else ''}）")
 
     _apply(train_test, ANCHOR, BLOCK, "梯度修正钩子")
     _apply(train_test, ANCHOR2, BLOCK2, "控制变量导出")

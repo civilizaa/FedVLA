@@ -1,0 +1,27 @@
+{
+  "dropped": [],
+  "kept": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "quant_scheme": "int8_g",
+  "bytes_per_client": [
+    21082882,
+    21082882,
+    21082882,
+    21082882
+  ],
+  "total_bytes": 84331528,
+  "offered_bytes_per_client": [
+    21082882,
+    21082882,
+    21082882,
+    21082882
+  ],
+  "offered_bytes_per_round": 84331528,
+  "uplink_bits": 8,
+  "quant_drift": 0.0002046377443148154,
+  "quant_rel_err_max": 0.004426653752239827
+}

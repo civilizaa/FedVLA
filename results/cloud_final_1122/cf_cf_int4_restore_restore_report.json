@@ -1,0 +1,121 @@
+{
+  "src": "/root/fedcore/keep/c_int4_global_r49",
+  "clean": "/root/fedcore/keep/dp_client2_r1",
+  "dst": "/root/fedcore/cf/cf_int4_restore",
+  "files": [
+    {
+      "file": "eda_weights.pt",
+      "stats": {
+        "replaced": 0,
+        "missing": 0,
+        "shape_mismatch": 0
+      },
+      "zeros_before": {},
+      "zeros_after": {}
+    },
+    {
+      "file": "extras.pth",
+      "stats": {
+        "replaced": 0,
+        "missing": 0,
+        "shape_mismatch": 0
+      },
+      "zeros_before": {},
+      "zeros_after": {}
+    },
+    {
+      "file": "model.pth",
+      "stats": {
+        "replaced": 12,
+        "missing": 24,
+        "shape_mismatch": 0
+      },
+      "zeros_before": {
+        "normalizer.mujoco_metaworld_task1.params_dict.action.offset": 2,
+        "normalizer.mujoco_metaworld_task1.params_dict.action.scale": 0,
+        "normalizer.mujoco_metaworld_task1.params_dict.action.input_stats.max": 1,
+        "normalizer.mujoco_metaworld_task1.params_dict.action.input_stats.mean": 3,
+        "normalizer.mujoco_metaworld_task1.params_dict.action.input_stats.min": 2,
+        "normalizer.mujoco_metaworld_task1.params_dict.action.input_stats.std": 1,
+        "normalizer.mujoco_metaworld_task1.params_dict.state.offset": 35,
+        "normalizer.mujoco_metaworld_task1.params_dict.state.scale": 31,
+        "normalizer.mujoco_metaworld_task1.params_dict.state.input_stats.max": 22,
+        "normalizer.mujoco_metaworld_task1.params_dict.state.input_stats.mean": 27,
+        "normalizer.mujoco_metaworld_task1.params_dict.state.input_stats.min": 23,
+        "normalizer.mujoco_metaworld_task1.params_dict.state.input_stats.std": 26,
+        "normalizer.mujoco_metaworld_task2.params_dict.action.offset": 1,
+        "normalizer.mujoco_metaworld_task2.params_dict.action.scale": 0,
+        "normalizer.mujoco_metaworld_task2.params_dict.action.input_stats.max": 0,
+        "normalizer.mujoco_metaworld_task2.params_dict.action.input_stats.mean": 1,
+        "normalizer.mujoco_metaworld_task2.params_dict.action.input_stats.min": 2,
+        "normalizer.mujoco_metaworld_task2.params_dict.action.input_stats.std": 0,
+        "normalizer.mujoco_metaworld_task2.params_dict.state.offset": 36,
+        "normalizer.mujoco_metaworld_task2.params_dict.state.scale": 17,
+        "normalizer.mujoco_metaworld_task2.params_dict.state.input_stats.max": 21,
+        "normalizer.mujoco_metaworld_task2.params_dict.state.input_stats.mean": 28,
+        "normalizer.mujoco_metaworld_task2.params_dict.state.input_stats.min": 23,
+        "normalizer.mujoco_metaworld_task2.params_dict.state.input_stats.std": 23,
+        "normalizer.mujoco_metaworld_task3.params_dict.action.offset": 2,
+        "normalizer.mujoco_metaworld_task3.params_dict.action.scale": 0,
+        "normalizer.mujoco_metaworld_task3.params_dict.action.input_stats.max": 0,
+        "normalizer.mujoco_metaworld_task3.params_dict.action.input_stats.mean": 2,
+        "normalizer.mujoco_metaworld_task3.params_dict.action.input_stats.min": 0,
+        "normalizer.mujoco_metaworld_task3.params_dict.action.input_stats.std": 1,
+        "normalizer.mujoco_metaworld_task3.params_dict.state.offset": 28,
+        "normalizer.mujoco_metaworld_task3.params_dict.state.scale": 23,
+        "normalizer.mujoco_metaworld_task3.params_dict.state.input_stats.max": 18,
+        "normalizer.mujoco_metaworld_task3.params_dict.state.input_stats.mean": 23,
+        "normalizer.mujoco_metaworld_task3.params_dict.state.input_stats.min": 18,
+        "normalizer.mujoco_metaworld_task3.params_dict.state.input_stats.std": 24
+      },
+      "zeros_after": {
+        "normalizer.mujoco_metaworld_task1.params_dict.action.offset": 2,
+        "normalizer.mujoco_metaworld_task1.params_dict.action.scale": 0,
+        "normalizer.mujoco_metaworld_task1.params_dict.action.input_stats.max": 1,
+        "normalizer.mujoco_metaworld_task1.params_dict.action.input_stats.mean": 3,
+        "normalizer.mujoco_metaworld_task1.params_dict.action.input_stats.min": 2,
+        "normalizer.mujoco_metaworld_task1.params_dict.action.input_stats.std": 1,
+        "normalizer.mujoco_metaworld_task1.params_dict.state.offset": 35,
+        "normalizer.mujoco_metaworld_task1.params_dict.state.scale": 31,
+        "normalizer.mujoco_metaworld_task1.params_dict.state.input_stats.max": 22,
+        "normalizer.mujoco_metaworld_task1.params_dict.state.input_stats.mean": 27,
+        "normalizer.mujoco_metaworld_task1.params_dict.state.input_stats.min": 23,
+        "normalizer.mujoco_metaworld_task1.params_dict.state.input_stats.std": 26,
+        "normalizer.mujoco_metaworld_task2.params_dict.action.offset": 1,
+        "normalizer.mujoco_metaworld_task2.params_dict.action.scale": 0,
+        "normalizer.mujoco_metaworld_task2.params_dict.action.input_stats.max": 0,
+        "normalizer.mujoco_metaworld_task2.params_dict.action.input_stats.mean": 1,
+        "normalizer.mujoco_metaworld_task2.params_dict.action.input_stats.min": 2,
+        "normalizer.mujoco_metaworld_task2.params_dict.action.input_stats.std": 0,
+        "normalizer.mujoco_metaworld_task2.params_dict.state.offset": 36,
+        "normalizer.mujoco_metaworld_task2.params_dict.state.scale": 17,
+        "normalizer.mujoco_metaworld_task2.params_dict.state.input_stats.max": 21,
+        "normalizer.mujoco_metaworld_task2.params_dict.state.input_stats.mean": 28,
+        "normalizer.mujoco_metaworld_task2.params_dict.state.input_stats.min": 23,
+        "normalizer.mujoco_metaworld_task2.params_dict.state.input_stats.std": 23,
+        "normalizer.mujoco_metaworld_task3.params_dict.action.offset": 0,
+        "normalizer.mujoco_metaworld_task3.params_dict.action.scale": 0,
+        "normalizer.mujoco_metaworld_task3.params_dict.action.input_stats.max": 0,
+        "normalizer.mujoco_metaworld_task3.params_dict.action.input_stats.mean": 0,
+        "normalizer.mujoco_metaworld_task3.params_dict.action.input_stats.min": 0,
+        "normalizer.mujoco_metaworld_task3.params_dict.action.input_stats.std": 0,
+        "normalizer.mujoco_metaworld_task3.params_dict.state.offset": 0,
+        "normalizer.mujoco_metaworld_task3.params_dict.state.scale": 0,
+        "normalizer.mujoco_metaworld_task3.params_dict.state.input_stats.max": 0,
+        "normalizer.mujoco_metaworld_task3.params_dict.state.input_stats.mean": 0,
+        "normalizer.mujoco_metaworld_task3.params_dict.state.input_stats.min": 0,
+        "normalizer.mujoco_metaworld_task3.params_dict.state.input_stats.std": 0
+      }
+    },
+    {
+      "file": "trunk.pth",
+      "stats": {
+        "replaced": 0,
+        "missing": 0,
+        "shape_mismatch": 0
+      },
+      "zeros_before": {},
+      "zeros_after": {}
+    }
+  ]
+}

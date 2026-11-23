@@ -81,12 +81,31 @@ def _named_params(model):
 
 
 def _import_fed_baselines():
-    """定位 federated/fed_baselines.py 并 import（**不依赖 CWD** —— 铁律 F/G）。"""
+    """定位 fed_baselines.py 并 import（**不依赖 CWD** —— 铁律 F/G）。
+
+    🔴 2026-11-23 云端实测踩坑：原实现只找 `<某处>/federated/fed_baselines.py`，
+    而云端代码目录是 `/root/fedcore/`（**没有 federated/ 子目录**）⇒ 导入直接
+    ImportError ⇒ 训练会在第一步就崩（本地单测因目录布局不同而测不出来）。
+    ⇒ 现在按优先级找多��布局：
+      1. 环境变量 FEDVLA_FED_BASE（run_fedavg.sh 会 export 成脚本所在目录）
+      2. 本文件**同级**（云端 /root/fedcore/ 与本地 federated/ 都命中）
+      3. 本地仓库布局 `<上级>/federated/`
+      4. 云端约定 /root/fedcore
+      5. CWD 下的 `.` 与 `federated`
+    """
     import sys
     _here = os.path.dirname(os.path.abspath(__file__))
-    cands = [os.path.join(_here, "..", "..", "federated"),
-             os.path.join(_here, "..", "..", "..", "federated"),
-             os.path.join(_here, "..", "federated")]
+    cands = []
+    _env_base = _env("FEDVLA_FED_BASE", "")
+    if _env_base:
+        cands.append(_env_base)
+    cands.append(_here)
+    cands += [os.path.join(_here, "..", "..", "federated"),
+              os.path.join(_here, "..", "..", "..", "federated"),
+              os.path.join(_here, "..", "federated"),
+              "/root/fedcore",
+              os.getcwd(),
+              os.path.join(os.getcwd(), "federated")]
     for _p in cands:
         _p = os.path.abspath(_p)
         if os.path.exists(os.path.join(_p, "fed_baselines.py")):

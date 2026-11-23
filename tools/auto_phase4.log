@@ -1,0 +1,30 @@
+[10:27:17] agent 仍未复活（lag=833415s），0s 已等
+[10:28:17] agent 仍未复活（lag=833475s），60s 已等
+[10:29:17] agent 仍未复活（lag=833535s），120s 已等
+[10:30:18] agent 仍未复活（lag=833596s），181s 已等
+[10:31:18] agent 仍未复活（lag=833656s），241s 已等
+[10:32:18] agent 心跳正常（落后 9s，第 1/3 次确认）
+[10:33:18] agent 心跳正常（落后 8s，第 2/3 次确认）
+[10:34:19] agent 心跳正常（落后 8s，第 3/3 次确认）
+[10:34:19] agent 已复活
+[10:34:19] 开始推送
+[10:34:36] [推送] federated/resume_phase4.sh -> /root/fedcore/resume_phase4.sh rc=0
+[10:35:53] [推送] federated/clean_legacy_rounds.sh -> /root/fedcore/clean_legacy_rounds.sh rc=0
+[10:37:10] [推送] federated/run_privacy_rev.sh -> /root/fedcore/run_privacy_rev.sh rc=0
+[10:38:27] [推送] federated/run_comm_scan_v2.sh -> /root/fedcore/run_comm_scan_v2.sh rc=0
+[10:39:42] [推送] federated/extract_comm_results.py -> /root/fedcore/extract_comm_results.py rc=0
+[10:40:59] [推送] federated/extract_privacy_results.py -> /root/fedcore/extract_privacy_results.py rc=0
+[10:42:16] [推送] federated/privacy_experiment.py -> /root/fedcore/privacy_experiment.py rc=0
+[10:43:34] [推送] federated/inversion.py -> /root/fedcore/inversion.py rc=0
+[10:44:51] [推送] federated/dp.py -> /root/fedcore/dp.py rc=0
+[10:46:10] [推送] federated/aggregate.py -> /root/fedcore/aggregate.py rc=0
+[10:47:27] [推送] federated/run_fedavg.sh -> /root/fedcore/run_fedavg.sh rc=0
+[10:47:27] [clearall] 清掉 80 条残留命令（防重放覆盖）
+[10:47:27] 等 180s 让队列彻底静默（铁律：当场通过不代表 3 分钟后还在）
+[10:50:31] [校验] /root/fedcore/resume_phase4.sh 含 'resume_phase4': 0 次 **缺失**
+[10:50:31] [校验] /root/fedcore/clean_legacy_rounds.sh 含 'clean_legacy_rounds': 0 次 **缺失**
+[10:50:35] [校验] /root/fedcore/run_comm_scan_v2.sh 含 'MAX_PAR': 0 次 **缺失**
+[10:50:39] [校验] /root/fedcore/extract_comm_results.py 含 '基线自检': 0 次 **缺失**
+[10:50:43] [校验] /root/fedcore/aggregate.py 含 'str(tok).replace': 0 次 **缺失**
+[10:50:46] [校验] /root/fedcore/run_fedavg.sh 含 'DROPPED_ARGS': 0 次 **缺失**
+[10:50:46] 退出：推送或校验失败（不继续，避免用旧脚本跑出假结果）

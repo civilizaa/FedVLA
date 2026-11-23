@@ -1,76 +1,16 @@
-# ===== 大型产物：绝不入库 =====
-output/                 # HPT 训练输出、日志、wandb
-data/                   # 数据集、离线示范
-*.ckpt
-*.pt
-*.pth
-*.bin
-wandb/
+# 🔴 凭据绝不入库（public 仓库）
+relay/relay_secret.txt
+tools/relay_secret.txt
+**/relay_secret.txt
 
-# ===== Python 通用 =====
-__pycache__/
-*.py[cod]
-*.egg-info/
-.eggs/
-build/
-dist/
-.ipynb_checkpoints/
+# 单测临时产物
+federated/_tmp_test/
+tools/_cloud_*.txt
+tools/_cloud_*.sh
+tools/_cloud_*.py
+tools/_probe*_out.txt
 
-# ===== 环境 =====
-.venv/
-venv/
-envs/
-conda_envs/
-*.egg
-
-# ===== 编辑器 / 系统 =====
-.idea/
-.vscode/
-*.swp
-.DS_Store
-Thumbs.db
-
-# ===== 临时 / 日志 =====
-tmp/
-_tmp*/
-*.log
-runs/
-lightning_logs/
-
-# ===== 密钥（红线：绝不可提交）=====
-*.token
-*.secret
-.env
-.env.*
-
-# 构建产物
+# 打包备份与历史联调产物
 federated.tar.gz
 federated.tar.gz.b64
-__pycache__/
-*.pyc
-
-# ===== relay 凭据与状态（红线）=====
-.autodl_creds.json
-relay_secret.txt
-**/relay_secret.txt
-relay/agent_b64.txt
-relay/agent_final.py
-relay/relay_client.json
-relay/relay_state.json
-**/relay_state.json
-
-# WorkBuddy 项目数据不入库
-.workbuddy/
-
-# relay 往返测试产物（不入库）
 results/_relay_test/
-results/cloud_final/
-
-# ===== 第4阶段云端产物：只入库可公开的小体积证据 =====
-# 完整批次留在本地磁盘（results/cloud_final_*/），privacy_results.json 单文件 19.1 MB
-results/cloud_final_*/privacy/
-results/cloud_final_*/privacy_results.json
-results/cloud_final_*/MANIFEST.json
-results/cloud_final_*/fig7_*.png
-results/cloud_final_1122/
-results/cloud_final_1119/

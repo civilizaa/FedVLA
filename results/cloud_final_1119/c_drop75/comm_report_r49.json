@@ -1,0 +1,13 @@
+{
+  "dropped": [
+    0,
+    1,
+    2
+  ],
+  "kept": [
+    3
+  ],
+  "quant_scheme": null,
+  "bytes_per_client": [],
+  "total_bytes": 0
+}

@@ -1,0 +1,19 @@
+[2026-11-18 15:58:10] ===== c_bit1 训练（drop=0 quant=bit1 轮数=50 从第 0 轮开始）=====
+[2026-11-18 18:25:46] c_bit1 训练完成
+[2026-11-18 18:25:46] [EVAL] c_bit1/mujoco_metaworld_task3 env=button-press-topdown-v2 seeds=3 episodes=20 moe=1
+| task                    |   reward |
+解析到 1 个日志文件，3 张结果表
+
+===== 逐 seed =====
+  output: [0.0, 0.0, 0.0]
+
+===== 逐任务汇总（均值 ± 95% CI）=====
+  button-press-topdown-v2          n=3  0.000 ± 0.000   [0.000, 0.000]
+  OVERALL(avg 行)                   n=3  0.000 ± 0.000   [0.000, 0.000]
+
+SUMMARY_DONE
+完整日志: /root/HPT/output/eval_c_bit1_mujoco_metaworld_task3.log
+[2026-11-18 18:25:58] [OK] c_bit1/mujoco_metaworld_task3 参数量 22.38M（>18M，MoE 已生效）
+[2026-11-18 18:25:58] [OK] c_bit1/mujoco_metaworld_task3 完成
+[2026-11-18 18:25:59] c_bit1 权重已清理（保留日志与结果）
+[磁盘] overlay          30G   16G   15G  51% /

@@ -40,16 +40,36 @@ from extract_phase3_results import (T_CRIT_95, collect_convergence,  # noqa: E40
 DOMAINS = ["mujoco_metaworld_task1", "mujoco_metaworld_task2",
            "mujoco_metaworld_task3"]
 
-# 主实验矩阵：(tag, 中文名, 划分)
+# 主实验矩阵：(tag, 中文名, 划分, 来源)
+#
+# 🔴 2026-11-23 补：balanced 臂的 FedAvg / EDA / EDA-Cluster **复用第 3 阶段产物**
+#    （划分 t1/t2/t3/t1、超参、轮数逐字同构 ⇒ 铁律 D 成立），
+#    否则主表 balanced 侧会缺 3 个格子。
+#    第 3 阶段的评估日志在 /root/HPT/output/（根），第 5 阶段在 /root/HPT/output/phase5/
+#    ⇒ find_eval_log / collect_convergence / collect_eda 都必须**跨两个根**找。
 STAGES = [
-    ("p5_bal_fedprox",    "均衡划分 + FedProx",        "balanced"),
-    ("p5_bal_scaffold",   "均衡划分 + SCAFFOLD",       "balanced"),
-    ("p5_iso_fedavg",     "孤立客户端 + FedAvg",       "isolated"),
-    ("p5_iso_fedprox",    "孤立客户端 + FedProx",      "isolated"),
-    ("p5_iso_scaffold",   "孤立客户端 + SCAFFOLD",     "isolated"),
-    ("p5_iso_eda",        "孤立客户端 + EDA 中心性",    "isolated"),
-    ("p5_iso_edaclu",     "孤立客户端 + 簇感知（本文）", "isolated"),
+    ("p3_moe_fedavg",      "均衡划分 + FedAvg",         "balanced", "第3阶段复用"),
+    ("p3_moe_eda",         "均衡划分 + EDA 中心性",       "balanced", "第3阶段复用"),
+    ("p3_moe_eda_cluster", "均衡划分 + 簇感知（本文）",     "balanced", "第3阶段复用"),
+    ("p5_bal_fedprox",     "均衡划分 + FedProx",         "balanced", "第5阶段新跑"),
+    ("p5_bal_scaffold",    "均衡划分 + SCAFFOLD",        "balanced", "第5阶段新跑"),
+    ("p5_iso_fedavg",      "孤立客户端 + FedAvg",        "isolated", "第5阶段新跑"),
+    ("p5_iso_fedprox",     "孤立客户端 + FedProx",       "isolated", "第5阶段新跑"),
+    ("p5_iso_scaffold",    "孤立客户端 + SCAFFOLD",      "isolated", "第5阶段新跑"),
+    ("p5_iso_eda",         "孤立客户端 + EDA 中心性",     "isolated", "第5阶段新跑"),
+    ("p5_iso_edaclu",      "孤立客户端 + 簇感知（本文）",  "isolated", "第5阶段新跑"),
 ]
+# 第 3 阶段的 IID 对照（只有 task1）—— 不进主表，仅供附录
+EXTRA_TAGS = ["p3_moe_iid"]
+
+
+def find_eval_log_multi(roots, tag: str, domain: str):
+    """在多个根里找评估日志（第 3 阶段在根目录，第 5 阶段在 phase5/ 下）。"""
+    for r in roots:
+        p = find_eval_log(r, tag, domain)
+        if p:
+            return p
+    return None
 
 
 def find_eval_log(out_root: str, tag: str, domain: str):
@@ -66,11 +86,12 @@ def find_eval_log(out_root: str, tag: str, domain: str):
     return None
 
 
-def collect_stage(out_root: str, tag: str):
-    """收集一个配置的全部结果。"""
+def collect_stage(out_root, tag: str):
+    """收集一个配置的全部结果（out_root 可以是单个根或根列表）。"""
+    roots = [out_root] if isinstance(out_root, str) else list(out_root)
     st = {"tag": tag, "domains": {}, "eval_logs": {}}
     for d in DOMAINS:
-        p = find_eval_log(out_root, tag, d)
+        p = find_eval_log_multi(roots, tag, d)
         if not p:
             st["domains"][d] = None
             continue
@@ -114,9 +135,9 @@ def collect_baseline(out_root: str, tag: str):
 def to_markdown(result: dict) -> str:
     """生成可直接贴进论文的主表（Markdown）。"""
     lines = []
-    lines.append("| 配置 | 划分 | " + " | ".join(
+    lines.append("| 配置 | 划分 | 来源 | " + " | ".join(
         ["reach-v2", "push-v2", "button-press"]))
-    lines.append("|---|---|---|---|---|")
+    lines.append("|---|---|---|---|---|---|")
     for st in result["stages"]:
         cells = []
         for d in DOMAINS:
@@ -126,7 +147,8 @@ def to_markdown(result: dict) -> str:
             else:
                 s = e["stats"]
                 cells.append(f"{s['mean']:.3f} ± {s['ci']:.3f}")
-        lines.append(f"| {st['label']} | {st['split']} | " + " | ".join(cells) + " |")
+        lines.append(f"| {st['label']} | {st['split']} | {st.get('source','')} | "
+                     + " | ".join(cells) + " |")
     return "\n".join(lines)
 
 
@@ -144,11 +166,20 @@ def main():
         "stages": [],
     }
 
-    for tag, label, split in STAGES:
-        st = collect_stage(out_root, tag)
+    # 🔴 两个根：第 5 阶段（phase5/）与第 3 阶段（根目录）
+    eval_roots = [out_root, os.path.dirname(out_root.rstrip("/"))]
+    cfg_roots = [out_root, os.path.dirname(out_root.rstrip("/"))]
+    for tag, label, split, source in STAGES:
+        st = collect_stage(eval_roots, tag)
         st["label"] = label
         st["split"] = split
-        st["convergence"] = collect_convergence(out_root, tag)
+        st["source"] = source
+        conv = {}
+        for r in cfg_roots:
+            conv = collect_convergence(r, tag)
+            if conv:
+                break
+        st["convergence"] = conv
         result["stages"].append(st)
         got = [d for d in DOMAINS
                if st["domains"].get(d) and st["domains"][d].get("n_tables", 0) > 0]
@@ -158,7 +189,13 @@ def main():
     result["centralized_upper_bound"] = collect_baseline(
         os.path.dirname(out_root.rstrip("/")), "g2b_central_eq")
 
-    result["eda"] = collect_eda(out_root, ["p5_iso_eda", "p5_iso_edaclu"])
+    eda = {}
+    for r in cfg_roots:
+        eda = collect_eda(r, ["p3_moe_eda", "p3_moe_eda_cluster",
+                               "p5_iso_eda", "p5_iso_edaclu"])
+        if eda:
+            break
+    result["eda"] = eda
 
     os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
     with open(args.out, "w", encoding="utf-8") as f:

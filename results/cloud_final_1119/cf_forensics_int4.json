@@ -1,0 +1,396 @@
+{
+  "scheme": "int4_g",
+  "bits": 4,
+  "clean_dir": "/root/fedcore/keep/c_int4_client0_r49",
+  "quant_dir": "/root/fedcore/keep/c_int4_global_r49",
+  "q1_global_nonzero": 22342944,
+  "q1_global_killed": 1723448,
+  "q1_global_killed_pct": 7.71361195731413,
+  "q1_top_killed": [
+    {
+      "key": "model.pth::trunk.trunk.blocks.0.attn.in_proj_weight",
+      "shape": [
+        768,
+        256
+      ],
+      "zeros_clean": 0,
+      "zeros_quant": 32527,
+      "nonzero_clean": 196608,
+      "killed": 32527,
+      "killed_pct": 16.544087727864586,
+      "rel_err": 0.0003535572614055127
+    },
+    {
+      "key": "model.pth::trunk.trunk.blocks.14.attn.in_proj_weight",
+      "shape": [
+        768,
+        256
+      ],
+      "zeros_clean": 0,
+      "zeros_quant": 32346,
+      "nonzero_clean": 196608,
+      "killed": 32346,
+      "killed_pct": 16.4520263671875,
+      "rel_err": 0.00046030100202187896
+    },
+    {
+      "key": "model.pth::trunk.trunk.blocks.15.attn.in_proj_weight",
+      "shape": [
+        768,
+        256
+      ],
+      "zeros_clean": 0,
+      "zeros_quant": 32281,
+      "nonzero_clean": 196608,
+      "killed": 32281,
+      "killed_pct": 16.418965657552086,
+      "rel_err": 0.0006015872932039201
+    },
+    {
+      "key": "model.pth::trunk.trunk.blocks.13.attn.in_proj_weight",
+      "shape": [
+        768,
+        256
+      ],
+      "zeros_clean": 0,
+      "zeros_quant": 32181,
+      "nonzero_clean": 196608,
+      "killed": 32181,
+      "killed_pct": 16.36810302734375,
+      "rel_err": 0.0004505364631768316
+    },
+    {
+      "key": "model.pth::trunk.trunk.blocks.12.attn.in_proj_weight",
+      "shape": [
+        768,
+        256
+      ],
+      "zeros_clean": 0,
+      "zeros_quant": 31378,
+      "nonzero_clean": 196608,
+      "killed": 31378,
+      "killed_pct": 15.959676106770834,
+      "rel_err": 0.00043835840187966824
+    },
+    {
+      "key": "model.pth::trunk.trunk.blocks.7.attn.in_proj_weight",
+      "shape": [
+        768,
+        256
+      ],
+      "zeros_clean": 0,
+      "zeros_quant": 31291,
+      "nonzero_clean": 196608,
+      "killed": 31291,
+      "killed_pct": 15.915425618489584,
+      "rel_err": 0.00044183674617670476
+    },
+    {
+      "key": "model.pth::trunk.trunk.blocks.11.attn.in_proj_weight",
+      "shape": [
+        768,
+        256
+      ],
+      "zeros_clean": 0,
+      "zeros_quant": 30992,
+      "nonzero_clean": 196608,
+      "killed": 30992,
+      "killed_pct": 15.763346354166666,
+      "rel_err": 0.00041108770528808236
+    },
+    {
+      "key": "model.pth::trunk.trunk.blocks.5.attn.in_proj_weight",
+      "shape": [
+        768,
+        256
+      ],
+      "zeros_clean": 0,
+      "zeros_quant": 30468,
+      "nonzero_clean": 196608,
+      "killed": 30468,
+      "killed_pct": 15.496826171875,
+      "rel_err": 0.00046292252955026925
+    },
+    {
+      "key": "model.pth::trunk.trunk.blocks.9.attn.in_proj_weight",
+      "shape": [
+        768,
+        256
+      ],
+      "zeros_clean": 0,
+      "zeros_quant": 30467,
+      "nonzero_clean": 196608,
+      "killed": 30467,
+      "killed_pct": 15.496317545572916,
+      "rel_err": 0.0004128494765609503
+    },
+    {
+      "key": "model.pth::trunk.trunk.blocks.4.attn.in_proj_weight",
+      "shape": [
+        768,
+        256
+      ],
+      "zeros_clean": 0,
+      "zeros_quant": 30454,
+      "nonzero_clean": 196608,
+      "killed": 30454,
+      "killed_pct": 15.489705403645834,
+      "rel_err": 0.0003689723089337349
+    },
+    {
+      "key": "model.pth::trunk.trunk.blocks.10.attn.in_proj_weight",
+      "shape": [
+        768,
+        256
+      ],
+      "zeros_clean": 0,
+      "zeros_quant": 30373,
+      "nonzero_clean": 196608,
+      "killed": 30373,
+      "killed_pct": 15.448506673177084,
+      "rel_err": 0.00043034899863414466
+    },
+    {
+      "key": "model.pth::trunk.trunk.blocks.6.attn.in_proj_weight",
+      "shape": [
+        768,
+        256
+      ],
+      "zeros_clean": 0,
+      "zeros_quant": 30365,
+      "nonzero_clean": 196608,
+      "killed": 30365,
+      "killed_pct": 15.444437662760416,
+      "rel_err": 0.00044553689076565206
+    }
+  ],
+  "q2_mask_all_identical": false,
+  "q2_normalizer_repro": [
+    {
+      "key": "model.pth::normalizer.mujoco_metaworld_task1.params_dict.action.offset",
+      "mask_identical": true,
+      "zeros_repro": 2,
+      "zeros_global": 2,
+      "max_abs_diff": 0.517909824848175
+    },
+    {
+      "key": "model.pth::normalizer.mujoco_metaworld_task1.params_dict.action.scale",
+      "mask_identical": true,
+      "zeros_repro": 0,
+      "zeros_global": 0,
+      "max_abs_diff": 1.013232946395874
+    },
+    {
+      "key": "model.pth::normalizer.mujoco_metaworld_task1.params_dict.action.input_stats.max",
+      "mask_identical": true,
+      "zeros_repro": 1,
+      "zeros_global": 1,
+      "max_abs_diff": 0.4948028326034546
+    },
+    {
+      "key": "model.pth::normalizer.mujoco_metaworld_task1.params_dict.action.input_stats.mean",
+      "mask_identical": true,
+      "zeros_repro": 3,
+      "zeros_global": 3,
+      "max_abs_diff": 0.25617724657058716
+    },
+    {
+      "key": "model.pth::normalizer.mujoco_metaworld_task1.params_dict.action.input_stats.min",
+      "mask_identical": true,
+      "zeros_repro": 2,
+      "zeros_global": 2,
+      "max_abs_diff": 0.3523077666759491
+    },
+    {
+      "key": "model.pth::normalizer.mujoco_metaworld_task1.params_dict.action.input_stats.std",
+      "mask_identical": true,
+      "zeros_repro": 1,
+      "zeros_global": 1,
+      "max_abs_diff": 0.15612661838531494
+    },
+    {
+      "key": "model.pth::normalizer.mujoco_metaworld_task1.params_dict.state.offset",
+      "mask_identical": true,
+      "zeros_repro": 35,
+      "zeros_global": 35,
+      "max_abs_diff": 293.2098083496094
+    },
+    {
+      "key": "model.pth::normalizer.mujoco_metaworld_task1.params_dict.state.scale",
+      "mask_identical": true,
+      "zeros_repro": 31,
+      "zeros_global": 31,
+      "max_abs_diff": 1808.9071044921875
+    },
+    {
+      "key": "model.pth::normalizer.mujoco_metaworld_task1.params_dict.state.input_stats.max",
+      "mask_identical": true,
+      "zeros_repro": 22,
+      "zeros_global": 22,
+      "max_abs_diff": 0.4948028326034546
+    },
+    {
+      "key": "model.pth::normalizer.mujoco_metaworld_task1.params_dict.state.input_stats.mean",
+      "mask_identical": true,
+      "zeros_repro": 27,
+      "zeros_global": 27,
+      "max_abs_diff": 0.4948028326034546
+    },
+    {
+      "key": "model.pth::normalizer.mujoco_metaworld_task1.params_dict.state.input_stats.min",
+      "mask_identical": true,
+      "zeros_repro": 23,
+      "zeros_global": 23,
+      "max_abs_diff": 0.4948016405105591
+    },
+    {
+      "key": "model.pth::normalizer.mujoco_metaworld_task1.params_dict.state.input_stats.std",
+      "mask_identical": true,
+      "zeros_repro": 26,
+      "zeros_global": 26,
+      "max_abs_diff": 0.0394090972840786
+    }
+  ],
+  "q3_normalizer": [
+    {
+      "key": "model.pth::normalizer.mujoco_metaworld_task1.params_dict.action.offset",
+      "dim": 4,
+      "lost_dims": 1,
+      "lost_frac": 0.25,
+      "absmax_clean": 1.0466994047164917,
+      "min_nonzero_clean": 0.04595041275024414,
+      "absmax_quant": 0.5287895798683167
+    },
+    {
+      "key": "model.pth::normalizer.mujoco_metaworld_task1.params_dict.action.scale",
+      "dim": 4,
+      "lost_dims": 0,
+      "lost_frac": 0.0,
+      "absmax_clean": 2.047750949859619,
+      "min_nonzero_clean": 1.0,
+      "absmax_quant": 1.0345180034637451
+    },
+    {
+      "key": "model.pth::normalizer.mujoco_metaworld_task1.params_dict.action.input_stats.max",
+      "dim": 4,
+      "lost_dims": 0,
+      "lost_frac": 0.0,
+      "absmax_clean": 1.0,
+      "min_nonzero_clean": 0.4659011662006378,
+      "absmax_quant": 0.5051971673965454
+    },
+    {
+      "key": "model.pth::normalizer.mujoco_metaworld_task1.params_dict.action.input_stats.mean",
+      "dim": 4,
+      "lost_dims": 2,
+      "lost_frac": 0.5,
+      "absmax_clean": 0.51773601770401,
+      "min_nonzero_clean": 0.01666305772960186,
+      "absmax_quant": 0.26155877113342285
+    },
+    {
+      "key": "model.pth::normalizer.mujoco_metaworld_task1.params_dict.action.input_stats.min",
+      "dim": 4,
+      "lost_dims": 1,
+      "lost_frac": 0.25,
+      "absmax_clean": 0.7120164632797241,
+      "min_nonzero_clean": 0.022816918790340424,
+      "absmax_quant": 0.359708696603775
+    },
+    {
+      "key": "model.pth::normalizer.mujoco_metaworld_task1.params_dict.action.input_stats.std",
+      "dim": 4,
+      "lost_dims": 0,
+      "lost_frac": 0.0,
+      "absmax_clean": 0.31553298234939575,
+      "min_nonzero_clean": 0.13195905089378357,
+      "absmax_quant": 0.1594063639640808
+    },
+    {
+      "key": "model.pth::normalizer.mujoco_metaworld_task1.params_dict.state.offset",
+      "dim": 39,
+      "lost_dims": 21,
+      "lost_frac": 0.5384615384615384,
+      "absmax_clean": 592.5791015625,
+      "min_nonzero_clean": 2.7874393708771095e-05,
+      "absmax_quant": 299.3692932128906
+    },
+    {
+      "key": "model.pth::normalizer.mujoco_metaworld_task1.params_dict.state.scale",
+      "dim": 39,
+      "lost_dims": 31,
+      "lost_frac": 0.7948717948717948,
+      "absmax_clean": 3655.81396484375,
+      "min_nonzero_clean": 1.0,
+      "absmax_quant": 1846.9068603515625
+    },
+    {
+      "key": "model.pth::normalizer.mujoco_metaworld_task1.params_dict.state.input_stats.max",
+      "dim": 39,
+      "lost_dims": 8,
+      "lost_frac": 0.20512820512820512,
+      "absmax_clean": 1.0,
+      "min_nonzero_clean": 2.6264409825671464e-05,
+      "absmax_quant": 0.5051971673965454
+    },
+    {
+      "key": "model.pth::normalizer.mujoco_metaworld_task1.params_dict.state.input_stats.mean",
+      "dim": 39,
+      "lost_dims": 13,
+      "lost_frac": 0.3333333333333333,
+      "absmax_clean": 1.0,
+      "min_nonzero_clean": 4.712574934728764e-07,
+      "absmax_quant": 0.5051971673965454
+    },
+    {
+      "key": "model.pth::normalizer.mujoco_metaworld_task1.params_dict.state.input_stats.min",
+      "dim": 39,
+      "lost_dims": 9,
+      "lost_frac": 0.23076923076923078,
+      "absmax_clean": 0.999997615814209,
+      "min_nonzero_clean": 2.7874393708771095e-05,
+      "absmax_quant": 0.5051959753036499
+    },
+    {
+      "key": "model.pth::normalizer.mujoco_metaworld_task1.params_dict.state.input_stats.std",
+      "dim": 39,
+      "lost_dims": 12,
+      "lost_frac": 0.3076923076923077,
+      "absmax_clean": 0.07964606583118439,
+      "min_nonzero_clean": 1.8671298107619805e-07,
+      "absmax_quant": 0.04023696854710579
+    }
+  ],
+  "q3_dead_dims": [
+    {
+      "key": "model.pth::normalizer.mujoco_metaworld_task1.params_dict.action.scale",
+      "dead_dims": 0,
+      "example_true_values": [],
+      "example_quant_values": []
+    },
+    {
+      "key": "model.pth::normalizer.mujoco_metaworld_task1.params_dict.state.scale",
+      "dead_dims": 31,
+      "example_true_values": [
+        11.17078,
+        6.812157,
+        9.527845,
+        10.125944,
+        20.286938,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "example_quant_values": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
+  ]
+}

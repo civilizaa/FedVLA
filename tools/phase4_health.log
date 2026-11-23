@@ -1,0 +1,15 @@
+[2026-11-19 11:05:00] === 第4阶段修正版重跑 看护体检 ===
+[2026-11-19 11:05:00] 判定: CLOUD_OFF —— 云端实例仍关闭，修正版重跑【未启动】（按纪律不启动）
+[2026-11-19 11:05:00] 证据1 /health: agent_seen=1794997819 => 2026-11-18 18:30:19，落后 57452s (15.96h)
+[2026-11-19 11:05:00]   注: agent_alive=true 是粘滞标志(relay/server.py: bool(hb))，不代表 agent 在消费队列
+[2026-11-19 11:05:00] 证据2 探针 cid=3445 入队后 250s 无任何回传 => agent 未在轮询（实例已死，非仅心跳陈旧）
+[2026-11-19 11:05:00] 证据3 AutoDL API 探针: AuthorizeFailed「登录超时，请重新登录」=> 本地无有效 AutoDL 凭据，无法由脚本重开实例
+[2026-11-19 11:05:00] 结论: 实例关机时刻与 2026-11-18 18:30 守护脚本自动关机完全吻合，属预期状态，非故障
+[2026-11-19 11:05:00] 本次动作: 只读体检 + 签发 24h 一次性 bootstrap 码；未推送、未清队列、未重训、未重开实例
+[2026-11-19 11:05:00] 本地就绪度: 3 个修复点全部在位且离线单测通过（test_quant_channel.py 5/5 PASS）
+[2026-11-19 11:05:00]   修复1 run_fedavg.sh: PYTHONPATH + import hpt 硬拦截（DP 根因）
+[2026-11-19 11:05:00]   修复2 aggregate.py: 量化自检(NaN/Inf+相对误差阈值) + quant_drift.jsonl 漂移诊断 + offered_bytes_per_round 无条件统计
+[2026-11-19 11:05:00]   修复3 test_quant_channel.py: 5 组离线单测（int8 偏差 0.21%，物理上不可能归零）
+[2026-11-19 11:05:00] 交接资产(已提交 aa7c2ef/e471ee5): prep_rerun_phase4.sh 清洗 + rerun_phase4_fix.sh 云端总控 + tools/rerun_phase4_fix.py 本地总控
+[2026-11-19 11:05:00] 待用户动作: ①AutoDL 控制台重开实例 ②在实例终端粘贴 bootstrap 命令复活 agent（重开实例不会自动起 agent）
+[2026-11-19 11:05:00] 建议动作: 复活后跑 `python tools/rerun_phase4_fix.py launch`（等agent→推脚本→clearall→等180s→回读校验→起跑总控）

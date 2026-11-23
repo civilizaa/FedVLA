@@ -1,0 +1,19 @@
+[2026-11-18 10:39:53] ===== c_drop25 训练（drop=0.25 quant=fp32 轮数=50 从第 13 轮开始）=====
+[2026-11-18 12:52:19] c_drop25 训练完成
+[2026-11-18 12:52:19] [EVAL] c_drop25/mujoco_metaworld_task3 env=button-press-topdown-v2 seeds=3 episodes=20 moe=1
+| task                    |   reward |
+解析到 1 个日志文件，3 张结果表
+
+===== 逐 seed =====
+  output: [0.95, 0.65, 0.85]
+
+===== 逐任务汇总（均值 ± 95% CI）=====
+  button-press-topdown-v2          n=3  0.817 ± 0.379   [0.437, 1.196]
+  OVERALL(avg 行)                   n=3  0.817 ± 0.379   [0.437, 1.196]
+
+SUMMARY_DONE
+完整日志: /root/HPT/output/eval_c_drop25_mujoco_metaworld_task3.log
+[2026-11-18 13:07:21] [OK] c_drop25/mujoco_metaworld_task3 参数量 22.38M（>18M，MoE 已生效）
+[2026-11-18 13:07:21] [OK] c_drop25/mujoco_metaworld_task3 完成
+[2026-11-18 13:07:21] c_drop25 权重已清理（保留日志与结果）
+[磁盘] overlay          30G   19G   12G  62% /

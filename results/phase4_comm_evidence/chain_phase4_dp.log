@@ -1,0 +1,30 @@
+[2026-11-18 11:45:09] ===== 第4阶段串行接力链启动 =====
+[2026-11-18 11:45:09] 等待通信扫描完成（判据：7 个 .rc_<tag> 全部出现）
+[2026-11-18 13:09:09] 通信扫描进度：2/7 个配置已结束
+[2026-11-18 13:57:09] 通信扫描进度：3/7 个配置已结束
+[2026-11-18 15:59:10] 通信扫描进度：4/7 个配置已结束
+[2026-11-18 16:59:09] 通信扫描进度：5/7 个配置已结束
+[2026-11-18 17:45:10] 通信扫描进度：6/7 个配置已结束
+[2026-11-18 18:27:10] [OK] 通信扫描完成（7/7）
+[2026-11-18 18:27:10] ===== 阶段 1：DP 效用扫描的 C 标定 =====
+===== DP 效用扫描：C 标定（2 轮，干净训练）=====
+OUTPUT_ROOT=/root/HPT/output/dp_calib
+[!!] 标定训练失败（rc=1），查看 /root/HPT/output/dp_calib/calib_train.log
+[OK] 配置自检通过：4 个客户端，domain↔env 映射一致
+===== FedVLA FedAvg =====
+OUTPUT_ROOT=/root/HPT/output/dp_calib
+NUM_ROUNDS=2  NUM_CLIENTS=4  LOCAL_EPOCHS=3
+CLIENT_DOMAINS: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1
+CLIENT_ENVS: reach-v2 push-v2 button-press-topdown-v2 reach-v2
+CLIENT_EPOCH_SIZE: 15 19 24 15
+从轮 0 开始
+=========================
+[OK] load_trunk 补丁已就位
+[OK] 全局步数感知调度补丁已就位（warmup_frac=0.25）
+[OK] MoE 已开启（E=8 k=2 ratio=0.25 layers=half）
+[OK] 聚合模式 = eda_cluster
+[round 0] 开始
+[round 0] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_calib/client_0_r0
+[round 0] client 0 训练失败，查看 /root/HPT/output/dp_calib/log_client_0_r0.txt
+/root/miniconda3/envs/hpt/bin/python: Error while finding module specification for 'hpt.run' (ModuleNotFoundError: No module named 'hpt')
+[2026-11-18 18:27:10] [!!] 标定失败（rc=1）—— DP 效用扫描无法进行，链路终止

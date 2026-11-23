@@ -30,6 +30,9 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/.mujoco/mujoco210/bin
 #   "No module named 'hpt'" → 标定直接失败 → DP 阶段整条链断掉（实测踩坑）。
 # 正解：显式把 HPT 源码目录挂进 PYTHONPATH，与 CWD 无关。
 export HPT_ROOT="${HPT_DIR:-/root/HPT}"
+# 🔴 钩子模块在 /root/HPT/hpt/utils/ 下，要 import 同伴的 fed_baselines.py
+#    必须告诉它基座目录（云端是 /root/fedcore，本地是 <repo>/federated）。
+export FEDVLA_FED_BASE="${FEDVLA_FED_BASE:-$SCRIPT_DIR}"
 export PYTHONPATH="$HPT_ROOT${PYTHONPATH:+:$PYTHONPATH}"
 
 START_ROUND=${START_ROUND:-0}

@@ -1,0 +1,647 @@
+[11-08 14:06:14] proc=3 disk=13G 58% done=未完成
+[11-08 14:06:14]   | c_drop00 rounds=4 last=r11 evallogs=0
+[11-08 14:06:14]   | c_drop25 (未开始)
+[11-08 14:06:14]   | c_drop50 (未开始)
+[11-08 14:06:14]   | c_drop75 (未开始)
+[11-08 14:06:14]   | c_int8 (未开始)
+[11-08 14:06:14]   | c_int4 (未开始)
+[11-08 14:06:14]   | c_bit1 (未开始)
+[11-08 14:06:14]   >> 配置进度变化
+[11-08 14:06:14]   | W ==============================================================
+[11-08 14:06:14]   | W [2026-11-08 13:46:50] ===== c_drop00 训练（drop=0 quant=fp32 轮数=25 从第 0 轮开始）=====
+[11-08 14:12:27] proc=3 disk=13G 58% done=未完成
+[11-08 14:12:27]   | c_drop00 rounds=4 last=r15 evallogs=0
+[11-08 14:12:27]   | c_drop25 (未开始)
+[11-08 14:12:27]   | c_drop50 (未开始)
+[11-08 14:12:27]   | c_drop75 (未开始)
+[11-08 14:12:27]   | c_int8 (未开始)
+[11-08 14:12:27]   | c_int4 (未开始)
+[11-08 14:12:27]   | c_bit1 (未开始)
+[11-08 14:12:27]   >> 配置进度变化
+[11-08 14:12:27]   | W ==============================================================
+[11-08 14:12:27]   | W [2026-11-08 13:46:50] ===== c_drop00 训练（drop=0 quant=fp32 轮数=25 从第 0 轮开始）=====
+[11-08 14:12:45] proc=3 disk=13G 58% done=未完成
+[11-08 14:12:45]   | c_drop00 rounds=4 last=r15 evallogs=0
+[11-08 14:12:45]   | c_drop25 (未开始)
+[11-08 14:12:45]   | c_drop50 (未开始)
+[11-08 14:12:45]   | c_drop75 (未开始)
+[11-08 14:12:45]   | c_int8 (未开始)
+[11-08 14:12:45]   | c_int4 (未开始)
+[11-08 14:12:45]   | c_bit1 (未开始)
+[11-08 14:12:45]   >> 配置进度变化
+[11-08 14:12:45]   | W ==============================================================
+[11-08 14:12:45]   | W [2026-11-08 13:46:50] ===== c_drop00 训练（drop=0 quant=fp32 轮数=25 从第 0 轮开始）=====
+[11-08 14:22:49] proc=3 disk=13G 58% done=未完成
+[11-08 14:22:49]   | c_drop00 rounds=4 last=r21 evallogs=0
+[11-08 14:22:49]   | c_drop25 (未开始)
+[11-08 14:22:49]   | c_drop50 (未开始)
+[11-08 14:22:49]   | c_drop75 (未开始)
+[11-08 14:22:49]   | c_int8 (未开始)
+[11-08 14:22:49]   | c_int4 (未开始)
+[11-08 14:22:49]   | c_bit1 (未开始)
+[11-08 14:22:49]   >> 配置进度变化
+[11-08 14:22:49]   | W ==============================================================
+[11-08 14:22:49]   | W [2026-11-08 13:46:50] ===== c_drop00 训练（drop=0 quant=fp32 轮数=25 从第 0 轮开始）=====
+[11-08 14:32:53] proc=1 disk=13G 58% done=未完成
+[11-08 14:32:53]   | c_drop00 rounds=3 last=r24 evallogs=1
+[11-08 14:32:53]   | c_drop25 (未开始)
+[11-08 14:32:53]   | c_drop50 (未开始)
+[11-08 14:32:53]   | c_drop75 (未开始)
+[11-08 14:32:53]   | c_int8 (未开始)
+[11-08 14:32:53]   | c_int4 (未开始)
+[11-08 14:32:53]   | c_bit1 (未开始)
+[11-08 14:32:53]   >> 配置进度变化
+[11-08 14:32:53]   | W [2026-11-08 14:28:23] c_drop00 训练完成
+[11-08 14:32:53]   | W [2026-11-08 14:28:23] [EVAL] c_drop00/mujoco_metaworld_task3 env=button-press-topdown-v2 seeds=3 episodes=20 moe=1
+[11-08 14:42:58] proc=1 disk=13G 58% done=未完成
+[11-08 14:42:58]   | c_drop00 rounds=3 last=r24 evallogs=1
+[11-08 14:42:58]   | c_drop25 (未开始)
+[11-08 14:42:58]   | c_drop50 (未开始)
+[11-08 14:42:58]   | c_drop75 (未开始)
+[11-08 14:42:58]   | c_int8 (未开始)
+[11-08 14:42:58]   | c_int4 (未开始)
+[11-08 14:42:58]   | c_bit1 (未开始)
+[11-08 14:42:58]   | W [2026-11-08 14:28:23] c_drop00 训练完成
+[11-08 14:42:58]   | W [2026-11-08 14:28:23] [EVAL] c_drop00/mujoco_metaworld_task3 env=button-press-topdown-v2 seeds=3 episodes=20 moe=1
+[11-08 14:53:02] proc=1 disk=13G 58% done=未完成
+[11-08 14:53:02]   | c_drop00 rounds=3 last=r24 evallogs=1
+[11-08 14:53:02]   | c_drop25 (未开始)
+[11-08 14:53:02]   | c_drop50 (未开始)
+[11-08 14:53:02]   | c_drop75 (未开始)
+[11-08 14:53:02]   | c_int8 (未开始)
+[11-08 14:53:02]   | c_int4 (未开始)
+[11-08 14:53:02]   | c_bit1 (未开始)
+[11-08 14:53:02]   | W [2026-11-08 14:28:23] c_drop00 训练完成
+[11-08 14:53:02]   | W [2026-11-08 14:28:23] [EVAL] c_drop00/mujoco_metaworld_task3 env=button-press-topdown-v2 seeds=3 episodes=20 moe=1
+[11-08 15:03:06] proc=0 disk=13G 59% done=未完成
+[11-08 15:03:06]   | c_drop00 rounds=0 last=r evallogs=1
+[11-08 15:03:06]   | c_drop25 rounds=4 last=r5 evallogs=0
+[11-08 15:03:06]   | c_drop50 (未开始)
+[11-08 15:03:06]   | c_drop75 (未开始)
+[11-08 15:03:06]   | c_int8 (未开始)
+[11-08 15:03:06]   | c_int4 (未开始)
+[11-08 15:03:06]   | c_bit1 (未开始)
+[11-08 15:03:06]   >> 配置进度变化
+[11-08 15:03:06]   | W [磁盘] overlay          30G   16G   15G  51% /
+[11-08 15:03:06]   | W [2026-11-08 14:53:04] ===== c_drop25 训练（drop=0.25 quant=fp32 轮数=25 从第 0 轮开始）=====
+[11-08 15:03:06] !! 无 hpt.run 进程但第4阶段未完成 —— 实例可能已关机
+[11-08 15:15:00] proc=3 disk=13G 58% done=未完成
+[11-08 15:15:00]   | c_drop00 rounds=0 last=r evallogs=1
+[11-08 15:15:00]   | c_drop25 rounds=4 last=r13 evallogs=0
+[11-08 15:15:00]   | c_drop50 (未开始)
+[11-08 15:15:00]   | c_drop75 (未开始)
+[11-08 15:15:00]   | c_int8 (未开始)
+[11-08 15:15:00]   | c_int4 (未开始)
+[11-08 15:15:00]   | c_bit1 (未开始)
+[11-08 15:15:00]   >> 配置进度变化
+[11-08 15:15:00]   | W [磁盘] overlay          30G   16G   15G  51% /
+[11-08 15:15:00]   | W [2026-11-08 14:53:04] ===== c_drop25 训练（drop=0.25 quant=fp32 轮数=25 从第 0 轮开始）=====
+[11-08 15:25:04] proc=2 disk=13G 58% done=未完成
+[11-08 15:25:04]   | c_drop00 rounds=0 last=r evallogs=1
+[11-08 15:25:04]   | c_drop25 rounds=4 last=r19 evallogs=0
+[11-08 15:25:04]   | c_drop50 (未开始)
+[11-08 15:25:04]   | c_drop75 (未开始)
+[11-08 15:25:04]   | c_int8 (未开始)
+[11-08 15:25:04]   | c_int4 (未开始)
+[11-08 15:25:04]   | c_bit1 (未开始)
+[11-08 15:25:04]   >> 配置进度变化
+[11-08 15:25:04]   | W [磁盘] overlay          30G   16G   15G  51% /
+[11-08 15:25:04]   | W [2026-11-08 14:53:04] ===== c_drop25 训练（drop=0.25 quant=fp32 轮数=25 从第 0 轮开始）=====
+[11-08 15:35:08] proc=1 disk=13G 58% done=未完成
+[11-08 15:35:08]   | c_drop00 rounds=0 last=r evallogs=1
+[11-08 15:35:08]   | c_drop25 rounds=3 last=r24 evallogs=1
+[11-08 15:35:08]   | c_drop50 (未开始)
+[11-08 15:35:08]   | c_drop75 (未开始)
+[11-08 15:35:08]   | c_int8 (未开始)
+[11-08 15:35:08]   | c_int4 (未开始)
+[11-08 15:35:08]   | c_bit1 (未开始)
+[11-08 15:35:08]   >> 配置进度变化
+[11-08 15:35:08]   | W [2026-11-08 15:34:55] c_drop25 训练完成
+[11-08 15:35:08]   | W [2026-11-08 15:34:55] [EVAL] c_drop25/mujoco_metaworld_task3 env=button-press-topdown-v2 seeds=3 episodes=20 moe=1
+[11-08 15:45:12] proc=1 disk=13G 58% done=未完成
+[11-08 15:45:12]   | c_drop00 rounds=0 last=r evallogs=1
+[11-08 15:45:12]   | c_drop25 rounds=3 last=r24 evallogs=1
+[11-08 15:45:12]   | c_drop50 (未开始)
+[11-08 15:45:12]   | c_drop75 (未开始)
+[11-08 15:45:12]   | c_int8 (未开始)
+[11-08 15:45:12]   | c_int4 (未开始)
+[11-08 15:45:12]   | c_bit1 (未开始)
+[11-08 15:45:12]   | W [2026-11-08 15:34:55] c_drop25 训练完成
+[11-08 15:45:12]   | W [2026-11-08 15:34:55] [EVAL] c_drop25/mujoco_metaworld_task3 env=button-press-topdown-v2 seeds=3 episodes=20 moe=1
+[11-08 15:55:16] proc=1 disk=12G 62% done=未完成
+[11-08 15:55:16]   | c_drop00 rounds=0 last=r evallogs=1
+[11-08 15:55:16]   | c_drop25 rounds=0 last=r evallogs=1
+[11-08 15:55:16]   | c_drop50 rounds=2 last=r1 evallogs=0
+[11-08 15:55:16]   | c_drop75 rounds=2 last=r1 evallogs=0
+[11-08 15:55:16]   | c_int8 rounds=1 last=r0 evallogs=0
+[11-08 15:55:16]   | c_int4 (未开始)
+[11-08 15:55:16]   | c_bit1 (未开始)
+[11-08 15:55:16]   >> 配置进度变化
+[11-08 15:55:16]   | W [2026-11-08 15:54:25] [!!] c_drop75 训练未完成（缺 global_r24/trunk.pth），查看 /root/HPT/output/log_c_drop75_train.txt
+[11-08 15:55:16]   | W [2026-11-08 15:54:25] ===== c_int8 训练（drop=0 quant=int8_g 轮数=25 从第 0 轮开始）=====
+[11-08 16:05:20] proc=2 disk=10G 69% done=未完成
+[11-08 16:05:20]   | c_drop00 rounds=0 last=r evallogs=1
+[11-08 16:05:20]   | c_drop25 rounds=0 last=r evallogs=1
+[11-08 16:05:20]   | c_drop50 rounds=2 last=r1 evallogs=0
+[11-08 16:05:20]   | c_drop75 rounds=2 last=r1 evallogs=0
+[11-08 16:05:20]   | c_int8 rounds=4 last=r4 evallogs=0
+[11-08 16:05:20]   | c_int4 (未开始)
+[11-08 16:05:20]   | c_bit1 (未开始)
+[11-08 16:05:20]   >> 配置进度变化
+[11-08 16:05:20]   | W [2026-11-08 15:54:25] [!!] c_drop75 训练未完成（缺 global_r24/trunk.pth），查看 /root/HPT/output/log_c_drop75_train.txt
+[11-08 16:05:20]   | W [2026-11-08 15:54:25] ===== c_int8 训练（drop=0 quant=int8_g 轮数=25 从第 0 轮开始）=====
+[11-08 16:15:23] proc=0 disk=10G 69% done=未完成
+[11-08 16:15:23]   | c_drop00 rounds=0 last=r evallogs=1
+[11-08 16:15:23]   | c_drop25 rounds=0 last=r evallogs=1
+[11-08 16:15:23]   | c_drop50 rounds=2 last=r1 evallogs=0
+[11-08 16:15:23]   | c_drop75 rounds=2 last=r1 evallogs=0
+[11-08 16:15:23]   | c_int8 rounds=4 last=r8 evallogs=0
+[11-08 16:15:23]   | c_int4 (未开始)
+[11-08 16:15:23]   | c_bit1 (未开始)
+[11-08 16:15:23]   >> 配置进度变化
+[11-08 16:15:23]   | W [2026-11-08 15:54:25] [!!] c_drop75 训练未完成（缺 global_r24/trunk.pth），查看 /root/HPT/output/log_c_drop75_train.txt
+[11-08 16:15:23]   | W [2026-11-08 15:54:25] ===== c_int8 训练（drop=0 quant=int8_g 轮数=25 从第 0 轮开始）=====
+[11-08 16:15:23] !! 无 hpt.run 进程但第4阶段未完成 —— 实例可能已关机
+[11-08 16:25:27] proc=1 disk=10G 68% done=未完成
+[11-08 16:25:27]   | c_drop00 rounds=0 last=r evallogs=1
+[11-08 16:25:27]   | c_drop25 rounds=0 last=r evallogs=1
+[11-08 16:25:27]   | c_drop50 rounds=2 last=r1 evallogs=0
+[11-08 16:25:27]   | c_drop75 rounds=2 last=r1 evallogs=0
+[11-08 16:25:27]   | c_int8 rounds=4 last=r13 evallogs=0
+[11-08 16:25:27]   | c_int4 (未开始)
+[11-08 16:25:27]   | c_bit1 (未开始)
+[11-08 16:25:27]   >> 配置进度变化
+[11-08 16:25:27]   | W [2026-11-08 15:54:25] [!!] c_drop75 训练未完成（缺 global_r24/trunk.pth），查看 /root/HPT/output/log_c_drop75_train.txt
+[11-08 16:25:27]   | W [2026-11-08 15:54:25] ===== c_int8 训练（drop=0 quant=int8_g 轮数=25 从第 0 轮开始）=====
+[11-08 16:35:31] proc=2 disk=10G 68% done=未完成
+[11-08 16:35:31]   | c_drop00 rounds=0 last=r evallogs=1
+[11-08 16:35:31]   | c_drop25 rounds=0 last=r evallogs=1
+[11-08 16:35:31]   | c_drop50 rounds=2 last=r1 evallogs=0
+[11-08 16:35:31]   | c_drop75 rounds=2 last=r1 evallogs=0
+[11-08 16:35:31]   | c_int8 rounds=4 last=r17 evallogs=0
+[11-08 16:35:31]   | c_int4 (未开始)
+[11-08 16:35:31]   | c_bit1 (未开始)
+[11-08 16:35:31]   >> 配置进度变化
+[11-08 16:35:31]   | W [2026-11-08 15:54:25] [!!] c_drop75 训练未完成（缺 global_r24/trunk.pth），查看 /root/HPT/output/log_c_drop75_train.txt
+[11-08 16:35:31]   | W [2026-11-08 15:54:25] ===== c_int8 训练（drop=0 quant=int8_g 轮数=25 从第 0 轮开始）=====
+[11-08 16:45:35] proc=0 disk=10G 69% done=未完成
+[11-08 16:45:35]   | c_drop00 rounds=0 last=r evallogs=1
+[11-08 16:45:35]   | c_drop25 rounds=0 last=r evallogs=1
+[11-08 16:45:35]   | c_drop50 rounds=2 last=r1 evallogs=0
+[11-08 16:45:35]   | c_drop75 rounds=2 last=r1 evallogs=0
+[11-08 16:45:35]   | c_int8 rounds=4 last=r21 evallogs=0
+[11-08 16:45:35]   | c_int4 (未开始)
+[11-08 16:45:35]   | c_bit1 (未开始)
+[11-08 16:45:35]   >> 配置进度变化
+[11-08 16:45:35]   | W [2026-11-08 15:54:25] [!!] c_drop75 训练未完成（缺 global_r24/trunk.pth），查看 /root/HPT/output/log_c_drop75_train.txt
+[11-08 16:45:35]   | W [2026-11-08 15:54:25] ===== c_int8 训练（drop=0 quant=int8_g 轮数=25 从第 0 轮开始）=====
+[11-08 16:45:35] !! 无 hpt.run 进程但第4阶段未完成 —— 实例可能已关机
+[11-08 16:55:40] proc=1 disk=10G 68% done=未完成
+[11-08 16:55:40]   | c_drop00 rounds=0 last=r evallogs=1
+[11-08 16:55:40]   | c_drop25 rounds=0 last=r evallogs=1
+[11-08 16:55:40]   | c_drop50 rounds=2 last=r1 evallogs=0
+[11-08 16:55:40]   | c_drop75 rounds=2 last=r1 evallogs=0
+[11-08 16:55:40]   | c_int8 rounds=3 last=r24 evallogs=1
+[11-08 16:55:40]   | c_int4 (未开始)
+[11-08 16:55:40]   | c_bit1 (未开始)
+[11-08 16:55:40]   >> 配置进度变化
+[11-08 16:55:40]   | W [2026-11-08 16:53:22] c_int8 训练完成
+[11-08 16:55:40]   | W [2026-11-08 16:53:22] [EVAL] c_int8/mujoco_metaworld_task3 env=button-press-topdown-v2 seeds=3 episodes=20 moe=1
+[11-08 17:07:37] proc=1 disk=10G 68% done=未完成
+[11-08 17:07:37]   | c_drop00 rounds=0 last=r evallogs=1
+[11-08 17:07:37]   | c_drop25 rounds=0 last=r evallogs=1
+[11-08 17:07:37]   | c_drop50 rounds=2 last=r1 evallogs=0
+[11-08 17:07:37]   | c_drop75 rounds=2 last=r1 evallogs=0
+[11-08 17:07:37]   | c_int8 rounds=3 last=r24 evallogs=1
+[11-08 17:07:37]   | c_int4 (未开始)
+[11-08 17:07:37]   | c_bit1 (未开始)
+[11-08 17:07:37]   | W [2026-11-08 16:53:22] c_int8 训练完成
+[11-08 17:07:37]   | W [2026-11-08 16:53:22] [EVAL] c_int8/mujoco_metaworld_task3 env=button-press-topdown-v2 seeds=3 episodes=20 moe=1
+[11-08 17:17:41] proc=1 disk=10G 68% done=未完成
+[11-08 17:17:41]   | c_drop00 rounds=0 last=r evallogs=1
+[11-08 17:17:41]   | c_drop25 rounds=0 last=r evallogs=1
+[11-08 17:17:41]   | c_drop50 rounds=2 last=r1 evallogs=0
+[11-08 17:17:41]   | c_drop75 rounds=2 last=r1 evallogs=0
+[11-08 17:17:41]   | c_int8 rounds=3 last=r24 evallogs=1
+[11-08 17:17:41]   | c_int4 (未开始)
+[11-08 17:17:41]   | c_bit1 (未开始)
+[11-08 17:17:41]   | W [2026-11-08 16:53:22] c_int8 训练完成
+[11-08 17:17:41]   | W [2026-11-08 16:53:22] [EVAL] c_int8/mujoco_metaworld_task3 env=button-press-topdown-v2 seeds=3 episodes=20 moe=1
+[11-08 17:27:45] proc=1 disk=11G 66% done=未完成
+[11-08 17:27:45]   | c_drop00 rounds=0 last=r evallogs=1
+[11-08 17:27:45]   | c_drop25 rounds=0 last=r evallogs=1
+[11-08 17:27:45]   | c_drop50 rounds=2 last=r1 evallogs=0
+[11-08 17:27:45]   | c_drop75 rounds=2 last=r1 evallogs=0
+[11-08 17:27:45]   | c_int8 rounds=0 last=r evallogs=1
+[11-08 17:27:45]   | c_int4 rounds=3 last=r2 evallogs=0
+[11-08 17:27:45]   | c_bit1 (未开始)
+[11-08 17:27:45]   >> 配置进度变化
+[11-08 17:27:45]   | W [磁盘] overlay          30G   19G   12G  61% /
+[11-08 17:27:45]   | W [2026-11-08 17:23:01] ===== c_int4 训练（drop=0 quant=int4_g 轮数=25 从第 0 轮开始）=====
+[11-08 17:37:52] proc=2 disk=11G 67% done=未完成
+[11-08 17:37:52]   | c_drop00 rounds=0 last=r evallogs=1
+[11-08 17:37:52]   | c_drop25 rounds=0 last=r evallogs=1
+[11-08 17:37:52]   | c_drop50 rounds=2 last=r1 evallogs=0
+[11-08 17:37:52]   | c_drop75 rounds=2 last=r1 evallogs=0
+[11-08 17:37:52]   | c_int8 rounds=0 last=r evallogs=1
+[11-08 17:37:52]   | c_int4 rounds=4 last=r6 evallogs=0
+[11-08 17:37:52]   | c_bit1 (未开始)
+[11-08 17:37:52]   >> 配置进度变化
+[11-08 17:37:52]   | W [磁盘] overlay          30G   19G   12G  61% /
+[11-08 17:37:52]   | W [2026-11-08 17:23:01] ===== c_int4 训练（drop=0 quant=int4_g 轮数=25 从第 0 轮开始）=====
+[11-08 17:47:59] proc=0 disk=10G 67% done=未完成
+[11-08 17:47:59]   | c_drop00 rounds=0 last=r evallogs=1
+[11-08 17:47:59]   | c_drop25 rounds=0 last=r evallogs=1
+[11-08 17:47:59]   | c_drop50 rounds=2 last=r1 evallogs=0
+[11-08 17:47:59]   | c_drop75 rounds=2 last=r1 evallogs=0
+[11-08 17:47:59]   | c_int8 rounds=0 last=r evallogs=1
+[11-08 17:47:59]   | c_int4 rounds=4 last=r6 evallogs=0
+[11-08 17:47:59]   | c_bit1 (未开始)
+[11-08 17:47:59]   | W [2026-11-08 17:38:11] 第4阶段结束 rc=137
+[11-08 17:47:59]   | W [2026-11-08 17:38:11] [!!] 第4阶段未正常结束（rc=137）—— 重新运行本脚本可续跑（幂等）
+[11-08 17:47:59] !! 无 hpt.run 进程但第4阶段未完成 —— 实例可能已关机
+[11-08 17:58:03] proc=0 disk=10G 67% done=未完成
+[11-08 17:58:03]   | c_drop00 rounds=0 last=r evallogs=1
+[11-08 17:58:03]   | c_drop25 rounds=0 last=r evallogs=1
+[11-08 17:58:03]   | c_drop50 rounds=2 last=r1 evallogs=0
+[11-08 17:58:03]   | c_drop75 rounds=2 last=r1 evallogs=0
+[11-08 17:58:03]   | c_int8 rounds=0 last=r evallogs=1
+[11-08 17:58:03]   | c_int4 rounds=4 last=r6 evallogs=0
+[11-08 17:58:03]   | c_bit1 (未开始)
+[11-08 17:58:03]   | W [2026-11-08 17:38:11] 第4阶段结束 rc=137
+[11-08 17:58:03]   | W [2026-11-08 17:38:11] [!!] 第4阶段未正常结束（rc=137）—— 重新运行本脚本可续跑（幂等）
+[11-08 17:58:03] !! 无 hpt.run 进程但第4阶段未完成 —— 实例可能已关机
+[11-08 18:09:21] proc=5 disk=7G 78% done=未完成
+[11-08 18:09:21]   | c_drop00 rounds=2 last=r1 evallogs=0
+[11-08 18:09:21]   | c_drop25 rounds=2 last=r1 evallogs=0
+[11-08 18:09:21]   | c_drop50 rounds=3 last=r2 evallogs=0
+[11-08 18:09:21]   | c_drop75 rounds=2 last=r1 evallogs=0
+[11-08 18:09:21]   | c_int8 rounds=0 last=r evallogs=0
+[11-08 18:09:21]   | c_int4 rounds=4 last=r6 evallogs=0
+[11-08 18:09:21]   | c_bit1 (未开始)
+[11-08 18:09:21]   >> 配置进度变化
+[11-08 18:09:21]   | W [2026-11-08 17:38:11] 第4阶段结束 rc=137
+[11-08 18:09:21]   | W [2026-11-08 17:38:11] [!!] 第4阶段未正常结束（rc=137）—— 重新运行本脚本可续跑（幂等）
+[11-08 18:19:25] proc=6 disk=7G 80% done=未完成
+[11-08 18:19:25]   | c_drop00 rounds=3 last=r4 evallogs=0
+[11-08 18:19:25]   | c_drop25 rounds=3 last=r3 evallogs=0
+[11-08 18:19:25]   | c_drop50 rounds=3 last=r5 evallogs=0
+[11-08 18:19:25]   | c_drop75 rounds=2 last=r1 evallogs=0
+[11-08 18:19:25]   | c_int8 rounds=0 last=r evallogs=0
+[11-08 18:19:25]   | c_int4 rounds=4 last=r6 evallogs=0
+[11-08 18:19:25]   | c_bit1 (未开始)
+[11-08 18:19:25]   >> 配置进度变化
+[11-08 18:19:25]   | W [2026-11-08 17:38:11] 第4阶段结束 rc=137
+[11-08 18:19:25]   | W [2026-11-08 17:38:11] [!!] 第4阶段未正常结束（rc=137）—— 重新运行本脚本可续跑（幂等）
+[11-08 18:29:29] proc=9 disk=6G 81% done=未完成
+[11-08 18:29:29]   | c_drop00 rounds=3 last=r6 evallogs=0
+[11-08 18:29:29]   | c_drop25 rounds=3 last=r6 evallogs=0
+[11-08 18:29:29]   | c_drop50 rounds=3 last=r7 evallogs=0
+[11-08 18:29:29]   | c_drop75 rounds=2 last=r1 evallogs=0
+[11-08 18:29:29]   | c_int8 rounds=0 last=r evallogs=0
+[11-08 18:29:29]   | c_int4 rounds=4 last=r6 evallogs=0
+[11-08 18:29:29]   | c_bit1 (未开始)
+[11-08 18:29:29]   >> 配置进度变化
+[11-08 18:29:29]   | W [2026-11-08 17:38:11] 第4阶段结束 rc=137
+[11-08 18:29:29]   | W [2026-11-08 17:38:11] [!!] 第4阶段未正常结束（rc=137）—— 重新运行本脚本可续跑（幂等）
+[11-08 18:39:33] proc=7 disk=6G 81% done=未完成
+[11-08 18:39:33]   | c_drop00 rounds=3 last=r9 evallogs=0
+[11-08 18:39:33]   | c_drop25 rounds=3 last=r9 evallogs=0
+[11-08 18:39:33]   | c_drop50 rounds=3 last=r10 evallogs=0
+[11-08 18:39:33]   | c_drop75 rounds=2 last=r1 evallogs=0
+[11-08 18:39:33]   | c_int8 rounds=0 last=r evallogs=0
+[11-08 18:39:33]   | c_int4 rounds=4 last=r6 evallogs=0
+[11-08 18:39:33]   | c_bit1 (未开始)
+[11-08 18:39:33]   >> 配置进度变化
+[11-08 18:39:33]   | W [2026-11-08 17:38:11] 第4阶段结束 rc=137
+[11-08 18:39:33]   | W [2026-11-08 17:38:11] [!!] 第4阶段未正常结束（rc=137）—— 重新运行本脚本可续跑（幂等）
+[11-08 18:49:37] proc=5 disk=6G 81% done=未完成
+[11-08 18:49:37]   | c_drop00 rounds=3 last=r11 evallogs=0
+[11-08 18:49:37]   | c_drop25 rounds=3 last=r11 evallogs=0
+[11-08 18:49:37]   | c_drop50 rounds=3 last=r13 evallogs=0
+[11-08 18:49:37]   | c_drop75 rounds=2 last=r1 evallogs=0
+[11-08 18:49:37]   | c_int8 rounds=0 last=r evallogs=0
+[11-08 18:49:37]   | c_int4 rounds=4 last=r6 evallogs=0
+[11-08 18:49:37]   | c_bit1 (未开始)
+[11-08 18:49:37]   >> 配置进度变化
+[11-08 18:49:37]   | W [2026-11-08 17:38:11] 第4阶段结束 rc=137
+[11-08 18:49:37]   | W [2026-11-08 17:38:11] [!!] 第4阶段未正常结束（rc=137）—— 重新运行本脚本可续跑（幂等）
+[11-18 10:40:58] proc=5 disk=12G 63% done=未完成
+[11-18 10:40:58]   | c_drop00 rounds=3 last=r13 evallogs=0
+[11-18 10:40:58]   | c_drop25 rounds=3 last=r13 evallogs=0
+[11-18 10:40:58]   | c_drop50 rounds=1 last=r0 evallogs=0
+[11-18 10:40:58]   | c_drop75 rounds=0 last=r evallogs=0
+[11-18 10:40:58]   | c_int8 rounds=0 last=r evallogs=0
+[11-18 10:40:58]   | c_int4 rounds=0 last=r evallogs=0
+[11-18 10:40:58]   | c_bit1 (未开始)
+[11-18 10:40:58]   >> 配置进度变化
+[11-18 10:40:58]   | W [2026-11-08 17:38:11] 第4阶段结束 rc=137
+[11-18 10:40:58]   | W [2026-11-08 17:38:11] [!!] 第4阶段未正常结束（rc=137）—— 重新运行本脚本可续跑（幂等）
+[11-18 10:41:06] proc=6 disk=12G 63% done=未完成
+[11-18 10:41:06]   | c_drop00 rounds=3 last=r13 evallogs=0
+[11-18 10:41:06]   | c_drop25 rounds=3 last=r13 evallogs=0
+[11-18 10:41:06]   | c_drop50 rounds=1 last=r0 evallogs=0
+[11-18 10:41:06]   | c_drop75 rounds=0 last=r evallogs=0
+[11-18 10:41:06]   | c_int8 rounds=0 last=r evallogs=0
+[11-18 10:41:06]   | c_int4 rounds=0 last=r evallogs=0
+[11-18 10:41:06]   | c_bit1 (未开始)
+[11-18 10:41:06]   >> 配置进度变化
+[11-18 10:41:06]   | W [2026-11-08 17:38:11] 第4阶段结束 rc=137
+[11-18 10:41:06]   | W [2026-11-08 17:38:11] [!!] 第4阶段未正常结束（rc=137）—— 重新运行本脚本可续跑（幂等）
+[11-18 10:50:55] proc=7 disk=10G 68% done=未完成
+[11-18 10:50:55]   | c_drop00 rounds=3 last=r15 evallogs=0
+[11-18 10:50:55]   | c_drop25 rounds=3 last=r15 evallogs=0
+[11-18 10:50:55]   | c_drop50 rounds=3 last=r2 evallogs=0
+[11-18 10:50:55]   | c_drop75 rounds=0 last=r evallogs=0
+[11-18 10:50:55]   | c_int8 rounds=0 last=r evallogs=0
+[11-18 10:50:55]   | c_int4 rounds=0 last=r evallogs=0
+[11-18 10:50:55]   | c_bit1 (未开始)
+[11-18 10:50:55]   >> 配置进度变化
+[11-18 10:50:55]   | W [2026-11-08 17:38:11] 第4阶段结束 rc=137
+[11-18 10:50:55]   | W [2026-11-08 17:38:11] [!!] 第4阶段未正常结束（rc=137）—— 重新运行本脚本可续跑（幂等）
+[11-18 10:51:09] proc=5 disk=10G 69% done=未完成
+[11-18 10:51:09]   | c_drop00 rounds=3 last=r15 evallogs=0
+[11-18 10:51:09]   | c_drop25 rounds=3 last=r15 evallogs=0
+[11-18 10:51:09]   | c_drop50 rounds=3 last=r2 evallogs=0
+[11-18 10:51:09]   | c_drop75 rounds=0 last=r evallogs=0
+[11-18 10:51:09]   | c_int8 rounds=0 last=r evallogs=0
+[11-18 10:51:09]   | c_int4 rounds=0 last=r evallogs=0
+[11-18 10:51:09]   | c_bit1 (未开始)
+[11-18 10:51:09]   >> 配置进度变化
+[11-18 10:51:09]   | W [2026-11-08 17:38:11] 第4阶段结束 rc=137
+[11-18 10:51:09]   | W [2026-11-08 17:38:11] [!!] 第4阶段未正常结束（rc=137）—— 重新运行本脚本可续跑（幂等）
+[11-18 11:01:13] proc=7 disk=10G 67% done=未完成
+[11-18 11:01:13]   | c_drop00 rounds=3 last=r18 evallogs=0
+[11-18 11:01:13]   | c_drop25 rounds=3 last=r17 evallogs=0
+[11-18 11:01:13]   | c_drop50 rounds=3 last=r5 evallogs=0
+[11-18 11:01:13]   | c_drop75 rounds=0 last=r evallogs=0
+[11-18 11:01:13]   | c_int8 rounds=0 last=r evallogs=0
+[11-18 11:01:13]   | c_int4 rounds=0 last=r evallogs=0
+[11-18 11:01:13]   | c_bit1 (未开始)
+[11-18 11:01:13]   >> 配置进度变化
+[11-18 11:01:13]   | W [2026-11-08 17:38:11] 第4阶段结束 rc=137
+[11-18 11:01:13]   | W [2026-11-08 17:38:11] [!!] 第4阶段未正常结束（rc=137）—— 重新运行本脚本可续跑（幂等）
+[11-18 11:11:17] proc=6 disk=10G 68% done=未完成
+[11-18 11:11:17]   | c_drop00 rounds=3 last=r21 evallogs=0
+[11-18 11:11:17]   | c_drop25 rounds=3 last=r20 evallogs=0
+[11-18 11:11:17]   | c_drop50 rounds=3 last=r7 evallogs=0
+[11-18 11:11:17]   | c_drop75 rounds=0 last=r evallogs=0
+[11-18 11:11:17]   | c_int8 rounds=0 last=r evallogs=0
+[11-18 11:11:17]   | c_int4 rounds=0 last=r evallogs=0
+[11-18 11:11:17]   | c_bit1 (未开始)
+[11-18 11:11:17]   >> 配置进度变化
+[11-18 11:11:17]   | W [2026-11-08 17:38:11] 第4阶段结束 rc=137
+[11-18 11:11:17]   | W [2026-11-08 17:38:11] [!!] 第4阶段未正常结束（rc=137）—— 重新运行本脚本可续跑（幂等）
+[11-18 11:21:21] proc=5 disk=10G 69% done=未完成
+[11-18 11:21:21]   | c_drop00 rounds=3 last=r23 evallogs=0
+[11-18 11:21:21]   | c_drop25 rounds=3 last=r23 evallogs=0
+[11-18 11:21:21]   | c_drop50 rounds=3 last=r10 evallogs=0
+[11-18 11:21:21]   | c_drop75 rounds=0 last=r evallogs=0
+[11-18 11:21:21]   | c_int8 rounds=0 last=r evallogs=0
+[11-18 11:21:21]   | c_int4 rounds=0 last=r evallogs=0
+[11-18 11:21:21]   | c_bit1 (未开始)
+[11-18 11:21:21]   >> 配置进度变化
+[11-18 11:21:21]   | W [2026-11-08 17:38:11] 第4阶段结束 rc=137
+[11-18 11:21:21]   | W [2026-11-08 17:38:11] [!!] 第4阶段未正常结束（rc=137）—— 重新运行本脚本可续跑（幂等）
+[11-18 11:31:25] proc=6 disk=10G 69% done=未完成
+[11-18 11:31:25]   | c_drop00 rounds=3 last=r26 evallogs=0
+[11-18 11:31:25]   | c_drop25 rounds=3 last=r26 evallogs=0
+[11-18 11:31:25]   | c_drop50 rounds=3 last=r13 evallogs=0
+[11-18 11:31:25]   | c_drop75 rounds=0 last=r evallogs=0
+[11-18 11:31:25]   | c_int8 rounds=0 last=r evallogs=0
+[11-18 11:31:25]   | c_int4 rounds=0 last=r evallogs=0
+[11-18 11:31:25]   | c_bit1 (未开始)
+[11-18 11:31:25]   >> 配置进度变化
+[11-18 11:31:25]   | W [2026-11-08 17:38:11] 第4阶段结束 rc=137
+[11-18 11:31:25]   | W [2026-11-08 17:38:11] [!!] 第4阶段未正常结束（rc=137）—— 重新运行本脚本可续跑（幂等）
+[11-18 11:41:29] proc=6 disk=10G 68% done=未完成
+[11-18 11:41:29]   | c_drop00 rounds=3 last=r30 evallogs=0
+[11-18 11:41:29]   | c_drop25 rounds=3 last=r29 evallogs=0
+[11-18 11:41:29]   | c_drop50 rounds=3 last=r16 evallogs=0
+[11-18 11:41:29]   | c_drop75 rounds=0 last=r evallogs=0
+[11-18 11:41:29]   | c_int8 rounds=0 last=r evallogs=0
+[11-18 11:41:29]   | c_int4 rounds=0 last=r evallogs=0
+[11-18 11:41:29]   | c_bit1 (未开始)
+[11-18 11:41:29]   >> 配置进度变化
+[11-18 11:41:29]   | W [2026-11-08 17:38:11] 第4阶段结束 rc=137
+[11-18 11:41:29]   | W [2026-11-08 17:38:11] [!!] 第4阶段未正常结束（rc=137）—— 重新运行本脚本可续跑（幂等）
+[11-18 11:51:32] proc=9 disk=10G 69% done=未完成
+[11-18 11:51:32]   | c_drop00 rounds=3 last=r32 evallogs=0
+[11-18 11:51:32]   | c_drop25 rounds=3 last=r32 evallogs=0
+[11-18 11:51:32]   | c_drop50 rounds=3 last=r19 evallogs=0
+[11-18 11:51:32]   | c_drop75 rounds=0 last=r evallogs=0
+[11-18 11:51:32]   | c_int8 rounds=0 last=r evallogs=0
+[11-18 11:51:32]   | c_int4 rounds=0 last=r evallogs=0
+[11-18 11:51:32]   | c_bit1 (未开始)
+[11-18 11:51:32]   >> 配置进度变化
+[11-18 11:51:32]   | W [2026-11-08 17:38:11] 第4阶段结束 rc=137
+[11-18 11:51:32]   | W [2026-11-08 17:38:11] [!!] 第4阶段未正常结束（rc=137）—— 重新运行本脚本可续跑（幂等）
+[11-18 12:01:36] proc=3 disk=10G 69% done=未完成
+[11-18 12:01:36]   | c_drop00 rounds=3 last=r35 evallogs=0
+[11-18 12:01:36]   | c_drop25 rounds=3 last=r35 evallogs=0
+[11-18 12:01:36]   | c_drop50 rounds=3 last=r22 evallogs=0
+[11-18 12:01:36]   | c_drop75 rounds=0 last=r evallogs=0
+[11-18 12:01:36]   | c_int8 rounds=0 last=r evallogs=0
+[11-18 12:01:36]   | c_int4 rounds=0 last=r evallogs=0
+[11-18 12:01:36]   | c_bit1 (未开始)
+[11-18 12:01:36]   >> 配置进度变化
+[11-18 12:01:36]   | W [2026-11-08 17:38:11] 第4阶段结束 rc=137
+[11-18 12:01:36]   | W [2026-11-08 17:38:11] [!!] 第4阶段未正常结束（rc=137）—— 重新运行本脚本可续跑（幂等）
+[11-18 12:11:40] proc=5 disk=10G 69% done=未完成
+[11-18 12:11:40]   | c_drop00 rounds=3 last=r38 evallogs=0
+[11-18 12:11:40]   | c_drop25 rounds=3 last=r37 evallogs=0
+[11-18 12:11:40]   | c_drop50 rounds=3 last=r25 evallogs=0
+[11-18 12:11:40]   | c_drop75 rounds=0 last=r evallogs=0
+[11-18 12:11:40]   | c_int8 rounds=0 last=r evallogs=0
+[11-18 12:11:40]   | c_int4 rounds=0 last=r evallogs=0
+[11-18 12:11:40]   | c_bit1 (未开始)
+[11-18 12:11:40]   >> 配置进度变化
+[11-18 12:11:40]   | W [2026-11-08 17:38:11] 第4阶段结束 rc=137
+[11-18 12:11:40]   | W [2026-11-08 17:38:11] [!!] 第4阶段未正常结束（rc=137）—— 重新运行本脚本可续跑（幂等）
+[11-18 12:21:44] proc=7 disk=10G 69% done=未完成
+[11-18 12:21:44]   | c_drop00 rounds=3 last=r41 evallogs=0
+[11-18 12:21:44]   | c_drop25 rounds=3 last=r40 evallogs=0
+[11-18 12:21:44]   | c_drop50 rounds=3 last=r28 evallogs=0
+[11-18 12:21:44]   | c_drop75 rounds=0 last=r evallogs=0
+[11-18 12:21:44]   | c_int8 rounds=0 last=r evallogs=0
+[11-18 12:21:44]   | c_int4 rounds=0 last=r evallogs=0
+[11-18 12:21:44]   | c_bit1 (未开始)
+[11-18 12:21:44]   >> 配置进度变化
+[11-18 12:21:44]   | W [2026-11-08 17:38:11] 第4阶段结束 rc=137
+[11-18 12:21:44]   | W [2026-11-08 17:38:11] [!!] 第4阶段未正常结束（rc=137）—— 重新运行本脚本可续跑（幂等）
+[11-18 12:31:48] proc=4 disk=10G 69% done=未完成
+[11-18 12:31:48]   | c_drop00 rounds=3 last=r44 evallogs=0
+[11-18 12:31:48]   | c_drop25 rounds=3 last=r43 evallogs=0
+[11-18 12:31:48]   | c_drop50 rounds=3 last=r31 evallogs=0
+[11-18 12:31:48]   | c_drop75 rounds=0 last=r evallogs=0
+[11-18 12:31:48]   | c_int8 rounds=0 last=r evallogs=0
+[11-18 12:31:48]   | c_int4 rounds=0 last=r evallogs=0
+[11-18 12:31:48]   | c_bit1 (未开始)
+[11-18 12:31:48]   >> 配置进度变化
+[11-18 12:31:48]   | W [2026-11-08 17:38:11] 第4阶段结束 rc=137
+[11-18 12:31:48]   | W [2026-11-08 17:38:11] [!!] 第4阶段未正常结束（rc=137）—— 重新运行本脚本可续跑（幂等）
+[11-18 12:41:52] proc=7 disk=10G 69% done=未完成
+[11-18 12:41:52]   | c_drop00 rounds=3 last=r47 evallogs=0
+[11-18 12:41:52]   | c_drop25 rounds=3 last=r46 evallogs=0
+[11-18 12:41:52]   | c_drop50 rounds=3 last=r34 evallogs=0
+[11-18 12:41:52]   | c_drop75 rounds=0 last=r evallogs=0
+[11-18 12:41:52]   | c_int8 rounds=0 last=r evallogs=0
+[11-18 12:41:52]   | c_int4 rounds=0 last=r evallogs=0
+[11-18 12:41:52]   | c_bit1 (未开始)
+[11-18 12:41:52]   >> 配置进度变化
+[11-18 12:41:52]   | W [2026-11-08 17:38:11] 第4阶段结束 rc=137
+[11-18 12:41:52]   | W [2026-11-08 17:38:11] [!!] 第4阶段未正常结束（rc=137）—— 重新运行本脚本可续跑（幂等）
+[11-18 12:51:56] proc=7 disk=10G 68% done=未完成
+[11-18 12:51:56]   | c_drop00 rounds=2 last=r49 evallogs=1
+[11-18 12:51:56]   | c_drop25 rounds=3 last=r49 evallogs=0
+[11-18 12:51:56]   | c_drop50 rounds=3 last=r37 evallogs=0
+[11-18 12:51:56]   | c_drop75 rounds=0 last=r evallogs=0
+[11-18 12:51:56]   | c_int8 rounds=0 last=r evallogs=0
+[11-18 12:51:56]   | c_int4 rounds=0 last=r evallogs=0
+[11-18 12:51:56]   | c_bit1 (未开始)
+[11-18 12:51:56]   >> 配置进度变化
+[11-18 12:51:56]   | W [2026-11-08 17:38:11] 第4阶段结束 rc=137
+[11-18 12:51:56]   | W [2026-11-08 17:38:11] [!!] 第4阶段未正常结束（rc=137）—— 重新运行本脚本可续跑（幂等）
+[11-18 13:02:00] proc=5 disk=10G 68% done=未完成
+[11-18 13:02:00]   | c_drop00 rounds=2 last=r49 evallogs=1
+[11-18 13:02:00]   | c_drop25 rounds=2 last=r49 evallogs=1
+[11-18 13:02:00]   | c_drop50 rounds=3 last=r40 evallogs=0
+[11-18 13:02:00]   | c_drop75 rounds=0 last=r evallogs=0
+[11-18 13:02:00]   | c_int8 rounds=0 last=r evallogs=0
+[11-18 13:02:00]   | c_int4 rounds=0 last=r evallogs=0
+[11-18 13:02:00]   | c_bit1 (未开始)
+[11-18 13:02:00]   >> 配置进度变化
+[11-18 13:02:00]   | W [2026-11-08 17:38:11] 第4阶段结束 rc=137
+[11-18 13:02:00]   | W [2026-11-08 17:38:11] [!!] 第4阶段未正常结束（rc=137）—— 重新运行本脚本可续跑（幂等）
+[11-18 13:12:05] proc=4 disk=12G 64% done=未完成
+[11-18 13:12:05]   | c_drop00 rounds=0 last=r evallogs=1
+[11-18 13:12:05]   | c_drop25 rounds=0 last=r evallogs=1
+[11-18 13:12:05]   | c_drop50 rounds=3 last=r44 evallogs=0
+[11-18 13:12:05]   | c_drop75 rounds=2 last=r1 evallogs=0
+[11-18 13:12:05]   | c_int8 rounds=1 last=r0 evallogs=0
+[11-18 13:12:05]   | c_int4 rounds=0 last=r evallogs=0
+[11-18 13:12:05]   | c_bit1 (未开始)
+[11-18 13:12:05]   >> 配置进度变化
+[11-18 13:12:05]   | W [2026-11-08 17:38:11] 第4阶段结束 rc=137
+[11-18 13:12:05]   | W [2026-11-08 17:38:11] [!!] 第4阶段未正常结束（rc=137）—— 重新运行本脚本可续跑（幂等）
+[11-18 13:22:09] proc=8 disk=10G 69% done=未完成
+[11-18 13:22:09]   | c_drop00 rounds=0 last=r evallogs=1
+[11-18 13:22:09]   | c_drop25 rounds=0 last=r evallogs=1
+[11-18 13:22:09]   | c_drop50 rounds=3 last=r47 evallogs=0
+[11-18 13:22:09]   | c_drop75 rounds=3 last=r4 evallogs=0
+[11-18 13:22:09]   | c_int8 rounds=3 last=r3 evallogs=0
+[11-18 13:22:09]   | c_int4 rounds=0 last=r evallogs=0
+[11-18 13:22:09]   | c_bit1 (未开始)
+[11-18 13:22:09]   >> 配置进度变化
+[11-18 13:22:09]   | W [2026-11-08 17:38:11] 第4阶段结束 rc=137
+[11-18 13:22:09]   | W [2026-11-08 17:38:11] [!!] 第4阶段未正常结束（rc=137）—— 重新运行本脚本可续跑（幂等）
+[11-18 13:32:13] proc=5 disk=11G 67% done=未完成
+[11-18 13:32:13]   | c_drop00 rounds=0 last=r evallogs=1
+[11-18 13:32:13]   | c_drop25 rounds=0 last=r evallogs=1
+[11-18 13:32:13]   | c_drop50 rounds=2 last=r49 evallogs=1
+[11-18 13:32:13]   | c_drop75 rounds=3 last=r8 evallogs=0
+[11-18 13:32:13]   | c_int8 rounds=3 last=r6 evallogs=0
+[11-18 13:32:13]   | c_int4 rounds=0 last=r evallogs=0
+[11-18 13:32:13]   | c_bit1 (未开始)
+[11-18 13:32:13]   >> 配置进度变化
+[11-18 13:32:13]   | W [2026-11-08 17:38:11] 第4阶段结束 rc=137
+[11-18 13:32:13]   | W [2026-11-08 17:38:11] [!!] 第4阶段未正常结束（rc=137）—— 重新运行本脚本可续跑（幂等）
+[11-18 13:42:16] proc=6 disk=10G 69% done=未完成
+[11-18 13:42:16]   | c_drop00 rounds=0 last=r evallogs=1
+[11-18 13:42:16]   | c_drop25 rounds=0 last=r evallogs=1
+[11-18 13:42:16]   | c_drop50 rounds=2 last=r49 evallogs=1
+[11-18 13:42:16]   | c_drop75 rounds=3 last=r11 evallogs=0
+[11-18 13:42:16]   | c_int8 rounds=3 last=r8 evallogs=0
+[11-18 13:42:16]   | c_int4 rounds=0 last=r evallogs=0
+[11-18 13:42:16]   | c_bit1 (未开始)
+[11-18 13:42:16]   >> 配置进度变化
+[11-18 13:42:16]   | W [2026-11-08 17:38:11] 第4阶段结束 rc=137
+[11-18 13:42:16]   | W [2026-11-08 17:38:11] [!!] 第4阶段未正常结束（rc=137）—— 重新运行本脚本可续跑（幂等）
+[11-18 13:52:20] proc=4 disk=10G 68% done=未完成
+[11-18 13:52:20]   | c_drop00 rounds=0 last=r evallogs=1
+[11-18 13:52:20]   | c_drop25 rounds=0 last=r evallogs=1
+[11-18 13:52:20]   | c_drop50 rounds=2 last=r49 evallogs=1
+[11-18 13:52:20]   | c_drop75 rounds=3 last=r15 evallogs=0
+[11-18 13:52:20]   | c_int8 rounds=3 last=r11 evallogs=0
+[11-18 13:52:20]   | c_int4 rounds=0 last=r evallogs=0
+[11-18 13:52:20]   | c_bit1 (未开始)
+[11-18 13:52:20]   >> 配置进度变化
+[11-18 13:52:20]   | W [2026-11-08 17:38:11] 第4阶段结束 rc=137
+[11-18 13:52:20]   | W [2026-11-08 17:38:11] [!!] 第4阶段未正常结束（rc=137）—— 重新运行本脚本可续跑（幂等）
+[11-18 14:02:24] proc=4 disk=11G 67% done=未完成
+[11-18 14:02:24]   | c_drop00 rounds=0 last=r evallogs=1
+[11-18 14:02:24]   | c_drop25 rounds=0 last=r evallogs=1
+[11-18 14:02:24]   | c_drop50 rounds=0 last=r evallogs=1
+[11-18 14:02:24]   | c_drop75 rounds=3 last=r19 evallogs=0
+[11-18 14:02:24]   | c_int8 rounds=3 last=r14 evallogs=0
+[11-18 14:02:24]   | c_int4 rounds=2 last=r1 evallogs=0
+[11-18 14:02:24]   | c_bit1 (未开始)
+[11-18 14:02:24]   >> 配置进度变化
+[11-18 14:02:24]   | W [2026-11-08 17:38:11] 第4阶段结束 rc=137
+[11-18 14:02:24]   | W [2026-11-08 17:38:11] [!!] 第4阶段未正常结束（rc=137）—— 重新运行本脚本可续跑（幂等）
+[11-18 14:12:28] proc=5 disk=10G 69% done=未完成
+[11-18 14:12:28]   | c_drop00 rounds=0 last=r evallogs=1
+[11-18 14:12:28]   | c_drop25 rounds=0 last=r evallogs=1
+[11-18 14:12:28]   | c_drop50 rounds=0 last=r evallogs=1
+[11-18 14:12:28]   | c_drop75 rounds=3 last=r22 evallogs=0
+[11-18 14:12:28]   | c_int8 rounds=3 last=r17 evallogs=0
+[11-18 14:12:28]   | c_int4 rounds=3 last=r4 evallogs=0
+[11-18 14:12:28]   | c_bit1 (未开始)
+[11-18 14:12:28]   >> 配置进度变化
+[11-18 14:12:28]   | W [2026-11-08 17:38:11] 第4阶段结束 rc=137
+[11-18 14:12:28]   | W [2026-11-08 17:38:11] [!!] 第4阶段未正常结束（rc=137）—— 重新运行本脚本可续跑（幂等）
+[11-18 14:22:32] proc=4 disk=10G 69% done=未完成
+[11-18 14:22:32]   | c_drop00 rounds=0 last=r evallogs=1
+[11-18 14:22:32]   | c_drop25 rounds=0 last=r evallogs=1
+[11-18 14:22:32]   | c_drop50 rounds=0 last=r evallogs=1
+[11-18 14:22:32]   | c_drop75 rounds=3 last=r26 evallogs=0
+[11-18 14:22:32]   | c_int8 rounds=3 last=r19 evallogs=0
+[11-18 14:22:32]   | c_int4 rounds=3 last=r7 evallogs=0
+[11-18 14:22:32]   | c_bit1 (未开始)
+[11-18 14:22:32]   >> 配置进度变化
+[11-18 14:22:32]   | W [2026-11-08 17:38:11] 第4阶段结束 rc=137
+[11-18 14:22:32]   | W [2026-11-08 17:38:11] [!!] 第4阶段未正常结束（rc=137）—— 重新运行本脚本可续跑（幂等）
+[11-18 14:32:38] proc=8 disk=10G 69% done=未完成
+[11-18 14:32:38]   | c_drop00 rounds=0 last=r evallogs=1
+[11-18 14:32:38]   | c_drop25 rounds=0 last=r evallogs=1
+[11-18 14:32:38]   | c_drop50 rounds=0 last=r evallogs=1
+[11-18 14:32:38]   | c_drop75 rounds=3 last=r29 evallogs=0
+[11-18 14:32:38]   | c_int8 rounds=3 last=r22 evallogs=0
+[11-18 14:32:38]   | c_int4 rounds=3 last=r10 evallogs=0
+[11-18 14:32:38]   | c_bit1 (未开始)
+[11-18 14:32:38]   >> 配置进度变化
+[11-18 14:32:38]   | W [2026-11-08 17:38:11] 第4阶段结束 rc=137
+[11-18 14:32:38]   | W [2026-11-08 17:38:11] [!!] 第4阶段未正常结束（rc=137）—— 重新运行本脚本可续跑（幂等）
+[11-18 14:42:42] proc=9 disk=10G 70% done=未完成
+[11-18 14:42:42]   | c_drop00 rounds=0 last=r evallogs=1
+[11-18 14:42:42]   | c_drop25 rounds=0 last=r evallogs=1
+[11-18 14:42:42]   | c_drop50 rounds=0 last=r evallogs=1
+[11-18 14:42:42]   | c_drop75 rounds=3 last=r32 evallogs=0
+[11-18 14:42:42]   | c_int8 rounds=3 last=r25 evallogs=0
+[11-18 14:42:42]   | c_int4 rounds=3 last=r12 evallogs=0
+[11-18 14:42:42]   | c_bit1 (未开始)
+[11-18 14:42:42]   >> 配置进度变化
+[11-18 14:42:42]   | W [2026-11-08 17:38:11] 第4阶段结束 rc=137
+[11-18 14:42:42]   | W [2026-11-08 17:38:11] [!!] 第4阶段未正常结束（rc=137）—— 重新运行本脚本可续跑（幂等）
+[11-18 14:52:42] proc=2 disk=10G 69% done=未完成
+[11-18 14:52:42]   | c_drop00 rounds=0 last=r evallogs=1
+[11-18 14:52:42]   | c_drop25 rounds=0 last=r evallogs=1
+[11-18 14:52:42]   | c_drop50 rounds=0 last=r evallogs=1
+[11-18 14:52:42]   | c_drop75 rounds=3 last=r36 evallogs=0
+[11-18 14:52:42]   | c_int8 rounds=3 last=r27 evallogs=0
+[11-18 14:52:42]   | c_int4 rounds=3 last=r15 evallogs=0
+[11-18 14:52:42]   | c_bit1 (未开始)
+[11-18 14:52:42]   >> 配置进度变化
+[11-18 14:52:42]   | W [2026-11-08 17:38:11] 第4阶段结束 rc=137
+[11-18 14:52:42]   | W [2026-11-08 17:38:11] [!!] 第4阶段未正常结束（rc=137）—— 重新运行本脚本可续跑（幂等）
+[11-18 15:02:46] proc=8 disk=10G 70% done=未完成
+[11-18 15:02:46]   | c_drop00 rounds=0 last=r evallogs=1
+[11-18 15:02:46]   | c_drop25 rounds=0 last=r evallogs=1
+[11-18 15:02:46]   | c_drop50 rounds=0 last=r evallogs=1
+[11-18 15:02:46]   | c_drop75 rounds=3 last=r39 evallogs=0
+[11-18 15:02:46]   | c_int8 rounds=3 last=r30 evallogs=0
+[11-18 15:02:46]   | c_int4 rounds=3 last=r17 evallogs=0
+[11-18 15:02:46]   | c_bit1 (未开始)
+[11-18 15:02:46]   >> 配置进度变化
+[11-18 15:02:46]   | W [2026-11-08 17:38:11] 第4阶段结束 rc=137
+[11-18 15:02:46]   | W [2026-11-08 17:38:11] [!!] 第4阶段未正常结束（rc=137）—— 重新运行本脚本可续跑（幂等）

@@ -1,0 +1,69 @@
+===== 17:48:34 =====
+表数=0
+0
+
+      03:28 /root/miniconda3/envs/hpt/bin/python -m hpt.run_
+89 %, 14285 MiB
+20.79 17.65 15.44 21/7984 284982
+
+===== 17:55:06 =====
+表数=0
+0
+
+      10:01 /root/miniconda3/envs/hpt/bin/python -m hpt.run_
+99 %, 9590 MiB
+21.85 21.21 18.04 14/7946 290843
+
+===== 18:01:31 =====
+表数=0
+0
+
+      16:26 /root/miniconda3/envs/hpt/bin/python -m hpt.run_
+99 %, 10072 MiB
+20.18 21.65 19.42 17/7934 296680
+
+===== 18:07:56 =====
+表数=0
+0
+
+      22:51 /root/miniconda3/envs/hpt/bin/python -m hpt.run_
+49 %, 9894 MiB
+22.76 22.38 20.48 11/7461 302124
+
+===== 18:14:40 =====
+表数=2
+| avg                     |     0.00 | | avg                     |     0.00 | 
+      29:35 /root/miniconda3/envs/hpt/bin/python -m hpt.run_
+100 %, 10126 MiB
+18.42 20.93 20.56 12/7501 307960
+
+===== 18:21:16 =====
+表数=2
+| avg                     |     0.00 | | avg                     |     0.00 | 
+      36:10 /root/miniconda3/envs/hpt/bin/python -m hpt.run_
+99 %, 13808 MiB
+22.95 21.14 20.59 15/7527 314744
+
+===== 18:27:55 =====
+表数=2
+| avg                     |     0.00 | | avg                     |     0.00 | 
+      42:49 /root/miniconda3/envs/hpt/bin/python -m hpt.run_
+97 %, 13922 MiB
+22.30 22.28 21.39 14/7085 321342
+
+===== 18:34:36 =====
+表数=2
+| avg                     |     0.00 | | avg                     |     0.00 | 
+      49:31 /root/miniconda3/envs/hpt/bin/python -m hpt.run_
+      01:38 /root/miniconda3/envs/hpt/bin/python -m hpt.run_
+82 %, 10211 MiB
+25.74 22.59 21.62 27/7235 327962
+
+===== 18:41:10 =====
+表数=3
+| avg                     |     0.00 | | avg                     |     0.00 | | avg                     |     0.00 | 
+      08:11 /root/miniconda3/envs/hpt/bin/python -m hpt.run_
+98 %, 10219 MiB
+17.77 21.35 21.73 13/7107 332708
+
+[poll] 三张表齐 ⇒ 评估完成

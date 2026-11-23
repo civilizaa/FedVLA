@@ -1,0 +1,101 @@
+{
+  "quant_dir": "/root/fedcore/keep/c_int4_global_r49",
+  "clean_dir": "/root/fedcore/keep/c_int4_client0_r49",
+  "quant": [
+    {
+      "domain": "mujoco_metaworld_task1",
+      "state": {
+        "dim": 39,
+        "zero_scale_dims": 31,
+        "effective_dims": 8,
+        "scale_absmax": 1846.9068603515625,
+        "scale_min_nonzero": 263.8438415527344,
+        "offset_absmax": 299.3692932128906,
+        "var_max": 3306423.25,
+        "var_mean_live": 777031.0625
+      },
+      "action": {
+        "dim": 4,
+        "zero_scale_dims": 0,
+        "effective_dims": 4,
+        "scale_absmax": 1.0345180034637451,
+        "scale_min_nonzero": 0.44336482882499695,
+        "offset_absmax": 0.5287895798683167,
+        "var_max": 1.055551528930664,
+        "var_mean_live": 0.7370867133140564
+      }
+    },
+    {
+      "domain": "mujoco_metaworld_task2",
+      "state": {
+        "dim": 39,
+        "zero_scale_dims": 17,
+        "effective_dims": 22,
+        "scale_absmax": 93.04444122314453,
+        "scale_min_nonzero": 13.292062759399414,
+        "offset_absmax": 92.04444122314453,
+        "var_max": 9500.4462890625,
+        "var_mean_live": 1524.2125244140625
+      },
+      "action": {
+        "dim": 4,
+        "zero_scale_dims": 0,
+        "effective_dims": 4,
+        "scale_absmax": 3.3333332538604736,
+        "scale_min_nonzero": 0.9523809552192688,
+        "offset_absmax": 1.0,
+        "var_max": 11.320677757263184,
+        "var_mean_live": 4.388442039489746
+      }
+    },
+    {
+      "domain": "mujoco_metaworld_task3",
+      "state": {
+        "dim": 39,
+        "zero_scale_dims": 23,
+        "effective_dims": 16,
+        "scale_absmax": 27.987979888916016,
+        "scale_min_nonzero": 3.9982829093933105,
+        "offset_absmax": 18.050556182861328,
+        "var_max": 765.5062866210938,
+        "var_mean_live": 219.36997985839844
+      },
+      "action": {
+        "dim": 4,
+        "zero_scale_dims": 0,
+        "effective_dims": 4,
+        "scale_absmax": 1.479182481765747,
+        "scale_min_nonzero": 1.0565589666366577,
+        "offset_absmax": 1.0,
+        "var_max": 2.157977342605591,
+        "var_mean_live": 1.3309266567230225
+      }
+    }
+  ],
+  "clean": [
+    {
+      "domain": "mujoco_metaworld_task1",
+      "state": {
+        "dim": 39,
+        "zero_scale_dims": 0,
+        "effective_dims": 39,
+        "scale_absmax": 3655.81396484375,
+        "scale_min_nonzero": 1.0,
+        "offset_absmax": 592.5791015625,
+        "var_max": 12954977.0,
+        "var_mean_live": 657116.0625
+      },
+      "action": {
+        "dim": 4,
+        "zero_scale_dims": 0,
+        "effective_dims": 4,
+        "scale_absmax": 2.047750949859619,
+        "scale_min_nonzero": 1.0,
+        "offset_absmax": 1.0466994047164917,
+        "var_max": 4.131535053253174,
+        "var_mean_live": 2.894895076751709
+      }
+    }
+  ],
+  "clean_only_domains": []
+}

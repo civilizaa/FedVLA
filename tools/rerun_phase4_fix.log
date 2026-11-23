@@ -1,0 +1,79 @@
+[11-19 10:57:57] agent 心跳正常（落后 11s，1/2）
+[11-19 10:58:58] agent 心跳正常（落后 11s，2/2）
+[11-19 10:58:58] agent 已活，开始推送
+[11-19 11:02:52] agent 心跳正常（落后 12s，1/2）
+[11-19 11:03:53] agent 心跳正常（落后 12s，2/2）
+[11-19 11:03:53] agent 已活，开始推送
+[11-19 11:03:53] [clearall-前] 清掉 6 条残留命令（防重放）
+[11-19 11:08:58] [入队] prep_rerun_phase4.sh         cid=3452 st=200
+[11-19 11:08:58] [入队] rerun_phase4_fix.sh          cid=3453 st=200
+[11-19 11:08:58] [入队] run_comm_scan_v2.sh          cid=3454 st=200
+[11-19 11:08:58] [入队] run_fedavg.sh                cid=3455 st=200
+[11-19 11:08:58] [入队] aggregate.py                 cid=3456 st=200
+[11-19 11:08:58] [入队] extract_comm_results.py      cid=3457 st=200
+[11-19 11:08:58] [入队] extract_dp_utility.py        cid=3458 st=200
+[11-19 11:08:58] [入队] chain_phase4_dp.sh           cid=3459 st=200
+[11-19 11:08:58] [入队] calibrate_dp_clip.sh         cid=3460 st=200
+[11-19 11:08:58] [入队] dp_clip_calibrate.py         cid=3461 st=200
+[11-19 11:08:58] [入队] dp_noise_client.py           cid=3462 st=200
+[11-19 11:08:58] [入队] run_dp_utility.sh            cid=3463 st=200
+[11-19 11:08:58] [入队] phase4_autoshutdown.sh       cid=3464 st=200
+[11-19 11:08:58] [入队] relay_push_out.py            cid=3465 st=200
+[11-19 11:08:58] [入队] eval_model.sh                cid=3466 st=200
+[11-19 11:08:58] [等待] 15 条命令回传 ...
+[11-19 11:08:58] [等待] 回传 15/15
+[11-19 11:08:58]   [OK ] prep_rerun_phase4.sh         want=0488620823 remote=0488620823
+[11-19 11:08:58]   [OK ] rerun_phase4_fix.sh          want=9c5215171e remote=9c5215171e
+[11-19 11:08:58]   [OK ] run_comm_scan_v2.sh          want=62cb28353c remote=62cb28353c
+[11-19 11:08:58]   [OK ] run_fedavg.sh                want=ec84e6f617 remote=ec84e6f617
+[11-19 11:08:58]   [OK ] aggregate.py                 want=644d7b18d0 remote=644d7b18d0
+[11-19 11:08:58]   [OK ] extract_comm_results.py      want=3c241d63da remote=3c241d63da
+[11-19 11:08:58]   [OK ] extract_dp_utility.py        want=7392b89fe6 remote=7392b89fe6
+[11-19 11:08:58]   [OK ] chain_phase4_dp.sh           want=aa07cede19 remote=aa07cede19
+[11-19 11:08:58]   [OK ] calibrate_dp_clip.sh         want=e025d01058 remote=e025d01058
+[11-19 11:08:58]   [OK ] dp_clip_calibrate.py         want=2b492ed85d remote=2b492ed85d
+[11-19 11:08:58]   [OK ] dp_noise_client.py           want=1085bba2ab remote=1085bba2ab
+[11-19 11:08:58]   [OK ] run_dp_utility.sh            want=987016d6c8 remote=987016d6c8
+[11-19 11:08:58]   [OK ] phase4_autoshutdown.sh       want=cb3f564931 remote=cb3f564931
+[11-19 11:08:58]   [OK ] relay_push_out.py            want=efd9fb6f62 remote=efd9fb6f62
+[11-19 11:08:58]   [OK ] eval_model.sh                want=54bc93993e remote=54bc93993e
+[11-19 11:08:58] [OK] 全部 15 个文件推送并校验通过
+[11-19 11:08:58] [clearall-后] 清掉 17 条残留命令
+[11-19 11:08:58] 等 180s 让队列彻底静默（铁律：当场通过不代表 3 分钟后还在）
+[11-19 11:13:20] 等 180s 让队列彻底静默（铁律：当场通过不代表 3 分钟后还在）
+[11-19 11:13:32] 等 180s 让队列彻底静默（铁律：当场通过不代表 3 分钟后还在）
+[11-19 11:18:08] [校验] prep_rerun_phase4.sh 含 'legacy_r2': 4 次 OK
+[11-19 11:18:08] [校验] rerun_phase4_fix.sh 含 'PUSH_IDBASE': 4 次 OK
+[11-19 11:18:08] [校验] run_comm_scan_v2.sh 含 'COMM_TAGS': 4 次 OK
+[11-19 11:18:08] [校验] run_fedavg.sh 含 'PYTHONPATH': 7 次 OK
+[11-19 11:18:08] [校验] aggregate.py 含 'quant_drift': 2 次 OK
+[11-19 11:18:08] [校验] phase4_autoshutdown.sh 含 'PUSH_IDBASE': 7 次 OK
+[11-19 11:18:08] [校验] chain_phase4_dp.sh 含 'calibrate_dp_clip': 1 次 OK
+[11-19 11:18:08] 回读校验通过，起跑云端总控
+[11-19 11:19:47] 云端总控启动日志：
+[11-19 11:19:47] started
+[2026-11-19 11:18:08] ==============================================================
+[2026-11-19 11:18:08] FedVLA 第4阶段 修正版重跑 总控
+[2026-11-19 11:18:08] 重跑配置：c_drop00 c_drop25 c_int8 c_int4 c_bit1
+[2026-11-19 11:18:08] 保留配置：c_drop50 c_drop75
+[2026-11-19 11:18:08] 推送 idbase=990000   绝对时限=13h
+[2026-11-19 11:18:08] ==============================================================
+[2026-11-19 11:18:08] [OK] import hpt 自检通过（PYTHONPATH=/root/HPT）
+[2026-11-19 11:18:08] [OK] GPU: NVIDIA GeForce RTX 3090, 24576 MiB
+[2026-11-19 11:18:08] ----- [1/5] 清洗重跑范围 -----
+[2026-11-19 11:18:08] ===== 修正版重跑清洗 =====
+[2026-11-19 11:18:08] 要重跑：c_drop00 c_drop25 c_int8 c_int4 c_bit1
+[2026-11-19 11:18:08] 要保留：c_drop50 c_drop75
+[2026-11-19 11:18:08] [c_drop00] 旧起点=13  权重=0  opt=0
+[2026-11-19 11:18:08] [c_drop25] 旧起点=13  权重=0  opt=0
+[2026-11-19 11:18:08] [c_int8] 旧起点=0  权重=0  opt=0
+[2026-11-19 11:18:08] [c_int4] 旧起点=0  权重=0  opt=0
+[2026-11-19 11:18:08] [c_bit1] 旧起点=0  权重=0  opt=0
+[2026-11-19 11:18:08] [c_drop50] 保留：起点=0  task3 评估表数=3
+[2026-11-19 11:18:08] [c_drop75] 保留：起点=0  task3 评估表数=3
+[2026-11-19 11:18:08] [OK] 自检通过：5 个重跑配置已清空（只剩 .legacy_r2 留档）
+[磁盘] overlay          30G   16G   15G  51% /
+[2026-11-19 11:18:08] ===== 清洗结束 =====
+[2026-11-19 11:18:08] [OK] 清洗完成
+[2026-11-19 11:18:08] ----- [2/5] 启动通信扫描 -----
+

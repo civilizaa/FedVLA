@@ -1,0 +1,58 @@
+{
+  "model": "/root/HPT/output/fedavg_hetero/global_r49/model.pth",
+  "rounds": 50,
+  "clients": 4,
+  "trunk_params": 12644352,
+  "personal_params": 3892838,
+  "total_params": 16537190,
+  "quantization": [
+    {
+      "scheme": "fp32 (不压缩)",
+      "bits": 32,
+      "mode": "tensor",
+      "total_bytes_50rounds": 12644352000.0,
+      "compression_ratio": 1.0,
+      "relative_error": 0.0
+    },
+    {
+      "scheme": "int8 per-tensor",
+      "bits": 8,
+      "mode": "tensor",
+      "total_bytes_50rounds": 3161088000.0,
+      "compression_ratio": 0.25,
+      "relative_error": 0.0072668388577393946
+    },
+    {
+      "scheme": "int8 per-group(64)",
+      "bits": 8,
+      "mode": "group",
+      "total_bytes_50rounds": 3161088000.0,
+      "compression_ratio": 0.25,
+      "relative_error": 0.0049529603907512015
+    },
+    {
+      "scheme": "int4 per-group(64)",
+      "bits": 4,
+      "mode": "group",
+      "total_bytes_50rounds": 1580544000.0,
+      "compression_ratio": 0.125,
+      "relative_error": 0.08949080174668594
+    },
+    {
+      "scheme": "int2 per-group(64)",
+      "bits": 2,
+      "mode": "group",
+      "total_bytes_50rounds": 790272000.0,
+      "compression_ratio": 0.0625,
+      "relative_error": 0.5842105319542312
+    },
+    {
+      "scheme": "1-bit 符号化",
+      "bits": 1,
+      "mode": "group",
+      "total_bytes_50rounds": 395136000.0,
+      "compression_ratio": 0.03125,
+      "relative_error": 0.557123967244591
+    }
+  ]
+}
