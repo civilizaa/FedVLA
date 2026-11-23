@@ -1,0 +1,76 @@
+{
+  "base": 1009000,
+  "outdir": "/root/HPT/output",
+  "files": [
+    {
+      "name": "eval_dp_s0001_mujoco_metaworld_task3.log",
+      "mode": "text",
+      "id": 1009001,
+      "size": 76016,
+      "sha256": "158fed82f1c267c355682f4fa5b5e70f1652250ca11090cdf9e556cd5bda7e9b"
+    },
+    {
+      "name": "eval_dp_s0003_mujoco_metaworld_task3.log",
+      "mode": "text",
+      "id": 1009002,
+      "size": 76016,
+      "sha256": "b798fcd16f0f783af5126070ea41bebe8d05ff874cac57b3eaf9d3d9e51f4435"
+    },
+    {
+      "name": "eval_dp_s0012_mujoco_metaworld_task3.log",
+      "mode": "text",
+      "id": 1009003,
+      "size": 20903,
+      "sha256": "8a6ca606cd534c51e63ab2c2b5f082304507f237fdb6b37b418505c3c95a8f9b"
+    },
+    {
+      "name": "dp_utility_raw.json",
+      "mode": "text",
+      "id": 1009004,
+      "size": 1862,
+      "sha256": "ec8c4f8f81674372a6001c1e29b4a717c79cee8561f7cef766e6851fd0a39ac5"
+    },
+    {
+      "name": "dplog_dp_s0001.log",
+      "mode": "text",
+      "id": 1009005,
+      "size": 66,
+      "sha256": "606cfa0f134cc5b8acfdd6943aed0d7fbdb8b4f35e2fa83bd812a7e0581847be"
+    },
+    {
+      "name": "dplog_dp_s0003.log",
+      "mode": "text",
+      "id": 1009006,
+      "size": 66,
+      "sha256": "b2ee3201b6615231ac970b4893b99213338a868ff83c82a08b83f6c418406351"
+    },
+    {
+      "name": "dplog_dp_s0012.log",
+      "mode": "text",
+      "id": 1009007,
+      "size": 66,
+      "sha256": "c54c82066721670d5a7c3e27b53142abc50859aaabfb40e7d1ea863322e47675"
+    },
+    {
+      "name": "log_dp_s0001_train.txt",
+      "mode": "text",
+      "id": 1009008,
+      "size": 112750,
+      "sha256": "33bdab50aa3292653be25cc0bc0b75dc82a72fd9b633822715743aec3014e787"
+    },
+    {
+      "name": "log_dp_s0003_train.txt",
+      "mode": "text",
+      "id": 1009009,
+      "size": 112750,
+      "sha256": "7a6a7d98e98aac0e28eaa8f3aaf06d6a31ac93b6b43423432de9c991e69fc7cb"
+    },
+    {
+      "name": "log_dp_s0012_train.txt",
+      "mode": "text",
+      "id": 1009010,
+      "size": 114231,
+      "sha256": "237ec03679d0f76ceb91ba10a8be65d01406e9bf3a2d17eb3c922a6e74b0221d"
+    }
+  ]
+}

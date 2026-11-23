@@ -1,0 +1,1197 @@
+[OK] 配置自检通过：4 个客户端，domain↔env 映射一致
+===== FedVLA FedAvg =====
+OUTPUT_ROOT=/root/HPT/output/dp_s0012
+NUM_ROUNDS=50  NUM_CLIENTS=4  LOCAL_EPOCHS=3
+CLIENT_DOMAINS: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1
+CLIENT_ENVS: reach-v2 push-v2 button-press-topdown-v2 reach-v2
+CLIENT_EPOCH_SIZE: 15 19 24 15
+从轮 0 开始
+=========================
+[OK] hpt 可 import（PYTHONPATH=/root/HPT）
+[OK] load_trunk 补丁已就位
+[OK] 全局步数感知调度补丁已就位（warmup_frac=0.25）
+[OK] MoE 已开启（E=8 k=2 ratio=0.25 layers=half）
+[OK] 聚合模式 = eda_cluster
+[round 0] 开始
+[round 0] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r0
+[round 0] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 0] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r0
+[round 0] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 0] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r0
+[round 0] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 0] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r0
+[round 0] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 0] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 0] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r0
+[round 1] 开始
+[round 1] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r1
+[round 1] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 1] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r1
+[round 1] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 1] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r1
+[round 1] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 1] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r1
+[round 1] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = 7.142e+01 @ trunk.blocks.4.mlp.fc2.weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 1] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 1] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r1
+[round 2] 开始
+[round 2] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r2
+[round 2] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 2] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r2
+[round 2] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 2] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r2
+[round 2] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 2] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r2
+[round 2] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = 7.089e+01 @ trunk.blocks.2.mlp.fc2.weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 2] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 2] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r2
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   24G  7.0G  77% /
+[round 3] 开始
+[round 3] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r3
+[round 3] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 3] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r3
+[round 3] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 3] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r3
+[round 3] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 3] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r3
+[round 3] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = 6.932e+01 @ trunk.blocks.12.mlp.fc1.weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 3] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 3] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r3
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   24G  7.0G  77% /
+[round 4] 开始
+[round 4] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r4
+[round 4] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 4] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r4
+[round 4] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 4] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r4
+[round 4] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 4] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r4
+[round 4] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = 6.988e+01 @ trunk.blocks.14.mlp.fc1.weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 4] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 4] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r4
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   24G  6.8G  78% /
+[round 5] 开始
+[round 5] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r5
+[round 5] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 5] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r5
+[round 5] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 5] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r5
+[round 5] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 5] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r5
+[round 5] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = 7.088e+01 @ trunk.blocks.14.mlp.fc1.weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 5] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 5] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r5
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   24G  6.9G  78% /
+[round 6] 开始
+[round 6] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r6
+[round 6] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 6] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r6
+[round 6] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 6] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r6
+[round 6] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 6] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r6
+[round 6] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = 7.016e+01 @ trunk.blocks.14.mlp.fc1.weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 6] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 6] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r6
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   24G  6.9G  78% /
+[round 7] 开始
+[round 7] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r7
+[round 7] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 7] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r7
+[round 7] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 7] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r7
+[round 7] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 7] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r7
+[round 7] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = 7.069e+01 @ trunk.blocks.10.mlp.fc2.weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 7] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 7] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r7
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   24G  6.8G  78% /
+[round 8] 开始
+[round 8] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r8
+[round 8] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 8] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r8
+[round 8] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 8] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r8
+[round 8] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 8] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r8
+[round 8] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 8] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 8] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r8
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   24G  6.9G  78% /
+[round 9] 开始
+[round 9] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r9
+[round 9] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 9] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r9
+[round 9] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 9] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r9
+[round 9] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 9] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r9
+[round 9] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 9] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 9] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r9
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   23G  7.2G  77% /
+[round 10] 开始
+[round 10] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r10
+[round 10] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 10] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r10
+[round 10] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 10] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r10
+[round 10] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 10] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r10
+[round 10] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 10] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 10] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r10
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   24G  6.9G  78% /
+[round 11] 开始
+[round 11] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r11
+[round 11] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 11] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r11
+[round 11] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 11] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r11
+[round 11] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 11] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r11
+[round 11] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 11] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 11] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r11
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   24G  6.6G  79% /
+[round 12] 开始
+[round 12] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r12
+[round 12] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 12] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r12
+[round 12] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 12] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r12
+[round 12] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 12] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r12
+[round 12] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 12] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 12] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r12
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   24G  6.7G  78% /
+[round 13] 开始
+[round 13] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r13
+[round 13] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 13] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r13
+[round 13] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 13] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r13
+[round 13] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 13] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r13
+[round 13] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 13] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 13] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r13
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   24G  6.6G  79% /
+[round 14] 开始
+[round 14] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r14
+[round 14] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 14] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r14
+[round 14] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 14] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r14
+[round 14] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 14] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r14
+[round 14] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 14] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 14] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r14
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   24G  6.8G  78% /
+[round 15] 开始
+[round 15] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r15
+[round 15] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 15] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r15
+[round 15] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 15] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r15
+[round 15] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 15] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r15
+[round 15] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 15] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 15] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r15
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   24G  6.8G  78% /
+[round 16] 开始
+[round 16] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r16
+[round 16] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 16] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r16
+[round 16] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 16] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r16
+[round 16] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 16] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r16
+[round 16] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 16] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 16] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r16
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   24G  6.9G  78% /
+[round 17] 开始
+[round 17] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r17
+[round 17] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 17] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r17
+[round 17] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 17] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r17
+[round 17] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 17] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r17
+[round 17] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 17] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 17] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r17
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   24G  7.0G  77% /
+[round 18] 开始
+[round 18] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r18
+[round 18] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 18] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r18
+[round 18] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 18] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r18
+[round 18] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 18] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r18
+[round 18] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 18] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 18] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r18
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   24G  7.0G  77% /
+[round 19] 开始
+[round 19] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r19
+[round 19] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 19] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r19
+[round 19] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 19] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r19
+[round 19] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 19] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r19
+[round 19] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 19] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 19] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r19
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   24G  6.3G  80% /
+[round 20] 开始
+[round 20] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r20
+[round 20] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 20] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r20
+[round 20] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 20] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r20
+[round 20] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 20] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r20
+[round 20] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 20] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 20] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r20
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   24G  6.4G  79% /
+[round 21] 开始
+[round 21] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r21
+[round 21] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 21] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r21
+[round 21] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 21] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r21
+[round 21] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 21] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r21
+[round 21] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 21] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 21] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r21
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   24G  6.4G  79% /
+[round 22] 开始
+[round 22] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r22
+[round 22] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 22] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r22
+[round 22] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 22] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r22
+[round 22] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 22] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r22
+[round 22] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 22] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 22] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r22
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   24G  6.3G  80% /
+[round 23] 开始
+[round 23] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r23
+[round 23] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 23] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r23
+[round 23] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 23] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r23
+[round 23] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 23] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r23
+[round 23] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 23] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 23] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r23
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   24G  6.3G  80% /
+[round 24] 开始
+[round 24] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r24
+[round 24] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 24] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r24
+[round 24] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 24] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r24
+[round 24] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 24] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r24
+[round 24] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 24] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 24] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r24
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   24G  6.3G  80% /
+[round 25] 开始
+[round 25] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r25
+[round 25] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 25] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r25
+[round 25] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 25] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r25
+[round 25] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 25] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r25
+[round 25] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 25] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 25] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r25
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   25G  6.0G  81% /
+[round 26] 开始
+[round 26] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r26
+[round 26] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 26] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r26
+[round 26] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 26] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r26
+[round 26] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 26] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r26
+[round 26] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 26] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 26] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r26
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   24G  6.3G  80% /
+[round 27] 开始
+[round 27] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r27
+[round 27] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 27] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r27
+[round 27] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 27] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r27
+[round 27] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 27] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r27
+[round 27] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 27] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 27] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r27
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   24G  6.1G  80% /
+[round 28] 开始
+[round 28] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r28
+[round 28] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 28] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r28
+[round 28] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 28] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r28
+[round 28] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 28] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r28
+[OK] 配置自检通过：4 个客户端，domain↔env 映射一致
+===== FedVLA FedAvg =====
+OUTPUT_ROOT=/root/HPT/output/dp_s0012
+NUM_ROUNDS=50  NUM_CLIENTS=4  LOCAL_EPOCHS=3
+CLIENT_DOMAINS: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1
+CLIENT_ENVS: reach-v2 push-v2 button-press-topdown-v2 reach-v2
+CLIENT_EPOCH_SIZE: 15 19 24 15
+从轮 0 开始
+=========================
+[OK] hpt 可 import（PYTHONPATH=/root/HPT）
+[OK] load_trunk 补丁已就位
+[OK] 全局步数感知调度补丁已就位（warmup_frac=0.25）
+[OK] MoE 已开启（E=8 k=2 ratio=0.25 layers=half）
+[OK] 聚合模式 = eda_cluster
+[round 0] 开始
+[round 0] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r0
+[round 0] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 0] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r0
+[round 0] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 0] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r0
+[round 0] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 0] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r0
+[round 0] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 0] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 0] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r0
+[round 1] 开始
+[round 1] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r1
+[round 1] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 1] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r1
+[round 1] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 1] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r1
+[round 1] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 1] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r1
+[round 1] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = 7.142e+01 @ trunk.blocks.4.mlp.fc2.weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 1] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 1] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r1
+[round 2] 开始
+[round 2] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r2
+[round 2] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 2] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r2
+[round 2] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 2] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r2
+[round 2] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 2] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r2
+[round 2] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = 7.089e+01 @ trunk.blocks.2.mlp.fc2.weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 2] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 2] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r2
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   23G  7.5G  76% /
+[round 3] 开始
+[round 3] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r3
+[round 3] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 3] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r3
+[round 3] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 3] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r3
+[round 3] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 3] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r3
+[round 3] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = 6.932e+01 @ trunk.blocks.12.mlp.fc1.weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 3] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 3] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r3
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   23G  7.3G  76% /
+[round 4] 开始
+[round 4] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r4
+[round 4] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 4] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r4
+[round 4] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 4] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r4
+[round 4] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 4] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r4
+[round 4] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = 6.988e+01 @ trunk.blocks.14.mlp.fc1.weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 4] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 4] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r4
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   23G  7.5G  76% /
+[round 5] 开始
+[round 5] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r5
+[round 5] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 5] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r5
+[round 5] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 5] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r5
+[round 5] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 5] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r5
+[round 5] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = 7.088e+01 @ trunk.blocks.14.mlp.fc1.weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 5] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 5] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r5
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   23G  7.1G  77% /
+[round 6] 开始
+[round 6] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r6
+[round 6] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 6] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r6
+[round 6] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 6] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r6
+[round 6] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 6] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r6
+[round 6] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = 7.016e+01 @ trunk.blocks.14.mlp.fc1.weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 6] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 6] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r6
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   23G  7.2G  77% /
+[round 7] 开始
+[round 7] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r7
+[round 7] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 7] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r7
+[round 7] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 7] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r7
+[round 7] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 7] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r7
+[round 7] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = 7.069e+01 @ trunk.blocks.10.mlp.fc2.weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 7] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 7] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r7
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   23G  7.1G  77% /
+[round 8] 开始
+[round 8] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r8
+[round 8] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 8] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r8
+[round 8] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 8] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r8
+[round 8] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 8] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r8
+[round 8] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 8] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 8] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r8
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   23G  7.2G  77% /
+[round 9] 开始
+[round 9] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r9
+[round 9] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 9] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r9
+[round 9] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 9] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r9
+[round 9] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 9] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r9
+[round 9] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 9] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 9] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r9
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   23G  7.3G  76% /
+[round 10] 开始
+[round 10] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r10
+[round 10] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 10] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r10
+[round 10] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 10] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r10
+[round 10] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 10] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r10
+[round 10] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 10] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 10] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r10
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   23G  7.1G  77% /
+[round 11] 开始
+[round 11] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r11
+[round 11] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 11] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r11
+[round 11] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 11] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r11
+[round 11] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 11] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r11
+[round 11] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 11] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 11] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r11
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   23G  7.3G  76% /
+[round 12] 开始
+[round 12] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r12
+[round 12] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 12] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r12
+[round 12] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 12] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r12
+[round 12] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 12] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r12
+[round 12] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 12] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 12] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r12
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   23G  7.2G  77% /
+[round 13] 开始
+[round 13] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r13
+[round 13] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 13] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r13
+[round 13] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 13] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r13
+[round 13] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 13] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r13
+[round 13] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 13] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 13] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r13
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   24G  6.7G  78% /
+[round 14] 开始
+[round 14] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r14
+[round 14] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 14] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r14
+[round 14] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 14] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r14
+[round 14] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 14] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r14
+[round 14] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 14] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 14] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r14
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   24G  7.0G  77% /
+[round 15] 开始
+[round 15] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r15
+[round 15] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 15] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r15
+[round 15] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 15] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r15
+[round 15] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 15] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r15
+[round 15] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 15] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 15] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r15
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   24G  7.0G  77% /
+[round 16] 开始
+[round 16] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r16
+[round 16] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 16] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r16
+[round 16] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 16] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r16
+[round 16] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 16] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r16
+[round 16] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 16] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 16] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r16
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   24G  7.0G  77% /
+[round 17] 开始
+[round 17] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r17
+[round 17] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 17] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r17
+[round 17] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 17] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r17
+[round 17] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 17] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r17
+[round 17] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 17] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 17] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r17
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   24G  7.0G  77% /
+[round 18] 开始
+[round 18] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r18
+[round 18] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 18] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r18
+[round 18] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 18] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r18
+[round 18] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 18] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r18
+[round 18] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 18] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 18] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r18
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   24G  7.0G  77% /
+[round 19] 开始
+[round 19] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r19
+[round 19] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 19] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r19
+[round 19] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 19] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r19
+[round 19] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 19] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r19
+[round 19] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 19] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 19] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r19
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   24G  7.0G  77% /
+[round 20] 开始
+[round 20] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r20
+[round 20] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 20] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r20
+[round 20] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 20] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r20
+[round 20] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 20] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r20
+[round 20] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 20] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 20] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r20
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   23G  7.2G  77% /
+[round 21] 开始
+[round 21] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r21
+[round 21] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 21] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r21
+[round 21] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 21] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r21
+[round 21] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 21] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r21
+[round 21] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 21] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 21] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r21
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   23G  7.1G  77% /
+[round 22] 开始
+[round 22] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r22
+[round 22] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 22] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r22
+[round 22] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 22] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r22
+[round 22] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 22] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r22
+[round 22] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 22] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 22] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r22
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   23G  7.1G  77% /
+[round 23] 开始
+[round 23] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r23
+[round 23] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 23] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r23
+[round 23] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 23] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r23
+[round 23] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 23] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r23
+[round 23] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 23] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 23] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r23
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   23G  7.2G  77% /
+[round 24] 开始
+[round 24] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r24
+[round 24] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 24] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r24
+[round 24] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 24] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r24
+[round 24] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 24] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r24
+[round 24] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 24] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 24] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r24
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   23G  7.3G  76% /
+[round 25] 开始
+[round 25] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r25
+[round 25] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 25] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r25
+[round 25] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 25] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r25
+[round 25] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 25] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r25
+[round 25] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 25] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 25] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r25
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   23G  7.2G  77% /
+[round 26] 开始
+[round 26] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r26
+[round 26] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 26] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r26
+[round 26] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 26] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r26
+[round 26] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 26] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r26
+[round 26] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 26] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 26] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r26
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   23G  7.3G  76% /
+[round 27] 开始
+[round 27] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r27
+[round 27] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 27] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r27
+[round 27] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 27] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r27
+[round 27] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 27] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r27
+[round 27] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 27] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 27] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r27
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   23G  7.1G  77% /
+[round 28] 开始
+[round 28] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r28
+[round 28] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 28] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r28
+[round 28] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 28] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r28
+[round 28] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 28] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r28
+[round 28] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 28] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 28] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r28
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   23G  7.3G  76% /
+[round 29] 开始
+[round 29] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r29
+[round 29] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 29] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r29
+[round 29] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 29] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r29
+[round 29] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 29] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r29
+[round 29] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 29] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 29] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r29
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   23G  7.2G  77% /
+[round 30] 开始
+[round 30] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r30
+[round 30] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 30] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r30
+[round 30] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 30] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r30
+[round 30] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 30] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r30
+[round 30] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 30] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 30] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r30
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   23G  7.2G  77% /
+[round 31] 开始
+[round 31] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r31
+[round 31] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 31] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r31
+[round 31] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 31] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r31
+[round 31] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 31] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r31
+[round 31] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 31] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 31] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r31
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   23G  7.2G  77% /
+[round 32] 开始
+[round 32] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r32
+[round 32] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 32] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r32
+[round 32] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 32] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r32
+[round 32] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 32] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r32
+[round 32] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 32] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 32] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r32
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   23G  7.1G  77% /
+[round 33] 开始
+[round 33] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r33
+[round 33] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 33] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r33
+[round 33] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 33] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r33
+[round 33] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 33] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r33
+[round 33] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 33] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 33] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r33
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   23G  7.1G  77% /
+[round 34] 开始
+[round 34] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r34
+[round 34] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 34] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r34
+[round 34] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 34] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r34
+[round 34] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 34] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r34
+[round 34] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 34] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 34] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r34
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   23G  7.2G  77% /
+[round 35] 开始
+[round 35] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r35
+[round 35] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 35] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r35
+[round 35] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 35] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r35
+[round 35] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 35] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r35
+[round 35] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 35] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 35] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r35
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   23G  7.2G  77% /
+[round 36] 开始
+[round 36] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r36
+[round 36] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 36] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r36
+[round 36] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 36] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r36
+[round 36] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 36] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r36
+[round 36] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 36] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 36] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r36
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   23G  7.2G  77% /
+[round 37] 开始
+[round 37] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r37
+[round 37] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 37] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r37
+[round 37] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 37] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r37
+[round 37] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 37] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r37
+[round 37] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 37] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 37] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r37
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   23G  7.2G  77% /
+[round 38] 开始
+[round 38] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r38
+[round 38] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 38] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r38
+[round 38] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 38] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r38
+[round 38] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 38] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r38
+[round 38] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 38] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 38] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r38
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   23G  7.1G  77% /
+[round 39] 开始
+[round 39] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r39
+[round 39] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 39] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r39
+[round 39] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 39] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r39
+[round 39] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 39] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r39
+[round 39] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 39] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 39] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r39
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   23G  7.2G  77% /
+[round 40] 开始
+[round 40] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r40
+[round 40] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 40] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r40
+[round 40] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 40] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r40
+[round 40] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 40] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r40
+[round 40] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 40] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 40] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r40
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   23G  7.3G  76% /
+[round 41] 开始
+[round 41] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r41
+[round 41] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 41] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r41
+[round 41] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 41] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r41
+[round 41] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 41] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r41
+[round 41] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 41] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 41] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r41
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   24G  7.0G  77% /
+[round 42] 开始
+[round 42] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r42
+[round 42] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 42] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r42
+[round 42] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 42] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r42
+[round 42] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 42] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r42
+[round 42] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 42] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 42] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r42
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   24G  7.0G  77% /
+[round 43] 开始
+[round 43] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r43
+[round 43] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 43] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r43
+[round 43] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 43] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r43
+[round 43] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 43] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r43
+[round 43] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 43] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 43] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r43
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   23G  7.1G  77% /
+[round 44] 开始
+[round 44] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r44
+[round 44] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 44] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r44
+[round 44] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 44] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r44
+[round 44] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 44] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r44
+[round 44] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 44] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 44] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r44
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   23G  7.3G  76% /
+[round 45] 开始
+[round 45] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r45
+[round 45] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 45] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r45
+[round 45] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 45] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r45
+[round 45] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 45] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r45
+[round 45] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 45] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 45] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r45
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   23G  7.2G  77% /
+[round 46] 开始
+[round 46] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r46
+[round 46] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 46] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r46
+[round 46] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 46] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r46
+[round 46] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 46] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r46
+[round 46] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 46] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 46] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r46
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   24G  6.8G  78% /
+[round 47] 开始
+[round 47] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r47
+[round 47] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 47] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r47
+[round 47] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 47] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r47
+[round 47] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 47] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r47
+[round 47] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 47] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 47] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r47
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   24G  7.0G  77% /
+[round 48] 开始
+[round 48] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r48
+[round 48] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 48] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r48
+[round 48] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 48] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r48
+[round 48] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 48] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r48
+[round 48] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 48] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 48] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r48
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   23G  7.1G  77% /
+[round 49] 开始
+[round 49] client 0  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_0_r49
+[round 49] client 0 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[round 49] client 1  domains=mujoco_metaworld_task2 env=push-v2  epoch_size=19 total_iters=56 warmup=14 -> /root/HPT/output/dp_s0012/client_1_r49
+[round 49] client 1 Epoch size: 19 Traj: 99 Train: 4851 Test: 594
+[round 49] client 2  domains=mujoco_metaworld_task3 env=button-press-topdown-v2  epoch_size=24 total_iters=71 warmup=18 -> /root/HPT/output/dp_s0012/client_2_r49
+[round 49] client 2 Epoch size: 24 Traj: 100 Train: 5903 Test: 601
+[round 49] client 3  domains=mujoco_metaworld_task1 env=reach-v2  epoch_size=15 total_iters=44 warmup=11 -> /root/HPT/output/dp_s0012/client_3_r49
+[round 49] client 3 Epoch size: 15 Traj: 100 Train: 3833 Test: 417
+[续训自检] 客户端 trunk 与上一轮全局的最大差异 = nan @ trunk.blocks.0.attn.in_proj_weight
+[OK] 续训生效：客户端确实在上一轮全局权重基础上继续训练
+[round 49] 聚合模式: eda_cluster（tasks: mujoco_metaworld_task1 mujoco_metaworld_task2 mujoco_metaworld_task3 mujoco_metaworld_task1）
+[round 49] 完成，全局模型 -> /root/HPT/output/dp_s0012/global_r49
+[清理] 删除 5 个历史轮次权重目录，释放约 520 MB（保留最近 1 轮 + 全部日志）
+[清理后磁盘] overlay          30G   24G  7.0G  77% /
+===== 全部 50 轮完成 =====
+最终全局模型: /root/HPT/output/dp_s0012/global_r49
+下一步：用 federated/run_eval_fedavg.sh 评估（3 seeds × 20 rollouts）

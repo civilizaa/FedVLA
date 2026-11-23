@@ -66,11 +66,21 @@ ANCHOR = """        domain_loss.backward()
 BLOCK = """        domain_loss.backward()
 
         # [FedVLA-BASE] 联邦基线梯度修正钩子（默认关闭 ⇒ 行为与原版一致）
+        # 🔴 2026-11-23 修复：原实现把优化器变量名写成了 'opt'，
+        #    而 HPT 的 train() 里真实变量名是 **optimizer** ⇒ 每个 step 都
+        #    NameError ⇒ 被 except 吞掉 ⇒ **近端项 / SCAFFOLD 从未生效且零报错**
+        #    （实测云端 log_client_*.txt 里满是
+        #     "[FedVLA-BASE] hook skipped: NameError name 'opt' is not defined"）。
+        #    现在：① 变量名修正；② **不再吞异常** —— 联邦基线模式下出错必须
+        #    立刻显式失败（铁律 Q），否则又是"静默退化 + 零报错"。
         try:
             from hpt.utils.fedvla_baseline import apply_baseline_hook
-            apply_baseline_hook(model, opt)
+            apply_baseline_hook(model, optimizer)
         except Exception as _be:
-            print("[FedVLA-BASE] hook skipped:", type(_be).__name__, _be)
+            import os as _fedvla_os
+            if _fedvla_os.environ.get("FEDVLA_BASELINE", "").strip().lower():
+                raise
+            # 非联邦基线模式：静默跳过（保持与原版逐字节一致）
 
         optimizer.step()
 """
@@ -80,10 +90,16 @@ ANCHOR2 = """    return {k: np.mean(v) for k, v in info_log.items() if len(v) > 
 """
 
 BLOCK2 = """    # [FedVLA-BASE] SCAFFOLD：本地训练结束后更新本地控制变量 c_k
+    # 🔴 2026-11-23 修复：原来用 except 兜住所有异常 ⇒ c_k 没落盘也零报错
+    #    ⇒ 下一轮聚合报「缺本地控制变量」才发现（那时已经白跑了一整轮）。
+    #    现在：**联邦基线模式下异常必须显式抛出**（铁律 Q）。
     try:
         from hpt.utils.fedvla_baseline import finish_baseline_round
         finish_baseline_round(model)
     except Exception as _be:
+        import os as _fedvla_os
+        if _fedvla_os.environ.get("FEDVLA_BASELINE", "").strip().lower():
+            raise
         print("[FedVLA-BASE] finish skipped:", type(_be).__name__, _be)
 
     return {k: np.mean(v) for k, v in info_log.items() if len(v) > 1}

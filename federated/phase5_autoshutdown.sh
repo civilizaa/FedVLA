@@ -56,10 +56,18 @@ WORKER_PAT='[r]un_phase5\.sh|[r]un_fedavg|eval_model\.sh|hpt\.run|hpt\.run_eval|
 
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"; }
 
+# rc_is_ok：只有内容为 0（成功）的 .rc 才算完成。
+# ⚠️ 2026-11-23 修复：原实现只判文件是否存在 ⇒ 失败的配置写 .rc=1 也被计入
+#    ⇒ 7 个 .rc 齐了就判"全部实验完成" ⇒ 推送一份混着残缺结果的主表。
+rc_is_ok() {
+    [ -f "$OUT/.rc_$1" ] || return 1
+    [ "$(cat "$OUT/.rc_$1" 2>/dev/null | tr -d '[:space:]')" = "0" ]
+}
+
 count_rc() {
     local n=0 t
     for t in $1; do
-        [ -f "$OUT/.rc_$t" ] && n=$((n + 1))
+        rc_is_ok "$t" && n=$((n + 1))
     done
     echo "$n"
 }

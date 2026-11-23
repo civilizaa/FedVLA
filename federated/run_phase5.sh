@@ -314,12 +314,61 @@ run_cfg () {
 
   # ---- 评估三个任务 ----
   local m="$root/global_r${last}"
+  # SKIP_EVAL=1：冒烟测试用（只验训练侧机制，省掉每任务 ~35 分钟的评估）
+  if [ "${SKIP_EVAL:-0}" = "1" ]; then
+    log "[SMOKE] SKIP_EVAL=1 —— 跳过三个任务的评估"
+    return 0
+  fi
   eval_task "$tag" mujoco_metaworld_task1 reach-v2 "$m" || return 1
   eval_task "$tag" mujoco_metaworld_task2 push-v2 "$m" || return 1
   eval_task "$tag" mujoco_metaworld_task3 button-press-topdown-v2 "$m" || return 1
 
+  # ---- 配置成功 ⇒ 回收中间产物（磁盘）----
+  cleanup_completed_config "$root" "$tag" "$last"
+
   log "[OK] $tag 全部完成"
   return 0
+}
+
+# ==============================================================================
+# 配置成功后的磁盘回收（2026-11-23 新增）
+# ==============================================================================
+# 🔴 为什么必须清：每个配置稳态占用实测 ~2.4GB
+#      client_*_r*     4 客户端 × 176MB × 保留轮数      ≈ 1.4GB
+#      opt_state_c*.pt 4 × 171MB（Adam 相位）            ≈ 0.68GB
+#      global_r*       保留轮数 × 176MB                  ≈ 0.35GB
+#    6 个新配置累计 ~14GB，而系统盘只剩 ~11GB ⇒ **必然爆盘**
+#    （第一版 M2 只清了 `_baseline/`，没清这两个大头 —— 阻塞点 B 的第二层）
+#
+# 🔴 为什么删了不会破坏「补评估」续跑：
+#    run_cfg 的完成判据（global_r{last}/trunk.pth 在 + 3 个评估日志齐全）
+#    在 opt_state 检查**之前**就 return 0（SKIP）⇒
+#    已经完整完成的配置，重跑时直接跳过，根本不会碰 opt_state；
+#    只有「训练完但评估不齐」的配置才走续跑分支 —— 那种情况 opt_state 必须留着。
+#    ⇒ 本函数**只在三个评估全部完成后**才调用。
+#
+# ⚠️ 保留 global_r{last}（评估与结果提取的对象），只删更早的轮次。
+cleanup_completed_config () {
+  local root="$1" tag="$2" last="$3"
+  local n=0 f
+  for f in "$root"/client_*_r*; do
+    [ -e "$f" ] || continue
+    rm -rf "$f" && n=$((n + 1))
+  done
+  for f in "$root"/opt_state_c*.pt; do
+    [ -e "$f" ] || continue
+    rm -f "$f" && n=$((n + 1))
+  done
+  # 只保留最后一轮的全局模型（更早的轮次不再需要）
+  for f in "$root"/global_r*; do
+    [ -e "$f" ] || continue
+    case "$(basename "$f")" in
+      "global_r${last}") continue ;;
+    esac
+    rm -rf "$f" && n=$((n + 1))
+  done
+  [ "$n" -gt 0 ] && log "[清理] $tag 已完成 ⇒ 回收 $n 个中间产物（client_* / opt_state / 早期 global_r）"
+  df -h "$root" 2>/dev/null | tail -1 | sed 's/^/[清理后磁盘] /'
 }
 
 # ==============================================================================
@@ -330,6 +379,11 @@ preflight
 FAILED=()
 for ((i=0; i<${#CFG_TAGS[@]}; i++)); do
   tag="${CFG_TAGS[$i]}"
+  # ONLY_TAGS：只跑指定配置（冒烟测试用；默认空 = 全跑，行为不变）
+  if [ -n "${ONLY_TAGS:-}" ] && ! echo " $ONLY_TAGS " | grep -q " $tag "; then
+    log "[SKIP] $tag 不在 ONLY_TAGS（$ONLY_TAGS）里"
+    continue
+  fi
   if run_cfg "$i"; then
     echo 0 > "$OUT/.rc_${tag}"
   else

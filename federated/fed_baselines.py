@@ -233,14 +233,26 @@ def scaffold_update_local_cv(c_local: dict[str, torch.Tensor],
     out: dict[str, torch.Tensor] = {}
     denom = float(local_steps) * float(lr)
     for k in ks:
-        if k not in c_global or k not in w_global or k not in w_local:
-            out[k] = c_local[k].clone()
+        if k not in w_global or k not in w_local:
             continue
-        c_k = c_local[k]
-        c = c_global[k]
+        # 🔴 2026-11-23 修复：原实现是
+        #     if k not in c_global or ...: out[k] = c_local[k].clone(); continue
+        #    ⇒ **检查的是 c_global，取的却是 c_local[k]** ⇒ 当 c_global 有该键
+        #    而 c_local 没有时直接 KeyError。
+        #    真实触发场景：round 0 的初始模型**不含 MoE** ⇒ c_k 只有 224 键；
+        #    round 1 的模型含 MoE ⇒ w_g 有 488 键 ⇒ c_k 缺 264 个 expert 键
+        #    ⇒ round 1 必崩（SCAFFOLD 聚合中止）。
+        #    现在：缺失的控制变量按 **0 起算**（标准 SCAFFOLD 对"此前未出现的
+        #    参数"就是 0 控制变量）⇒ 既不崩，语义也正确。
+        c_k = c_local.get(k)
+        c = c_global.get(k)
         w_g = w_global[k].detach().float()
         w_l = w_local[k].detach().float()
-        out[k] = (c_k.float() - c.float() + (w_g - w_l) / denom).to(c_k.dtype)
+        if c_k is None:
+            c_k = torch.zeros_like(w_g)
+        if c is None:
+            c = torch.zeros_like(w_g)
+        out[k] = (c_k.float() - c.float() + (w_g - w_l) / denom).to(w_g.dtype)
     return out
 
 

@@ -27,6 +27,19 @@ EPISODE_NUM="${EPISODE_NUM:-20}"
 N_JOBS="${N_JOBS:-1}"
 HPT_PY=/root/miniconda3/envs/hpt/bin/python
 
+# ===== [FedVLA-MOE] 评估侧必须开 MoE（2026-11-23 修复）=========================
+# ⚠️ 这是第 3 阶段已踩过的致命缺陷（见 run_phase3_eval.sh 的 apply_moe_env）：
+#    patch_hpt_moe.py 的判定是 `if os.environ.get("FEDVLA_MOE","0") == "1"`，
+#    不设 ⇒ moe_cfg=None ⇒ policy 根本不创建 MoE 模块；
+#    而 Policy.load_model 用 strict=False ⇒ 264 个 MoE 键被**静默丢弃**，
+#    不报错、不告警 ⇒ 评估的是残缺模型（13.94M 而非 21.08M）。
+#    5 个取值必须与训练侧逐字一致，否则结构对不上。
+export FEDVLA_MOE=1
+export FEDVLA_MOE_EXPERTS=8
+export FEDVLA_MOE_TOPK=2
+export FEDVLA_MOE_EXPERT_RATIO=0.25
+export FEDVLA_MOE_LAYERS=half
+# ==============================================================================
 export WANDB_MODE=offline
 export MUJOCO_GL=egl
 export HF_ENDPOINT=https://hf-mirror.com

@@ -37,6 +37,10 @@ sys.path.insert(0, HERE)
 from extract_phase3_results import (T_CRIT_95, collect_convergence,  # noqa: E402
                                     collect_eda, mean_ci, parse_log)
 
+# 🔴 2026-11-23：MoE 生效判据（参数量下限）。低于此值 = 评估的是残缺模型，
+#    该 domain 的结果一律作废并显式报错（修 fail-open：原来只记录不校验）。
+PARAMS_MIN_M = 18.0
+
 DOMAINS = ["mujoco_metaworld_task1", "mujoco_metaworld_task2",
            "mujoco_metaworld_task3"]
 
@@ -113,6 +117,16 @@ def collect_stage(out_root, tag: str):
                         break
         except Exception:
             pass
+        # 🔴 门槛：参数量不足 ⇒ MoE 未生效 ⇒ 该 domain 作废（显式报错，不静默）
+        pm = (st["domains"][d] or {}).get("params_M")
+        if pm is not None and pm < PARAMS_MIN_M:
+            print("[FATAL] %s/%s 参数量仅 %.2fM < %.1fM ⇒ MoE 未生效，"
+                  "评的是残缺模型，本项作废" % (tag, d, pm, PARAMS_MIN_M))
+            st["domains"][d]["invalid_reason"] = (
+                "params_M=%.2f < %.1f ⇒ MoE 未生效（残缺模型），结果作废"
+                % (pm, PARAMS_MIN_M))
+            st["domains"][d]["stats"] = None
+            st["domains"][d]["seeds"] = []
     return st
 
 

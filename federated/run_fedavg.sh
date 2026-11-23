@@ -78,6 +78,38 @@ cleanup_old_rounds () {
   df -h "$OUTPUT_ROOT" | tail -1 | sed 's/^/[清理后磁盘] /'
 }
 
+# ===== _baseline 历史轮次清理（2026-11-23 修复）=================================
+# 背景：FedProx 的 anchor_r{r}.pt（84MB）与 SCAFFOLD 的 ci_c{c}_r{r}.pt（50MB）
+#       原本**从不被清理** ⇒ 单配置 4.2G / 10.1G ⇒ 30G 系统盘必爆。
+#       2026-11-23 实测：p5_bal_scaffold 在第 1 轮就因磁盘水位触发
+#       「可用空间仅 5GB < 6GB」而聚合中止。
+# 口径：只删**已被消费完**的中间产物，保留最近 $KEEP 轮；
+#       ci_c{c}.pt（当前控制变量）与 c_global_r{r}.pt（SCAFFOLD 下发源）永不删。
+cleanup_old_baseline () {
+  local cur="$1" keep="$2"
+  local cutoff=$((cur - keep))
+  [ "$cutoff" -lt 1 ] && return 0
+  local n=0 f base r
+  for f in "$BASELINE_DIR"/anchor_r*.pt "$BASELINE_DIR"/ci_c*_r*.pt \
+           "$BASELINE_DIR"/c_global_r*.pt "$BASELINE_DIR"/wglobal_r*.pt; do
+    [ -e "$f" ] || continue
+    base=$(basename "$f")
+    case "$base" in
+      ci_c[0-9].pt) continue ;;   # 当前控制变量的持久化副本（无轮次号，永不删）
+    esac
+    # 🔴 必须**按轮次**判断，只删 r < cutoff 的；
+    #    原实现不判轮次 ⇒ 会把**当前轮**的 anchor_r{r}.pt / ci_c{c}_r{r}.pt 一起删掉
+    #    ⇒ SCAFFOLD 的 c_k 下发链断裂 ⇒ 下一轮聚合中止。
+    r=$(echo "$base" | grep -oE '_r[0-9]+\.pt$' | grep -oE '[0-9]+')
+    [ -n "$r" ] || continue
+    if [ "$r" -lt "$cutoff" ]; then
+      rm -f "$f" && n=$((n + 1))
+    fi
+  done
+  [ "$n" -gt 0 ] && echo "[清理] 删除 $n 个 _baseline 历史轮次中间产物（保留最近 ${keep} 轮）"
+  return 0
+}
+
 echo "===== FedVLA FedAvg ====="
 echo "OUTPUT_ROOT=$OUTPUT_ROOT"
 echo "NUM_ROUNDS=$NUM_ROUNDS  NUM_CLIENTS=$NUM_CLIENTS  LOCAL_EPOCHS=$LOCAL_EPOCHS"
@@ -553,6 +585,7 @@ PY
     KEEP=1
   fi
   cleanup_old_rounds "$r" "$KEEP"
+  [ -n "${BASELINE_DIR:-}" ] && cleanup_old_baseline "$r" "$KEEP"
 done
 
 echo "===== 全部 $NUM_ROUNDS 轮完成 ====="

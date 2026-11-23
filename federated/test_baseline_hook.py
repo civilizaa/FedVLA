@@ -120,14 +120,24 @@ def test_prox_hook_rejects_key_mismatch():
     import io as _io
     import contextlib
     buf = _io.StringIO()
+    raised = None
     with contextlib.redirect_stdout(buf):
-        hook.apply_baseline_hook(model, None)
+        try:
+            hook.apply_baseline_hook(model, None)
+        except RuntimeError as e:
+            raised = e
     out = buf.getvalue()
 
     for n, p in model.named_parameters():
         assert torch.allclose(p.grad, before[n]), f"{n} 键不匹配时不应修改梯度"
-    assert "键不匹配" in out, f"应打印键空间告警，实际输出：{out}"
-    print("  ✅ 键空间错配被拦下并告警（不会静默退化成 FedAvg）")
+    # 🔴 2026-11-23：判据从"打印告警"升级为"**显式抛异常**"（fail-loud，铁律 Q）——
+    #    告警会被 run_phase5.sh 的日志淹没，而异常会立刻中止该配置。
+    assert raised is not None, (
+        "键空间错配必须显式抛异常（fail-loud），不能只是打印告警后继续")
+    assert "键不匹配" in str(raised) or "键不匹配" in out, \
+        f"异常信息应点明键空间错配，实际：{raised!r} / stdout={out!r}"
+    print("  ✅ 键空间错配被显式拦下（抛异常 + 梯度未改），"
+          "不会静默退化成 FedAvg")
 
 
 def test_scaffold_hook_applies_and_exports():

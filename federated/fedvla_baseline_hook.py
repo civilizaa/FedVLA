@@ -44,6 +44,10 @@ import torch
 _FILE_CACHE: dict = {}
 _ZERO_CV_CACHE: dict = {}
 
+# 🔴 FedProx 近端项生效统计（判据：整个 epoch 里必须**至少有一次非零**）
+_PROX_STEPS_TOTAL = 0
+_PROX_STEPS_NONZERO = 0
+
 
 def _env(name, default=None):
     v = os.environ.get(name)
@@ -151,9 +155,23 @@ def apply_baseline_hook(model, opt):
         # 只对**模型里真实存在且锚点里也有**的参数生效（键空间必须一致）
         keys = [k for k in scaffold_keys(np_) if k in anchor]
         if not keys:
-            print("[FedVLA-BASE] 锚点与模型参数键不匹配 —— 近端项未生效（静默退化！）")
-            return
+            # 🔴 2026-11-23：原来只打印 + return ⇒ 近端项静默不生效（铁律 A 同款）。
+            #    现在显式抛异常：近端项没作用到任何参数 ⇒ FedProx 等价 FedAvg ⇒
+            #    这一格实验数据必须作废，不能默默跑完 50 轮。
+            raise RuntimeError(
+                "FedProx 锚点与模型参数键不匹配（键空间错配）—— 近端项未生效，"
+                "本次实验等价于 FedAvg，必须作废重跑")
         n = apply_prox_term(list(np_.values()), np_, anchor, mu, keys)
+        # 🔴 2026-11-23：这里**不能**用"单步 n<=0 就 raise"当判据！
+        #    round r 的模型是从 global_{r-1} 加载的，锚点也来自 global_{r-1}
+        #    ⇒ **第一个 step 的 w 恰好等于 w_global** ⇒ 近端项数学上必然为 0
+        #    ⇒ 那是**正确行为**，不是"锚点与参数不匹配"。
+        #    真正的失效判据是：**整个 epoch 里一次都没有非零**（⇒ 锚点与模型
+        #    永远相同 ⇒ 等价 FedAvg）⇒ 改在 finish_baseline_round 里用累计量判。
+        global _PROX_STEPS_TOTAL, _PROX_STEPS_NONZERO
+        _PROX_STEPS_TOTAL += 1
+        if n > 0:
+            _PROX_STEPS_NONZERO += 1
         print(f"[FedVLA-BASE] FedProx 近端项已施加 mu={mu} 键数={len(keys)} "
               f"‖g_prox‖₂={n:.4e}")
 
@@ -177,6 +195,12 @@ def apply_baseline_hook(model, opt):
             p.grad.copy_(scaffold_direction(p.grad, c_li, g_c))
             n += 1
         print(f"[FedVLA-BASE] SCAFFOLD 控制变量已应用 键数={n}")
+        if n == 0:
+            # 🔴 2026-11-23：控制变量一个参数都没作用上 ⇒ SCAFFOLD 退化成 FedAvg，
+            #    且零报错 ⇒ 这一格数据必须作废。
+            raise RuntimeError(
+                "SCAFFOLD 控制变量未作用到任何参数（键空间错配）—— "
+                "SCAFFOLD 等价 FedAvg，本次实验作废")
 
 
 def finish_baseline_round(model):
@@ -187,12 +211,28 @@ def finish_baseline_round(model):
        本地训练的最终结果 ⇒ 最后一次写出的 c_k 才是正确的。
     """
     mode = _mode()
+    if mode == "fedprox":
+        # 🔴 2026-11-23：近端项失效的**正确判据**是"整个 epoch 一次都没非零"
+        #    （单步为 0 是正常的：模型起点就等于锚点）。
+        global _PROX_STEPS_TOTAL, _PROX_STEPS_NONZERO
+        if _PROX_STEPS_TOTAL > 0 and _PROX_STEPS_NONZERO == 0:
+            raise RuntimeError(
+                "FedProx 近端项在 %d 个 step 里**一次都没有非零** —— "
+                "锚点与模型完全相同 ⇒ 本次实验等价 FedAvg，必须作废"
+                % _PROX_STEPS_TOTAL)
+        print("[FedVLA-BASE] FedProx 近端项统计：非零 %d/%d 个 step"
+              % (_PROX_STEPS_NONZERO, _PROX_STEPS_TOTAL))
     if mode != "scaffold":
         return
 
     out_path = _env("FEDVLA_SCAFFOLD_CV_OUT")
     if not out_path:
-        return
+        # 🔴 2026-11-23：原来这里直接 return ⇒ c_k 不落盘也零报错 ⇒
+        #    下一轮聚合才发现「缺本地控制变量」（那时已白跑一整轮）。
+        #    SCAFFOLD 模式下缺 CV_OUT 属于致命配置错误 ⇒ 必须显式失败。
+        raise RuntimeError(
+            "SCAFFOLD 模式但未设置 FEDVLA_SCAFFOLD_CV_OUT —— "
+            "本地控制变量 c_k 无处落盘，SCAFFOLD 会退化成 no-op（零报错）")
 
     (_ap, _sd, scaffold_keys, scaffold_update_local_cv) = _import_fed_baselines()
 
@@ -203,8 +243,14 @@ def finish_baseline_round(model):
 
     keys = [k for k in scaffold_keys(w_g) if k in w_g]
     if not keys:
-        print("[FedVLA-BASE] SCAFFOLD w_global 键与模型不匹配 —— 跳过控制变量更新")
-        return
+        # 🔴 2026-11-23：原来只是打印 + return ⇒ c_k 静默不落盘 ⇒
+        #    下一轮聚合中止，且**全程零报错**（SCAFFOLD 退化成 FedAvg）。
+        #    现在显式抛异常（铁律 Q：判据必须 fail-loud）。
+        sample = list(w_g.keys())[:5] if w_g else []
+        raise RuntimeError(
+            "SCAFFOLD w_global 键与模型不匹配（w_g 键数=%d, 样例=%s）—— "
+            "控制变量 c_k 无从计算，SCAFFOLD 会静默退化成 FedAvg"
+            % (len(w_g), sample))
 
     if not c_g:
         c_g = {k: torch.zeros_like(w_g[k]) for k in keys}

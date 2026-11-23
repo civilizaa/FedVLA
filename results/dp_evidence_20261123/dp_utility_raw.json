@@ -1,0 +1,86 @@
+{
+  "domain": "mujoco_metaworld_task3",
+  "calib": {
+    "n_samples": 4,
+    "delta_l2_median": 1284.2807639417144,
+    "delta_l2_mean": 1284.2793666570954,
+    "delta_l2_min": 0.4072108540438778,
+    "delta_l2_max": 2568.148727890909,
+    "clip_norm_C": 1284.2807639417144,
+    "n_shared_params": 0,
+    "note": "C = ‖Δ‖₂ 中位数。σ 直接读作噪声/信号比：噪声 L2 ≈ σ·C，信号 L2 ≈ ‖Δ‖₂ ≈ C。ε 只依赖 σ，与 C 无关。"
+  },
+  "baseline": {
+    "mean": 0.7166666666666667,
+    "ci": 0.501976151822982,
+    "n": 3,
+    "seeds": [
+      0.95,
+      0.6,
+      0.6
+    ],
+    "df": 2,
+    "sd": 0.202072594216369,
+    "lo": 0.21469051484368462,
+    "hi": 1.2186428184896487
+  },
+  "rows": [
+    {
+      "tag": "dp_s0001",
+      "label": "σ=1e-4 (噪声/信号 0.41)",
+      "sigma": 0.0001,
+      "epsilon": 4999999872.88349,
+      "best_order": 2,
+      "seeds": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "n": 3,
+      "mean": 0.0,
+      "ci": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "proxy_fidelity": null,
+      "proxy_action_cos": null
+    },
+    {
+      "tag": "dp_s0003",
+      "label": "σ=1e-3 (噪声/信号 4.1)",
+      "sigma": 0.001,
+      "epsilon": 49999872.883489355,
+      "best_order": 2,
+      "seeds": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "n": 3,
+      "mean": 0.0,
+      "ci": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "proxy_fidelity": null,
+      "proxy_action_cos": null
+    },
+    {
+      "tag": "dp_s0012",
+      "label": "σ=1e-2 (噪声/信号 41)",
+      "sigma": 0.01,
+      "epsilon": 499872.88348935294,
+      "best_order": 2,
+      "seeds": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "n": 3,
+      "mean": 0.0,
+      "ci": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "proxy_fidelity": null,
+      "proxy_action_cos": null
+    }
+  ]
+}
