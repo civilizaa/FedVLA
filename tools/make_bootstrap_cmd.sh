@@ -11,10 +11,18 @@
 #      → 必须显式校验下载内容，否则下一次 `python3 agent.py` 会报
 #      `SyntaxError: invalid decimal literal`（用户 2026-11-05 实际遇到）。
 #
+#   5. 🔴 **agent.py 必须装在 /root/HPT/agent.py**（2026-11-23 修正）：
+#      `relay_push_out.py --agent` 默认读 `/root/HPT/agent.py` 抠 RELAY_TOKEN/SHARECODE；
+#      `phase5_autoshutdown.sh` 的回读自检也写死 `/root/HPT/agent.py`。
+#      ⇒ 装在别处 ⇒ 关机前推产物时读不到凭据 ⇒ **10+ 小时算力成果永久丢失**。
+#      同时从 /root/HPT 启动：relay 下发的命令若不带 cwd 会继承 agent 的 cwd
+#      ⇒ CWD 必须是 /root/HPT（历史实测如此）。
+#
 # 用法: bash make_bootstrap_cmd.sh <code>
 set -u
 CODE="${1:?用法: bash make_bootstrap_cmd.sh <一次性code>}"
 REL="${RELAY_PUBLIC_URL:-https://fedvla-relay.app.workbuddy.host}"
+INSTALL_DIR="${INSTALL_DIR:-/root/HPT}"
 
 # sharecode 首字母做 URL 编码（网关只对首字母宽容），避免明文进命令历史。
 # ⚠️ sharecode 是长期凭据，**绝不写进本文件** —— 从环境变量或 relay_secret.txt 读。
@@ -31,9 +39,11 @@ fi
 SC_ENC="%58${SC_RAW:1}"    # 首字母编码成 %58
 
 cat <<EOF
-mkdir -p /root/fedvla_relay && cd /root/fedvla_relay && \\
+mkdir -p ${INSTALL_DIR} /root/fedvla_relay && cd ${INSTALL_DIR} && \\
 curl -sS -f --max-time 60 -o agent.py "${REL}/bootstrap?code=${CODE}&sharecode=${SC_ENC}" && \\
 python3 -c "import ast; ast.parse(open('agent.py').read()); print('[OK] agent.py 语法校验通过')" && \\
-(nohup python3 agent.py > agent.log 2>&1 < /dev/null &) && sleep 8 && \\
-echo "--- agent.log ---" && tail -n 5 /root/fedvla_relay/agent.log
+cp agent.py /root/fedvla_relay/agent.py && \\
+(nohup setsid python3 agent.py > ${INSTALL_DIR}/agent.log 2>&1 < /dev/null &) && sleep 10 && \\
+echo "--- agent.log ---" && tail -n 5 ${INSTALL_DIR}/agent.log && \\
+echo "--- agent.py 位置 ---" && ls -la ${INSTALL_DIR}/agent.py
 EOF
