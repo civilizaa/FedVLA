@@ -1,0 +1,20 @@
+[2026-11-23 11:03:46] ===== 第5阶段自动关机守护启动 =====
+[2026-11-23 11:03:46] 等待条件：主实验矩阵 p5_bal_fedprox p5_bal_scaffold p5_iso_fedavg p5_iso_fedprox p5_iso_scaffold p5_iso_eda p5_iso_edaclu（7 个配置）
+[2026-11-23 11:03:46] MAX_HOURS=24  POLL=60s  PUSH_IDBASE=1010000
+[2026-11-23 11:14:47] ===== 第5阶段自动关机守护启动 =====
+[2026-11-23 11:14:47] 等待条件：主实验矩阵 p5_bal_fedprox p5_bal_scaffold p5_iso_fedavg p5_iso_fedprox p5_iso_scaffold p5_iso_eda p5_iso_edaclu（7 个配置）
+[2026-11-23 11:14:47] MAX_HOURS=40  POLL=60s  PUSH_IDBASE=1010000
+[2026-11-23 11:26:06] ===== 第5阶段自动关机守护启动 =====
+[2026-11-23 11:26:06] 等待条件：主实验矩阵 p5_bal_fedprox p5_bal_scaffold p5_iso_fedavg p5_iso_fedprox p5_iso_scaffold p5_iso_eda p5_iso_edaclu（7 个配置）
+[2026-11-23 11:26:06] MAX_HOURS=60  POLL=60s  PUSH_IDBASE=1010000
+[2026-11-23 17:04:19] ===== 第5阶段自动关机守护启动 =====
+[2026-11-23 17:04:19] 等待条件：主实验矩阵 p5_bal_fedprox p5_bal_scaffold p5_iso_fedavg p5_iso_fedprox p5_iso_scaffold p5_iso_eda p5_iso_edaclu（7 个配置）
+[2026-11-23 17:04:19] MAX_HOURS=44  POLL=60s  PUSH_IDBASE=1010000
+[2026-11-24 08:28:37] 收工原因：全部实验完成（主实验矩阵 7/7）
+[2026-11-24 08:28:37] 主实验矩阵 .rc = 7/7
+[2026-11-24 08:28:37] --- 云端提取第5阶段结果 ---
+[2026-11-24 08:28:39] extract_phase5_results rc=0
+[2026-11-24 08:28:39] --- 打包产物 ---
+-rw-r--r-- 1 root root 52029 Nov 24 08:28 /root/fedcore/phase5_out.tgz
+[2026-11-24 08:28:39] phase5_out.tgz = 52K
+[2026-11-24 08:28:39] --- 推进 relay 结果存储 ---

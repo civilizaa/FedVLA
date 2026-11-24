@@ -1,0 +1,13 @@
+[p3_moe_fedavg       ] 有结果的任务: 3/3  ['mujoco_metaworld_task1', 'mujoco_metaworld_task2', 'mujoco_metaworld_task3']
+[p3_moe_eda          ] 有结果的任务: 3/3  ['mujoco_metaworld_task1', 'mujoco_metaworld_task2', 'mujoco_metaworld_task3']
+[p3_moe_eda_cluster  ] 有结果的任务: 3/3  ['mujoco_metaworld_task1', 'mujoco_metaworld_task2', 'mujoco_metaworld_task3']
+[p5_bal_fedprox      ] 有结果的任务: 3/3  ['mujoco_metaworld_task1', 'mujoco_metaworld_task2', 'mujoco_metaworld_task3']
+[p5_bal_scaffold     ] 有结果的任务: 3/3  ['mujoco_metaworld_task1', 'mujoco_metaworld_task2', 'mujoco_metaworld_task3']
+[p5_iso_fedavg       ] 有结果的任务: 3/3  ['mujoco_metaworld_task1', 'mujoco_metaworld_task2', 'mujoco_metaworld_task3']
+[p5_iso_fedprox      ] 有结果的任务: 3/3  ['mujoco_metaworld_task1', 'mujoco_metaworld_task2', 'mujoco_metaworld_task3']
+[p5_iso_scaffold     ] 有结果的任务: 3/3  ['mujoco_metaworld_task1', 'mujoco_metaworld_task2', 'mujoco_metaworld_task3']
+[p5_iso_eda          ] 有结果的任务: 3/3  ['mujoco_metaworld_task1', 'mujoco_metaworld_task2', 'mujoco_metaworld_task3']
+[p5_iso_edaclu       ] 有结果的任务: 3/3  ['mujoco_metaworld_task1', 'mujoco_metaworld_task2', 'mujoco_metaworld_task3']
+[OK] 已写出 /root/HPT/output/phase5/phase5_raw.json
+[OK] 已写出 /root/HPT/output/phase5/phase5_raw.md
+EXTRACT_DONE

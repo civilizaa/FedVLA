@@ -20,6 +20,18 @@ ROOT = os.path.dirname(HERE)
 
 
 def read_creds(paths):
+    # 🔴 2026-11-23 修正：真正生效的凭据在 tools/relay_secret.txt
+    #    （第 1 行 token / 第 2 行 sharecode / 第 3 行 url），
+    #    旧版只找 relay/agent*.py 里的 RELAY_TOKEN 常量 —— 仓库里那份是
+    #    agent_template.py 的占位符（__RELAY_TOKEN__）⇒ 拿到空 token ⇒ /health 403。
+    secret = os.path.join(HERE, "relay_secret.txt")
+    if os.path.exists(secret):
+        try:
+            lines = [l.strip() for l in open(secret, encoding="utf-8").read().splitlines() if l.strip()]
+            if len(lines) >= 2:
+                return lines[0], lines[1], (lines[2].rstrip("/") if len(lines) > 2 else DEFAULT_URL)
+        except OSError:
+            pass
     for p in paths:
         if not p or not os.path.exists(p):
             continue

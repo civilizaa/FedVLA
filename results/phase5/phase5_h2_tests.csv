@@ -1,0 +1,13 @@
+﻿split,对比,domain,A,B,逐seed差,Δ均值,差值sd,t,p(双尾),同向数,判定
+balanced,簇感知 vs 中心性EDA,task1,p3_moe_eda_cluster,p3_moe_eda,+0|+0|+0,+0.0000,0.0000,0.000,1.000,0,不显著
+balanced,簇感知 vs 中心性EDA,task2,p3_moe_eda_cluster,p3_moe_eda,+0|+0|+0,+0.0000,0.0000,0.000,1.000,0,不显著
+balanced,簇感知 vs 中心性EDA,task3,p3_moe_eda_cluster,p3_moe_eda,+0.4|+0.4|+0.45,+0.4167,0.0289,25.000,0.002,3,显著
+balanced,簇感知 vs MoE+FedAvg,task1,p3_moe_eda_cluster,p3_moe_fedavg,+0|+0|+0,+0.0000,0.0000,0.000,1.000,0,不显著
+balanced,簇感知 vs MoE+FedAvg,task2,p3_moe_eda_cluster,p3_moe_fedavg,+0|+0|+0,+0.0000,0.0000,0.000,1.000,0,不显著
+balanced,簇感知 vs MoE+FedAvg,task3,p3_moe_eda_cluster,p3_moe_fedavg,+0.35|+0.4|+0.4,+0.3833,0.0289,23.000,0.002,3,显著
+isolated,簇感知 vs 中心性EDA,task1,p5_iso_edaclu,p5_iso_eda,-0.1|-0.1|+0,-0.0667,0.0577,-2.000,0.184,0,不显著
+isolated,簇感知 vs 中心性EDA,task2,p5_iso_edaclu,p5_iso_eda,+0|+0|+0,+0.0000,0.0000,0.000,1.000,0,不显著
+isolated,簇感知 vs 中心性EDA,task3,p5_iso_edaclu,p5_iso_eda,-0.4|-0.5|-0.45,-0.4500,0.0500,-15.588,0.004,0,显著
+isolated,簇感知 vs MoE+FedAvg,task1,p5_iso_edaclu,p5_iso_fedavg,-0.15|+0|+0,-0.0500,0.0866,-1.000,0.423,0,不显著
+isolated,簇感知 vs MoE+FedAvg,task2,p5_iso_edaclu,p5_iso_fedavg,+0|+0|+0,+0.0000,0.0000,0.000,1.000,0,不显著
+isolated,簇感知 vs MoE+FedAvg,task3,p5_iso_edaclu,p5_iso_fedavg,-0.4|-0.6|-0.45,-0.4833,0.1041,-8.043,0.015,0,显著
